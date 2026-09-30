@@ -1,0 +1,1017 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Snellman B2B-verkkokauppa — etusivu (proto v0.1)</title>
+  <meta name="description" content="Snellmanin liha tilattuna suoraan keittiöösi tai myymälääsi. Verkkokauppa ravintoloille, kioskeille ja lähikaupoille.">
+  <link rel="icon" href="https://snellman.fi/app/uploads/2021/12/cropped-Snellman-logo-01-32x32.png" sizes="32x32">
+  <style>
+/* =================================================================
+ * Snellman B2B verkkokauppa — etusivun proto v0.1
+ * Tyylit nojaavat snellman.fi:stä scrapettuihin GDS-tokeneihin.
+ * (CSS upotettu HTML:ään jotta proto toimii Launch-previewssä; sama
+ *  sisältö löytyy myös tiedostosta styles.css normaalia hostausta varten.)
+ * ================================================================= */
+
+@font-face {
+  font-family: "Taberna Serif";
+  font-style:  normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TabernaSerif-Regular.307208f4.otf") format("opentype");
+}
+@font-face {
+  font-family: "TheSansB";
+  font-style:  normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W5Plain.9a8ed524.otf") format("opentype");
+}
+@font-face {
+  font-family: "TheSansB";
+  font-style:  normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W7Bold.f9113732.otf") format("opentype");
+}
+
+:root {
+  --c-white:           #ffffff;
+  --c-black:           #333031;
+  --c-green-dark:      #00522c;
+  --c-green-darkest:   #00422c;
+  --c-green-bright:    #005a30;
+  --c-green-hover:     #1e5f41;
+  --c-green-soft:      #7d968a;
+  --c-green-tint:      #00522c0f;
+  --c-cream:           #f3f2eb;
+  --c-off-white:       #faf9f5;
+  --c-yellow:          #f2cd5b;
+  --c-border:          #dddddd;
+  --c-muted:           #6b6b6b;
+
+  --font-display: "Taberna Serif", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-sans:    "TheSansB", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+
+  --s-3xs: 4px;  --s-2xs: 8px;  --s-xs: 12px;  --s-s: 16px;
+  --s-m: 24px;   --s-l: 32px;   --s-xl: 40px;  --s-2xl: 48px;  --s-3xl: 80px;
+
+  --container-max: 1280px;
+  --container-pad: 24px;
+  --section-pad-y: 80px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 27px;
+  color: var(--c-green-darkest);
+  background: var(--c-white);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+img, svg { display: block; max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: 0; background: none; padding: 0; color: inherit; }
+ul { list-style: none; padding: 0; margin: 0; }
+h1, h2, h3, h4, h5, h6, p { margin: 0; }
+
+.h1, h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 75px);
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+.h2, h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3.5vw, 56px);
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+.h3, h3 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(22px, 2.4vw, 32px);
+  line-height: 1.15;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+.h4, h4 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.25;
+}
+.eyebrow {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-green-dark);
+}
+.lead { font-size: 19px; line-height: 29px; }
+.micro { font-size: 13px; line-height: 17px; color: var(--c-muted); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 28px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  border-radius: 0;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--c-green-dark); color: var(--c-white); }
+.btn-primary:hover { background: var(--c-green-hover); }
+.btn-ghost { background: transparent; color: var(--c-green-darkest); box-shadow: inset 0 0 0 2px var(--c-green-darkest); }
+.btn-ghost:hover { background: var(--c-green-darkest); color: var(--c-white); }
+.btn-on-dark { background: var(--c-white); color: var(--c-green-darkest); }
+.btn-on-dark:hover { background: var(--c-cream); }
+.btn-ghost-on-dark { background: transparent; color: var(--c-white); box-shadow: inset 0 0 0 2px var(--c-white); }
+.btn-ghost-on-dark:hover { background: var(--c-white); color: var(--c-green-darkest); }
+.btn-sm { padding: 10px 18px; font-size: 13px; }
+.btn .arrow { transition: transform 0.15s ease-out; }
+.btn:hover .arrow { transform: translateX(4px); }
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+}
+.section { padding: var(--section-pad-y) 0; }
+.section--cream { background: var(--c-cream); }
+.section--dark { background: var(--c-green-dark); color: var(--c-white); }
+.section--dark .eyebrow { color: var(--c-yellow); }
+
+.flag {
+  display: inline-block;
+  background: var(--c-yellow);
+  color: var(--c-green-darkest);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  padding: 4px 8px;
+  margin-left: 6px;
+  border-radius: 3px;
+  vertical-align: middle;
+  cursor: help;
+}
+
+/* A0 — HEADER */
+.site-header { position: sticky; top: 0; z-index: 100; background: var(--c-white); border-bottom: 1px solid var(--c-border); }
+.site-header__inner { display: flex; align-items: center; justify-content: space-between; height: 70px; gap: 32px; }
+.site-header__logo img { height: 40px; width: auto; }
+.site-nav { display: none; gap: 28px; }
+.site-nav a {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-green-darkest);
+  padding: 8px 0;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.site-nav a:hover, .site-nav a.is-active { border-bottom-color: var(--c-green-dark); }
+
+.site-utils { display: flex; align-items: center; gap: 14px; }
+.icon-btn { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; color: var(--c-green-darkest); }
+.lang-switch { display: none; gap: 4px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--c-muted); letter-spacing: 0.08em; }
+.lang-switch a { padding: 4px 6px; }
+.lang-switch a.is-active { color: var(--c-green-darkest); border-bottom: 2px solid var(--c-green-dark); }
+.login-link { display: none; font-family: var(--font-sans); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+@media (min-width: 900px) { .site-nav, .lang-switch, .login-link { display: flex; } }
+
+/* A1 — HERO */
+.hero { background: var(--c-cream); position: relative; overflow: hidden; }
+.hero__inner { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; padding: 80px 0; }
+.hero__content { max-width: 580px; }
+.hero__title { margin-top: 16px; }
+.hero__subtitle { margin-top: 24px; font-size: clamp(17px, 1.4vw, 20px); line-height: 1.5; color: var(--c-green-darkest); max-width: 520px; }
+.hero__ctas { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 32px; }
+.hero__micro {
+  margin-top: 18px;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--c-green-darkest);
+}
+.hero__micro::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  background: var(--c-yellow);
+  border-radius: 50%;
+  margin-right: 10px;
+  vertical-align: middle;
+  transform: translateY(-1px);
+}
+.hero__visual {
+  aspect-ratio: 5 / 4;
+  background:
+    radial-gradient(ellipse at 70% 30%, var(--c-green-bright) 0%, var(--c-green-darkest) 70%);
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  color: var(--c-off-white);
+  overflow: hidden;
+}
+.hero__visual::before {
+  content: "1951";
+  position: absolute;
+  top: -0.18em;
+  right: -0.05em;
+  font-family: var(--font-display);
+  font-size: clamp(180px, 28vw, 380px);
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.06);
+  pointer-events: none;
+  user-select: none;
+}
+.hero__visual::after {
+  content: "Pietarsaari · perheyritys vuodesta 1951";
+  position: relative;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.7);
+  padding: 24px 28px;
+}
+@media (min-width: 900px) { .hero__inner { grid-template-columns: 1.05fr 0.95fr; padding: 120px 0; } }
+
+/* A2 — SEGMENTIT */
+.section-head { max-width: 720px; margin-bottom: 56px; }
+.section-head__title { margin-top: 12px; }
+.section-head__lead { margin-top: 20px; color: var(--c-green-darkest); }
+
+.segments { display: grid; grid-template-columns: 1fr; gap: 24px; }
+.segment-card {
+  background: var(--c-white);
+  border: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-out, border-color 0.2s ease-out;
+  text-decoration: none;
+  color: inherit;
+}
+.segment-card:hover { transform: translateY(-4px); border-color: var(--c-green-dark); }
+.segment-card__image {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(160deg, var(--c-green-bright), var(--c-green-darkest));
+  display: flex;
+  align-items: flex-end;
+  padding: 16px;
+  color: rgba(255,255,255,0.7);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.segment-card__body { padding: 24px 24px 32px; flex: 1; display: flex; flex-direction: column; }
+.segment-card__title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 400;
+  line-height: 1.1;
+  text-transform: lowercase;
+  letter-spacing: 0.05em;
+}
+.segment-card__lead { margin-top: 12px; font-size: 15px; line-height: 23px; color: var(--c-muted); flex: 1; }
+.segment-card__more {
+  margin-top: 24px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-green-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+@media (min-width: 700px) { .segments { grid-template-columns: repeat(3, 1fr); } }
+
+/* A3 — USP */
+.usps { display: grid; grid-template-columns: 1fr; gap: 32px; }
+.usp__icon {
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--c-yellow);
+  color: var(--c-green-darkest);
+  margin-bottom: 20px;
+}
+.usp__icon svg { width: 30px; height: 30px; }
+.usp__title { margin-bottom: 8px; }
+.usp__text { font-size: 15px; line-height: 23px; }
+@media (min-width: 700px) { .usps { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 1000px) { .usps { grid-template-columns: repeat(4, 1fr); } }
+
+/* A4 — OUTLET */
+.outlet { background: var(--c-green-dark); color: var(--c-white); position: relative; overflow: hidden; }
+.outlet::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(135deg, transparent 0 60px, rgba(255,255,255,0.03) 60px 120px);
+  pointer-events: none;
+}
+.outlet__inner { display: grid; grid-template-columns: 1fr; gap: 48px; align-items: center; padding: 96px 0; position: relative; }
+.outlet__body { max-width: 540px; }
+.outlet__lead { margin-top: 20px; font-size: 18px; line-height: 28px; color: rgba(255,255,255,0.85); }
+.outlet__stats { display: flex; flex-wrap: wrap; gap: 32px; margin: 32px 0; }
+.outlet__stat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 44px;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  color: var(--c-yellow);
+}
+.outlet__stat span {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.75);
+}
+.outlet__visual {
+  aspect-ratio: 1 / 1;
+  border: 2px solid rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.5);
+  text-align: center;
+  padding: 24px;
+}
+.outlet__eyebrow { color: var(--c-yellow); }
+@media (min-width: 900px) { .outlet__inner { grid-template-columns: 1.2fr 0.8fr; } }
+
+/* A5 — STEPS */
+.steps { display: grid; grid-template-columns: 1fr; gap: 32px; margin-top: 16px; }
+.step { position: relative; padding: 32px 28px; border-top: 4px solid var(--c-green-dark); background: var(--c-white); }
+.step__num {
+  font-family: var(--font-display);
+  font-size: 56px;
+  line-height: 0.9;
+  color: var(--c-green-dark);
+  letter-spacing: 0.02em;
+  opacity: 0.85;
+  display: block;
+  margin-bottom: 4px;
+}
+.step__title { margin: 8px 0 12px; }
+.step__text { font-size: 15px; line-height: 23px; color: var(--c-muted); }
+.steps-cta { margin-top: 56px; text-align: center; }
+@media (min-width: 700px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+
+/* A6 — ANCHOR */
+.anchor { display: grid; grid-template-columns: 1fr; gap: 56px; align-items: center; }
+.anchor__body { max-width: 520px; }
+.anchor__lead { margin-top: 24px; font-size: 17px; line-height: 27px; }
+.anchor__numbers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin: 40px 0;
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+  padding: 32px 0;
+}
+.anchor__num strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(32px, 4vw, 56px);
+  line-height: 1;
+  color: var(--c-green-dark);
+  letter-spacing: 0.02em;
+}
+.anchor__num span {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  line-height: 1.4;
+}
+.anchor__more {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-green-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-bottom: 2px solid var(--c-green-dark);
+  padding-bottom: 4px;
+}
+.anchor__visual {
+  aspect-ratio: 4 / 5;
+  background: radial-gradient(circle at 30% 30%, var(--c-green-bright) 0%, var(--c-green-darkest) 70%);
+  display: flex;
+  align-items: flex-end;
+  padding: 24px;
+  color: rgba(255,255,255,0.6);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+@media (min-width: 900px) { .anchor { grid-template-columns: 1.1fr 0.9fr; } }
+
+/* A7 — PROOF */
+.proof { display: grid; grid-template-columns: 1fr; gap: 32px; }
+.proof-card {
+  background: var(--c-white);
+  border: 1px solid var(--c-border);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.proof-card__quote {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 2vw, 28px);
+  line-height: 1.35;
+  letter-spacing: 0.02em;
+  text-transform: lowercase;
+  color: var(--c-green-darkest);
+  margin: 0;
+}
+.proof-card__source {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  margin-top: auto;
+}
+@media (min-width: 800px) { .proof { grid-template-columns: 1fr 1fr; } }
+
+/* A8 — FAQ */
+.faq { max-width: 800px; }
+.faq-item { border-top: 1px solid var(--c-border); padding: 0; }
+.faq-item:last-child { border-bottom: 1px solid var(--c-border); }
+.faq-item summary {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 0;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1.4;
+  color: var(--c-green-darkest);
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item .chev {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease-out;
+  color: var(--c-green-dark);
+}
+.faq-item[open] .chev { transform: rotate(45deg); }
+.faq-item__body { padding-bottom: 24px; max-width: 680px; font-size: 16px; line-height: 26px; color: var(--c-green-darkest); }
+
+/* A9 — FINAL CTA */
+.final-cta { background: var(--c-green-dark); color: var(--c-white); text-align: center; }
+.final-cta__inner { padding: 96px 0; max-width: 680px; margin: 0 auto; }
+.final-cta__title { color: var(--c-white); }
+.final-cta__lead { margin-top: 16px; font-size: 18px; line-height: 28px; color: rgba(255,255,255,0.85); }
+.final-cta__ctas { margin-top: 32px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* A10 — FOOTER */
+.site-footer {
+  background: var(--c-green-darkest);
+  color: rgba(255,255,255,0.85);
+  padding: 64px 0 32px;
+  font-size: 14px;
+  line-height: 22px;
+}
+.site-footer__top {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.footer-col h5 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--c-yellow);
+  margin-bottom: 16px;
+}
+.footer-col ul li { margin-bottom: 8px; }
+.footer-col a { transition: color 0.15s; }
+.footer-col a:hover { color: var(--c-white); }
+.site-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding-top: 32px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.55);
+}
+.site-footer__bottom a { margin-right: 16px; }
+.social { display: flex; gap: 12px; }
+.social a {
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255,255,255,0.3);
+  transition: background 0.15s, color 0.15s;
+}
+.social a:hover { background: var(--c-white); color: var(--c-green-darkest); }
+@media (min-width: 700px) { .site-footer__top { grid-template-columns: 1.4fr 1fr 1fr 1fr; } }
+
+.proto-banner {
+  background: var(--c-yellow);
+  color: var(--c-green-darkest);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  padding: 10px 16px;
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+.proto-banner strong { font-weight: 700; }
+.proto-banner .sep { opacity: 0.5; }
+.proto-banner a { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <!-- Prototyyppi-merkintä -->
+  <div class="proto-banner" role="note">
+    <span><strong>Proto v0.1</strong></span>
+    <span class="sep">·</span>
+    <span>Etusivu, anonyymi prospect</span>
+    <span class="sep">·</span>
+    <a href="#">Avaa wireframe-dokumentti</a>
+  </div>
+
+  <!-- ═════ A0 · HEADER ═════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a href="#" class="site-header__logo" aria-label="Snellman etusivulle">
+        <img src="https://snellman.fi/app/themes/snellmanrecipes/build/images/snellman-logo.svg" alt="Snellman">
+      </a>
+
+      <nav class="site-nav" aria-label="Päänavigaatio">
+        <a href="#segments">Valikoima</a>
+        <a href="#segments">Ratkaisut kohderyhmille</a>
+        <a href="#outlet">Boost &amp; Outlet</a>
+        <a href="#faq">Toimitus &amp; ehdot</a>
+        <a href="#faq">Tuki</a>
+      </nav>
+
+      <div class="site-utils">
+        <button class="icon-btn" aria-label="Haku">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+        </button>
+        <div class="lang-switch" aria-label="Kieli">
+          <a href="#" class="is-active">FI</a>
+          <a href="#">SV</a>
+          <a href="#">EN</a>
+        </div>
+        <a href="#" class="login-link">Kirjaudu</a>
+        <a href="#final" class="btn btn-primary btn-sm">Pyydä asiakkuus</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═════ A1 · HERO ═══════════════════════════════════════════════ -->
+  <section class="hero" id="hero">
+    <div class="container hero__inner">
+      <div class="hero__content">
+        <span class="eyebrow">Snellman pro · uusi verkkokauppa</span>
+        <h1 class="hero__title">Snellmanin liha — tilattuna suoraan keittiöösi tai myymälääsi.</h1>
+        <p class="hero__subtitle">
+          Verkkokauppa ravintoloille, kioskeille ja lähikaupoille.
+          Omat sopimushinnat, joustavat eräkoot, Outlet-erät kun haluat säästää lisää.
+        </p>
+        <div class="hero__ctas">
+          <a href="#final" class="btn btn-primary">Pyydä asiakkuus <span class="arrow">→</span></a>
+          <a href="#" class="btn btn-ghost">Kirjaudu jos olet jo asiakas</a>
+        </div>
+        <p class="hero__micro micro">
+          Saat vastauksen yleensä saman päivän aikana. Asiakkuus on maksuton.
+        </p>
+      </div>
+      <div class="hero__visual" aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <!-- ═════ A2 · SEGMENTIT ══════════════════════════════════════════ -->
+  <section class="section" id="segments">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Kenelle</span>
+        <h2 class="h2 section-head__title">Sinun toimintaasi mietitty valikoima.</h2>
+        <p class="lead section-head__lead">
+          Jokaiselle pienelle jälleenmyyjälle räätälöity polku — tuote- ja toimitusratkaisut tehty oman toimialasi mittakaavaan.
+        </p>
+      </div>
+
+      <div class="segments">
+        <a class="segment-card" href="#">
+          <div class="segment-card__image">[ kuvapaikka: ravintolakeittiö ]</div>
+          <div class="segment-card__body">
+            <h3 class="segment-card__title">Ravintoloille</h3>
+            <p class="segment-card__lead">Tuoreet ja kypsät lihat, paistivalmiit erät. Tilauseräkoot ravintolan kokoluokkaan.</p>
+            <span class="segment-card__more">Lue lisää <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+
+        <a class="segment-card" href="#">
+          <div class="segment-card__image">[ kuvapaikka: lähikaupan tiski ]</div>
+          <div class="segment-card__body">
+            <h3 class="segment-card__title">Lähikaupoille ja kioskeille</h3>
+            <p class="segment-card__lead">Vakiomyyntiartikkelit, kausituotteet ja kampanjaerät hyllyihisi.</p>
+            <span class="segment-card__more">Lue lisää <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+
+        <a class="segment-card" href="#">
+          <div class="segment-card__image">[ kuvapaikka: suurkeittiö ]</div>
+          <div class="segment-card__body">
+            <h3 class="segment-card__title">Suurkeittiöille</h3>
+            <p class="segment-card__lead">Toistuvat tilaukset, monilähtöiset toimitukset, ennustettavuus.</p>
+            <span class="segment-card__more">Lue lisää <span aria-hidden="true">→</span></span>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A3 · USP ════════════════════════════════════════════════ -->
+  <section class="section section--cream">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Mitä saat</span>
+        <h2 class="h2 section-head__title">Suoraan tuottajalta, omilla ehdoillasi.</h2>
+      </div>
+
+      <div class="usps">
+        <div class="usp">
+          <span class="usp__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 7h13l5 5v5h-3"/><path d="M3 7v10h3"/><circle cx="8" cy="17" r="2"/><circle cx="18" cy="17" r="2"/></svg>
+          </span>
+          <h3 class="h4 usp__title">Suoraan tuottajalta</h3>
+          <p class="usp__text">Sama liha jota toimitetaan keskusliikkeille — ilman välivaiheita.</p>
+        </div>
+
+        <div class="usp">
+          <span class="usp__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="6" width="18" height="13" rx="1"/><path d="M3 10h18"/><path d="M8 15h3"/></svg>
+          </span>
+          <h3 class="h4 usp__title">Omat sopimushinnat</h3>
+          <p class="usp__text">Asiakaskohtaiset hinnat ja eräkoot. Kirjaudut sisään, näet omasi.</p>
+        </div>
+
+        <div class="usp">
+          <span class="usp__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg>
+          </span>
+          <h3 class="h4 usp__title">Boost-erät joka päivä</h3>
+          <p class="usp__text">Päivärajan lähestyvät erät −30 %. Sama liha, parempi hinta.</p>
+        </div>
+
+        <div class="usp">
+          <span class="usp__icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 9h18l-2 11H5z"/><path d="M8 9V6a4 4 0 0 1 8 0v3"/></svg>
+          </span>
+          <h3 class="h4 usp__title">Snellman Outlet</h3>
+          <p class="usp__text">Aukeaa kun pyydät pääsyn. Edullisimmat erät, parasta ennen -paineella.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A4 · OUTLET-TEASER ══════════════════════════════════════ -->
+  <section class="outlet" id="outlet">
+    <div class="container outlet__inner">
+      <div class="outlet__body">
+        <span class="eyebrow outlet__eyebrow">Snellman outlet</span>
+        <h2 class="h2 outlet__title" style="color: var(--c-white); margin-top: 12px;">Outlet — auki kutsuasiakkaille.</h2>
+        <p class="outlet__lead">
+          Outlet on osa kauppaa, jossa myydään parasta ennen -lähellä olevat erät selvästi edullisempaan hintaan. Tuotteet ovat samoja Snellmanin laatutuotteita — vain päiväys lähestyy. Outletin näet sisäänkirjautumisen jälkeen, kun olemme avanneet sinulle pääsyn.
+        </p>
+
+        <div class="outlet__stats">
+          <div class="outlet__stat">
+            <strong>50 %</strong>
+            <span>tyypillinen alennus</span>
+          </div>
+          <div class="outlet__stat">
+            <strong>päivittäin</strong>
+            <span>erät vaihtuvat</span>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+          <a href="#final" class="btn btn-on-dark">Pyydä pääsy Outletiin <span class="arrow">→</span></a>
+          <a href="outlet.html" class="btn btn-ghost-on-dark">Katso esimerkkinäkymä</a>
+        </div>
+      </div>
+
+      <div class="outlet__visual" aria-hidden="true">
+        [ kuvapaikka: tuote-erä päiväysleimalla,<br>tai animoitu Outlet-merkki ]
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A5 · 3 ASKELTA ═════════════════════════════════════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Näin pääset alkuun</span>
+        <h2 class="h2 section-head__title">Kolme askelta ensimmäiseen tilaukseen.</h2>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <span class="step__num">1</span>
+          <h3 class="h3 step__title">Pyydä asiakkuus</h3>
+          <p class="step__text">Täytä lyhyt lomake: Y-tunnus, yhteystiedot, asiakastyyppi.</p>
+        </div>
+        <div class="step">
+          <span class="step__num">2</span>
+          <h3 class="h3 step__title">Saat tunnukset</h3>
+          <p class="step__text">Avaamme tilin ja toimitamme kirjautumistiedot sähköpostilla — tyypillisesti yhdessä arkipäivässä.</p>
+        </div>
+        <div class="step">
+          <span class="step__num">3</span>
+          <h3 class="h3 step__title">Tilaa kun sinulle sopii</h3>
+          <p class="step__text">Selaa valikoimaa, näe omat hintasi, valitse toimituspäivä — me tuotetaan loput.</p>
+        </div>
+      </div>
+
+      <div class="steps-cta">
+        <a href="#final" class="btn btn-primary">Pyydä asiakkuus <span class="arrow">→</span></a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A6 · BRAND-ANCHOR ═══════════════════════════════════════ -->
+  <section class="section section--cream">
+    <div class="container anchor">
+      <div class="anchor__body">
+        <span class="eyebrow">Snellman lyhyesti</span>
+        <h2 class="h2 section-head__title" style="margin-top: 12px;">Pietarsaaresta, vuodesta 1951.</h2>
+        <p class="anchor__lead">
+          Snellman on perheyritys, joka on tehnyt liha- ja leiketuotteita Pietarsaaressa yli seitsemänkymmentä vuotta. Käytämme pelkästään suomalaista lihaa perhetiloilta. Tuotantomme toimii pääosin uusiutuvalla energialla. Tämä verkkokauppa on uusi tapa palvella pieniä jälleenmyyjäasiakkaita — ilman välikäsiä, ilman puhelinjonoja.
+        </p>
+
+        <div class="anchor__numbers">
+          <div class="anchor__num"><strong>70+</strong><span>vuotta perheyritystä</span></div>
+          <div class="anchor__num"><strong>100 %</strong><span>suomalaista lihaa</span></div>
+          <div class="anchor__num"><strong>1</strong><span>tuotantopaikka — Pietarsaari</span></div>
+          <div class="anchor__num"><strong>0</strong><span>turhia lisäaineita</span></div>
+        </div>
+
+        <a href="#" class="anchor__more">Lue Snellmanin tarina <span aria-hidden="true">→</span></a>
+      </div>
+
+      <div class="anchor__visual" aria-hidden="true">
+        [ kuvapaikka: Pietarsaaren tuotantotila tai perheen jäsen ]
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A7 · SISÄINEN AUKTORITEETTI ════════════════════════════ -->
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Snellman jo tutuissa hyllyissäsi</span>
+        <h2 class="h2 section-head__title">Sama brändi jota asiakkaasi jo ostavat.</h2>
+        <p class="lead section-head__lead">
+          Pilottiasiakkaiden referenssit lisätään lanseerauksen jälkeen.
+        </p>
+      </div>
+
+      <div class="proof">
+        <div class="proof-card">
+          <span class="eyebrow">Tunnustus</span>
+          <blockquote class="proof-card__quote">
+            "Maailman parhaat lihapullat -kategoria, 2024."
+          </blockquote>
+          <p class="proof-card__source">— Yhden hyllytuotteen referenssinosto</p>
+        </div>
+
+        <div class="proof-card">
+          <span class="eyebrow">Mittakaava</span>
+          <blockquote class="proof-card__quote">
+            "Yli 200 jälleenmyyjäkumppania kuluttajatuotteissa Suomessa."
+          </blockquote>
+          <p class="proof-card__source">— Snellmanin nykyinen kaupan jalanjälki</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A8 · FAQ ════════════════════════════════════════════════ -->
+  <section class="section section--cream" id="faq">
+    <div class="container">
+      <div class="section-head">
+        <span class="eyebrow">Kysymyksiä</span>
+        <h2 class="h2 section-head__title">Pienen jälleenmyyjän ensiepäilyt — vastattuna.</h2>
+      </div>
+
+      <div class="faq">
+        <details class="faq-item" open>
+          <summary>
+            <span>Mikä on minimitilauksen koko?</span>
+            <span class="chev" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+          </summary>
+          <div class="faq-item__body">Vakioasiakkaalla minimi on X €. Outletissa erien koot vaihtelevat erittäin, koska niitä myydään pakkauskoossa.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span>Minne toimitatte?</span>
+            <span class="chev" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+          </summary>
+          <div class="faq-item__body">Aloitamme Pohjanmaalta ja pääkaupunkiseudulta. Toimitusalue laajenee asteittain — kysy aluekohtaisesti kun pyydät asiakkuutta.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span>Minkälaisia hinnat ovat?</span>
+            <span class="chev" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+          </summary>
+          <div class="faq-item__body">Hinnat ovat asiakaskohtaiset ja näkyvät vasta kirjautumisen jälkeen. Boost-erissä alennus on tyypillisesti 30 %, Outletissa noin 50 %.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span>Voinko tilata vain Outlet-tuotteita?</span>
+            <span class="chev" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+          </summary>
+          <div class="faq-item__body">Outlet on lisäpalvelu vakiovalikoiman päälle. Saat pääsyn pyytämällä erikseen — Outletin erät vaihtuvat päivittäin.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span>Mitä jos lähetyksessä on jotain vialla?</span>
+            <span class="chev" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+          </summary>
+          <div class="faq-item__body">Reklamaatio asiakaspalvelumme kautta. Hyvitykset käsitellään tyypillisesti 5 arkipäivässä.</div>
+        </details>
+
+        <details class="faq-item">
+          <summary>
+            <span>Maksaako asiakkuus jotain?</span>
+            <span class="chev" aria-hidden="true">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            </span>
+          </summary>
+          <div class="faq-item__body">Ei. Asiakkuus ja verkkokauppa ovat maksuttomia. Maksat vain tilaamastasi tavarasta.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A9 · LOPPU-CTA ═════════════════════════════════════════ -->
+  <section class="final-cta" id="final">
+    <div class="container">
+      <div class="final-cta__inner">
+        <span class="eyebrow" style="color: var(--c-yellow);">Aloitetaanko</span>
+        <h2 class="h2 final-cta__title" style="margin-top: 12px;">Aloitetaanko?</h2>
+        <p class="final-cta__lead">Asiakkuus on maksuton ja avautuu yleensä yhdessä arkipäivässä.</p>
+        <div class="final-cta__ctas">
+          <a href="#" class="btn btn-on-dark">Pyydä asiakkuus <span class="arrow">→</span></a>
+          <a href="#" class="btn btn-ghost-on-dark">Kysy myyjältä</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ A10 · FOOTER ════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="site-footer__top">
+        <div class="footer-col">
+          <a href="#" aria-label="Snellman">
+            <img src="https://snellman.fi/app/themes/snellmanrecipes/build/images/snellman-logo.svg" alt="Snellman" style="height: 36px; filter: invert(1) brightness(2); margin-bottom: 16px;">
+          </a>
+          <p>Snellmanin Lihanjalostus Oy<br>Kuusisaarentie 1, 68600 Pietarsaari<br>Y-tunnus: 0181785-1</p>
+        </div>
+
+        <div class="footer-col">
+          <h5>Asiakkuus</h5>
+          <ul>
+            <li><a href="#final">Pyydä asiakkuus</a></li>
+            <li><a href="#">Kirjaudu</a></li>
+            <li><a href="#outlet">Outlet-pääsy</a></li>
+            <li><a href="#">Asiakaspalvelu</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Tilaaminen</h5>
+          <ul>
+            <li><a href="#">Toimitusehdot</a></li>
+            <li><a href="#">Maksu &amp; laskutus</a></li>
+            <li><a href="#">Reklamaatiot</a></li>
+            <li><a href="#faq">Usein kysyttyä</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-col">
+          <h5>Snellman</h5>
+          <ul>
+            <li><a href="https://www.snellman.fi" target="_blank" rel="noopener">snellman.fi — kuluttajille</a></li>
+            <li><a href="#">snellmanpro.fi — Horeca</a></li>
+            <li><a href="#">Yritys &amp; tarina</a></li>
+            <li><a href="#">Vastuullisuus</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="site-footer__bottom">
+        <div>
+          <a href="#">Tietosuoja</a>
+          <a href="#">Evästeet</a>
+          <a href="#">Käyttöehdot</a>
+          <span>© 2026 Snellman</span>
+        </div>
+        <div class="social" aria-label="Sosiaalinen media">
+          <a href="#" aria-label="Instagram">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor"/></svg>
+          </a>
+          <a href="#" aria-label="LinkedIn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 10v7M7 7v.01M11 17v-4a3 3 0 0 1 6 0v4"/></svg>
+          </a>
+          <a href="#" aria-label="Facebook">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</body>
+</html>

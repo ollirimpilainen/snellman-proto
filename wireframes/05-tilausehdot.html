@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title></title>
+<!-- Kirjasto välimuistin ohi: lib/load.js (tokens, components, core, basics, product, shell) -->
+<script src="lib/load.js"></script>
+<!--
+  SNELLMAN RETAIL — TILAUSEHDOT (wireframe)
+  ==================================================================
+  Spec:  05-tilausehdot.md v1.0, 15.9.2026
+  Pohja: lib/ (komponenttikirjasto): tokenit, header A/B, footer, murupolku,
+         painikkeet, TÄYTTÖ-merkinnät. Sivulla vain omat lohkot.
+
+  Julkinen sisältösivu, sama URL kirjautumattomalle (header A) ja
+  kirjautuneelle (header B). Proto-palkista voi kokeilla specin ehdot:
+  tila, minimitilaus (jos ei minimiä, E4 poistuu sisällysluettelosta
+  ja yhteenvedosta), toimitusmaksu (sisältyy / erillinen).
+
+  Jokainen ehtokohta on kahdessa kerroksessa: "Lyhyesti" (asiakas lukee
+  tämän, tuotantovalmis oletuksin) ja "Tarkempi ehto" -haitari, jonka
+  sisältö tulee Snellmanin juridiikalta. Haitarin sisältö on nyt
+  keltainen TÄYTTÖ-laatikko — ei feikattua juridiikkaa.
+
+  Kaikki näkyvä teksti on PROTO/SHELL/PAGE-objekteissa.
+  Markkupissa ei ole sanoja — ruotsin lisääminen olisi sisältötyötä.
+  ==================================================================
+-->
+<style>
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Tässä vain sivun omat. */
+  :root { --c-text-muted: var(--c-meta); }
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto { background: #2b2b28; color: #e9e8e1; font-size: var(--fs-xs); line-height: 1.5; }
+  .proto .container { padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl { display: flex; align-items: center; gap: var(--gap-8); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .lg { width: 18px; height: 10px; display: inline-block; }
+  .lg--var { border-bottom: 1px dotted #e9e8e1; }
+  .lg--fill { background: #fff6d6; border: 1px solid #e0c86a; }
+
+  /* Header, murupolku, painikkeet, TÄYTTÖ, footer: lib/components.css */
+  /* Kääre ei saa rajata stickyä: header on sticky bodyn, ei #shell-headerin sisällä. */
+  .crumb { padding-top: var(--gap-8); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block--tight { padding-top: var(--gap-48); padding-bottom: 0; }
+  .block[id] { scroll-margin-top: calc(var(--sticky-offset) + 16px); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+  .cols { display: grid; gap: var(--gap-32); }
+  .cols--2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── T1 otsikko ja tiivistelmä ─────────────────────────────────── */
+  .intro { max-width: var(--container-text); }
+  .intro h1 { margin-bottom: var(--gap-24); }
+  .intro__valid { font-size: var(--fs-small); color: var(--c-text-muted); margin-top: var(--gap-16); }
+  .summary { background: var(--c-bg-block); padding: var(--gap-32); margin-top: var(--gap-40); max-width: var(--container-text); }
+  .summary h2 { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); margin-bottom: var(--gap-16); }
+  .summary ul { list-style: none; display: grid; gap: var(--gap-12); }
+  .summary li { display: grid; grid-template-columns: 22px 1fr; gap: var(--gap-12); align-items: start; }
+  .summary li .ico { color: var(--c-primary); margin-top: 6px; }
+
+  /* ── T2 + T3: sisällysluettelo ja ehtokohdat — gds/layout 25/75 ── */
+  .terms { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--gap-60); align-items: start; }
+  .toc { position: sticky; top: calc(var(--sticky-offset) + var(--gap-24)); }
+  .toc__label { font-family: var(--font-sans); font-size: var(--fs-eyebrow); font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-2); margin-bottom: var(--gap-12); }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a { display: grid; grid-template-columns: 28px 1fr; gap: var(--gap-8); align-items: center;
+    min-height: 44px; padding: 8px var(--gap-16) 6px; 
+    text-decoration: none; font-size: var(--fs-small); line-height: 1.4; color: var(--c-text-2); }
+  .toc a::before { content: counter(toc); font-weight: 700; color: var(--c-text-muted); }
+  .toc a:hover { color: var(--c-primary); text-decoration: underline; }
+  /* Nykyinen kohta: lihavointi + väri + taustasävy, ei sivuraitaa (projektin sääntö) */
+  .toc a[aria-current="true"] { color: var(--c-primary); font-weight: 700; background: var(--c-bg-accent); }
+  .toc a[aria-current="true"]::before { color: var(--c-primary); }
+
+  .term { padding: var(--gap-40) 0; border-top: 1px solid var(--c-border); max-width: var(--container-text);
+    scroll-margin-top: calc(var(--sticky-offset) + var(--gap-24)); }
+  .term:first-child { border-top: 0; padding-top: 0; }
+  .term h2 { margin-bottom: var(--gap-24); }
+  .term__short { display: grid; grid-template-columns: 96px 1fr; gap: var(--gap-24); }
+  .term__label { font-family: var(--font-sans); font-size: var(--fs-eyebrow); font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-2); padding-top: 6px; }
+  .term__short p { margin: 0; }
+  .term__links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--gap-8) var(--gap-24); margin-top: var(--gap-8); }
+  /* Haitari "Tarkempi ehto": lib .acc (gds/accordion) */
+  .term .acc { margin-top: var(--gap-24); }
+  .term .acc__panel .fill--block { margin: 0 0 var(--gap-12); }
+
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Responsiivisuus ───────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    /* Spec T2: mobiilissa sisällysluettelo sivun alussa, ei sticky. */
+    .terms { grid-template-columns: 1fr; gap: var(--gap-40); }
+    .toc { position: static; }
+    .toc ol { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--gap-24); }
+    .toc a { padding-left: 0; }
+    .term__short { grid-template-columns: 1fr; gap: var(--gap-4); }
+    .term__label { padding-top: 0; }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+    .block--tight { padding-top: var(--gap-32); padding-bottom: 0; }
+    .cols--2 { grid-template-columns: 1fr; }
+    .summary { padding: var(--gap-24); }
+    .toc ol { grid-template-columns: 1fr; }
+    .term { padding: var(--gap-32) 0; }
+  }
+
+  /* ── Tuloste (T4 kortti 2: PDF generoidaan sivun sisällöstä) ───── */
+  @media print {
+    .skip, .proto, .site-nav, .site-search, .site-utils, .menu-toggle, .crumb, .toc, .site-footer, .support { display: none !important; }
+    .site-header { position: static; }
+    .terms { display: block; }
+    .term, .acc__item { break-inside: avoid; }
+    /* Haitarit auki tulosteessa (T4 kortti 2): lib piilottaa paneelin hidden-attribuutilla. */
+    .acc__panel[hidden] { display: block !important; }
+    .acc__btn .ico { display: none; }
+    a { text-decoration: none; }
+  }
+</style>
+</head>
+
+<!-- ══════════ PROTO: kokeiltavat ehdot (ei osa designia) ══════════ -->
+<script>
+const PROTO = {
+  title: "<b>Wireframe</b>",
+  meta: ["Snellman Retail", "05 Tilausehdot", "spec v1.0 / 15.9.2026"],
+  hint: "Kokeile specin ehdollista näkyvyyttä:",
+  legend: [
+    { cls: "var",  label: "pisteviiva = dynaaminen arvo, sama kaikilla sivuilla" },
+    { cls: "fill", label: "keltainen = avoin kysymys Snellmanille" }
+  ],
+  controls: [
+    { key: "view",    label: "Tila",          opts: [ { v: "a", label: "A kirjautumaton" }, { v: "b", label: "B kirjautunut" } ] },
+    { key: "minimum", label: "Minimitilaus",  opts: [ { v: "yes", label: "On (E4)" }, { v: "no", label: "Ei minimiä" } ] },
+    { key: "fee",     label: "Toimitusmaksu", opts: [ { v: "included", label: "Sisältyy hintaan" }, { v: "paid", label: "Erillinen" } ] }
+  ],
+  defaults: { view: "a", minimum: "yes", fee: "included" }
+};
+
+/* ══════════ SHELL: sivun linkit kehykseen (lib/components/shell.js) ══════════
+   Kehyksen sanasto, logo ja rakenne ovat kirjastossa (SN.SHELL). Tässä vain
+   tämän sivun hrefit ja nykyinen kohta; ne asetetaan SN.SHELLiin renderissä. */
+const SHELL = {
+  lang: "fi",
+  skip: "Siirry sisältöön",
+  breadcrumbLabel: "Murupolku",
+  home: { a: "01-etusivu.html", b: "01-etusivu.html?view=b" },
+  /* Kielivalinta on piilotettu: vain suomi. Rakenne jää paikalleen
+     kysymystä 7 varten — lisää kieli tähän, ei markkupiin. */
+  langs: [],
+  a: {
+    current: "tilausehdot",
+    nav: [
+      { key: "asiakaspalvelu", label: "Asiakaspalvelu", href: "04-asiakaspalvelu.html" },
+      { key: "tilausehdot",    label: "Tilausehdot",    href: "05-tilausehdot.html" }
+    ],
+    cta: { label: "Kirjaudu", href: "./#kirjaudu" }
+  },
+  b: {
+    /* Tilausehdot ei ole B-navissa: yksikään kohta ei ole nykyinen. */
+    current: "",
+    nav: [
+      { key: "kategoriat", label: "Kategoriat",      href: "02-kategoriat.html" },
+      { key: "pikatilaus", label: "Pikatilaus",      href: "02-kategoriat.html?view=quick" },
+      { key: "outlet",     label: "Snellman Outlet", href: "03-snellman-outlet.html", requires: "outlet" },
+      { key: "tilaukset",  label: "Tilaukset",       href: "#" },
+      { key: "tili",       label: "Tili",            href: "#" }
+    ],
+    cart: { href: "07-ostoskori.html" }
+  },
+  footer: {
+    links: [
+      { label: "Tietosuoja",               href: "#" },
+      { label: "Yksityisyys ja evästeet",  href: "#" },
+      { label: "Tilausehdot",              href: "05-tilausehdot.html" },
+      { label: "Asiakaspalvelu",           href: "04-asiakaspalvelu.html" }
+    ]
+  }
+};
+
+/* ══════════ PAGE: sivun koko sisältö ══════════ */
+const PAGE = {
+  meta: {
+    title: "Tilausehdot | Snellman tilauskanava",
+    /* Spec: index, follow. Wireframe itse ei saa indeksoitua, siksi noindex tässä. */
+    robots: "noindex, nofollow",
+    robotsProduction: "index, follow",
+    description: "Snellmanin tilauskanavan tilaus- ja toimitusehdot: minimitilaus, toimitusalue ja -ajat, tilauksen muuttaminen, Boost- ja Outlet-erät, laskutus ja palautukset."
+  },
+  breadcrumb: [
+    { label: "Etusivu",     href: "01-etusivu.html" },
+    { label: "Tilausehdot", href: "#" }
+  ],
+
+  /* Demoarvot. Spec "Kytkennät muualle kauppaan": sama muuttuja pitää näkyä
+     samana joka paikassa — arvot ovat samat kuin 01-etusivu.html:ssä ja
+     tallennetaan tuotannossa yhteen paikkaan (teeman asetukset / ACF options). */
+  vars: {
+    "rivimäärä":        "6",
+    "pvm":              "1.11.2026",
+    "päivityspvm":      "15.9.2026",
+    "minimi":           "150",
+    "aikaraja_tilaus":  "toimitusta edeltävänä arkipäivänä klo 12",
+    "aikaraja_muutos":  "toimitusta edeltävänä arkipäivänä klo 12",
+    "toimitusalue":     "koko Suomeen",
+    "toimitusaika":     "7–15",
+    "toimitusmaksu":    "12",
+    "laskutustapa":     "verkkolaskuna tai sähköpostilla",
+    "puhelinnumero":    "020 XXX XXXX",
+    "sähköposti":       "asiakaspalvelu@snellman.fi",
+    "aukioloaika":      "8–16"
+  },
+
+  /* ── T1 ── */
+  intro: {
+    block: "core/heading H1 + core/paragraph + core/group (#f3f2eb) → core/list",
+    heading: "Tilausehdot",
+    lead: "Nämä ehdot koskevat tilauksia Snellmanin tilauskanavassa. Ne täydentävät asiakassopimustasi. Alla lyhyt yhteenveto ja tarkemmat ehdot kohta kohdalta.",
+    valid: "Voimassa {pvm} alkaen. Päivitetty {päivityspvm}.",
+    summaryHeading: "Lyhyesti",
+    summary: [
+      { text: "Minimitilaus {minimi} € per toimitus.", requires: "minimum", fill: "minimitilaus avoin" },
+      { text: "Tilaa viimeistään {aikaraja_tilaus} ennen toimituspäivää.", fill: "aikaraja" },
+      { text: "Muutokset ja peruutukset viimeistään {aikaraja_muutos} asiakaspalvelun kautta.", fill: "aikaraja" },
+      { text: "Boost- ja Outlet-eriä ei voi palauttaa muuten kuin laatuvirheen vuoksi.", fill: "palautuskäytäntö vahvistetaan" },
+      { text: "Hinnat ilman alv, lasku asiakkuutesi maksuehdoilla.", fill: "alv-käsittely avoin" },
+      { text: "Tarkista toimitus vastaanotettaessa ja ilmoita puutteista toimituspäivänä." }
+    ]
+  },
+
+  /* ── T2 ── */
+  toc: {
+    block: "core/list ankkurilinkeillä, desktopilla sticky vasemmalla, mobiilissa sivun alussa",
+    ariaLabel: "Sisällys",
+    label: "Sisällys"
+  },
+
+  /* ── T3 ── */
+  terms: {
+    block: "per kohta core/group (id) → core/heading H2 → core/paragraph (Lyhyesti) → gds/accordion (Tarkempi ehto)",
+    ariaLabel: "Ehtokohdat",
+    shortLabel: "Lyhyesti",
+    detailLabel: "Tarkempi ehto",
+    detailNote: "Varsinainen ehtoteksti tulee Snellmanin juridiikalta ja sijoitetaan tähän haitariin. Jos ehto poikkeaa tiivistyksestä, tiivistys kirjoitetaan uudelleen, ei päinvastoin.",
+    items: [
+      { id: "soveltaminen", tocLabel: "Kenelle tilauskanava on", heading: "Kenelle tilauskanava on",
+        short: "Tilauskanava on tarkoitettu Snellmanin yritysasiakkaille, joilla on voimassa oleva asiakkuus: ravintoloille, kahviloille, kioskeille ja itsenäisille lähikaupoille. Tilaaminen edellyttää kirjautumista. Kanava ei ole tarkoitettu kuluttajille.",
+        detail: "Snellman: sopimussuhde, sovellettavat yleiset myyntiehdot, ristiriitatilanteiden järjestys" },
+
+      { id: "tunnukset", tocLabel: "Tunnukset ja käyttäjät", heading: "Tunnukset ja käyttäjät",
+        short: "Tunnukset ovat yrityskohtaisia, ja yritys vastaa niiden käytöstä. Pidä salasana omana tietonasi ja ilmoita heti, jos epäilet tunnusten joutuneen vääriin käsiin. Käyttäjien lisäys ja poisto hoidetaan asiakaspalvelun kautta.",
+        detail: "Snellman: vastuu tunnuksilla tehdyistä tilauksista, tunnusten sulkeminen" },
+
+      { id: "tilaus", tocLabel: "Tilauksen tekeminen", heading: "Tilauksen tekeminen",
+        short: "Tilaus syntyy, kun vahvistat sen yhteenvedossa ja saat vahvistuksen sähköpostiin. Tilaus tehdään valitulle toimituspäivälle, ja se pitää vahvistaa viimeistään {aikaraja_tilaus} ennen toimitusta. Kalenteri näyttää vain päivät, joille ehdit tilata. Snellman voi jättää tilauksen toimittamatta, jos tuotetta ei ole saatavilla; silloin ilmoitamme siitä ennen toimitusta.",
+        fill: "aikaraja_tilaus vahvistetaan (Linda)",
+        detail: "Snellman: sopimuksen syntyhetki, saatavuusvarauma, tilauksen hylkääminen" },
+
+      { id: "minimi", tocLabel: "Minimitilaus", heading: "Minimitilaus", requires: "minimum",
+        short: "Minimitilaus on {minimi} € per toimitus ilman arvonlisäveroa. Jos tilaus toimitetaan kahdessa osassa, minimi koskee kumpaakin osaa erikseen. Kori kertoo, jos summa jää alle minimin, eikä tilausta voi silloin vahvistaa.",
+        fill: "Avoin: minimitilaus. Jos minimiä ei ole, koko kohta poistetaan sisällysluettelosta ja yhteenvedosta (proto-palkki: Minimitilaus → Ei minimiä).",
+        detail: "Snellman" },
+
+      { id: "toimitus", tocLabel: "Toimitus", heading: "Toimitus",
+        short: "Toimitamme {toimitusalue}. Toimituspäivät riippuvat alueestasi ja näkyvät kalenterissa. Kokkikartanon valmisruoat toimitetaan Keravalta ja lihatuotteet Pietarsaaresta; jos toimituspäivät eroavat, näet molemmat ennen vahvistusta. Toimitus tapahtuu toimituspäivänä klo {toimitusaika}. {toimitusmaksu_lause}",
+        feeIncluded: "Toimitus sisältyy hintaan.",
+        feePaid: "Toimitus maksaa {toimitusmaksu} € per toimitus.",
+        fill: "Avoin: toimitusalue ja -aika · toimitusmaksu",
+        detail: "Snellman: vaaranvastuun siirtyminen, kuljetusliike, force majeure, toimitusesteet" },
+
+      { id: "muutokset", tocLabel: "Tilauksen muuttaminen ja peruminen", heading: "Tilauksen muuttaminen ja peruminen",
+        short: "Voit muuttaa tai perua tilauksen viimeistään {aikaraja_muutos} ottamalla yhteyttä asiakaspalveluun ja kertomalla tilausnumeron. Sen jälkeen tilaus on keräilyssä, eikä sitä voi enää muuttaa. Tilauskanavassa ei voi muokata vahvistettua tilausta itse.",
+        fill: "aikaraja_muutos vahvistetaan (Linda)",
+        detail: "Snellman: peruutuksesta veloitettavat kulut, jos niitä on" },
+
+      { id: "hinnat", tocLabel: "Hinnat ja laskutus", heading: "Hinnat ja laskutus",
+        short: "Hinnat näytetään ilman arvonlisäveroa. Hinta määräytyy valitun toimituspäivän mukaan; kampanja- ja Boost-hinnat ovat voimassa vain niille päiville, joille ne on merkitty. Vaihtelevan painon tuotteet laskutetaan punnitun painon mukaan, ja kori näyttää arvion. Tilaukset laskutetaan asiakkuutesi maksuehdoilla, ja lasku toimitetaan {laskutustapa}.",
+        fill: "Avoin: alv · laskutustapa (Linda)",
+        detail: "Snellman: maksuehto, viivästyskorko, hinnoitteluvirheiden korjaus" },
+
+      { id: "outlet", tocLabel: "Boost- ja Outlet-erät", heading: "Boost- ja Outlet-erät",
+        short: "Boost-erät ovat lähellä parasta ennen -päivää ja Outlet-erien päiväys ei riitä vähittäiskaupan hyllyyn. Molemmat myydään alennettuun hintaan, ja käytä viimeistään -päivä näkyy tuoterivillä. Erät ovat rajallisia ja myydään loppuun; jos erä loppuu ennen vahvistusta, tuote poistuu korista. Boost- ja Outlet-eriä ei voi palauttaa muuten kuin laatuvirheen vuoksi. Outlet-osio on käytössä vain asiakkaille, joille se on avattu.",
+        fill: "Boost- ja Outlet-erien palautuskäytäntö vahvistetaan (Linda)",
+        detail: "Snellman: vastuunrajaus päiväyksen suhteen, oikeus säätää alennustasoa (brief tavoite 6), Outlet-oikeuden myöntäminen ja poistaminen" },
+
+      { id: "palautukset", tocLabel: "Vastaanotto, puutteet ja palautukset", heading: "Vastaanotto, puutteet ja palautukset",
+        short: "Tarkista toimitus vastaanotettaessa: määrät, tuotteet ja lämpötila. Ilmoita puuttuvasta, virheellisestä tai vaurioituneesta tuotteesta asiakaspalveluun toimituspäivänä. Korvaamme tuotteen tai hyvitämme sen laskulla. Elintarvikkeita ei voi palauttaa muusta syystä, koska kylmäketjua ei voida varmistaa palautuksen jälkeen.",
+        fill: "reklamaatioaika ja -menettely vahvistetaan (Linda)",
+        detail: "Snellman: reklamaatioaika, hyvitysmenettely, kuvat todisteena" },
+
+      { id: "tietosuoja", tocLabel: "Tietosuoja", heading: "Tietosuoja",
+        short: "Käsittelemme yhteyshenkilöiden tietoja tilausten hoitamiseen ja asiakassuhteen ylläpitoon. Tarkemmat tiedot ovat tietosuojaselosteessa.",
+        /* Spec: ei haitaria, linkit riittävät. */
+        links: [
+          { label: "Tietosuoja",              href: "#" },
+          { label: "Yksityisyys ja evästeet", href: "#" }
+        ] },
+
+      { id: "muutokset-ehtoihin", tocLabel: "Ehtojen muutokset ja yhteystiedot", heading: "Ehtojen muutokset ja yhteystiedot",
+        short: "Voimme päivittää näitä ehtoja. Muutoksista ilmoitetaan tilauskanavassa ja sähköpostilla ennen voimaantuloa, ja uudet ehdot koskevat niiden voimaantulon jälkeen tehtyjä tilauksia. Kysymyksissä auttaa asiakaspalvelu: {puhelinnumero}, {sähköposti}, arkisin {aukioloaika}.",
+        fill: "yhteystiedot (Snellman, Teija)",
+        detail: "Snellman: ilmoitusaika, sovellettava laki, riitojen ratkaisu" }
+    ]
+  },
+
+  /* ── T4 ── */
+  support: {
+    block: "core/columns 2 → gds/card × 2, koko kortti linkki",
+    ariaLabel: "Tuki",
+    items: [
+      { title: "Asiakaspalvelu ja usein kysytyt kysymykset", text: "Jos ehdot eivät vastanneet kysymykseesi, katso vastaukset tai ota yhteyttä.", href: "04-asiakaspalvelu.html", cta: "Siirry" },
+      { title: "Tulostettava versio", text: "Lataa tilausehdot PDF-muodossa.", href: "#", cta: "Lataa PDF",
+        fill: "PDF generoidaan sivun sisällöstä, päivämäärä tiedostonimeen (Oskar). Wireframessä selaimen tulostus antaa saman: proto-palkki, navi ja sisällys piilotetaan, haitarit avataan." }
+    ]
+  }
+};
+</script>
+<body>
+<a href="#main" class="skip" id="skiplink"></a>
+<div class="proto"><div class="container" id="proto"></div></div>
+<div id="shell-header"></div>
+<div id="crumb"></div>
+<main id="main"></main>
+<div id="shell-footer"></div>
+
+
+<!-- ══════════ RENDER ══════════ -->
+<script>
+(function () {
+  "use strict";
+  const { esc } = SN;
+
+  /* ─── Tila ────────────────────────────────────────────────────── */
+  const KEY = "snellman-wf-05";
+  const S = Object.assign({}, PROTO.defaults, readState());
+  function readState() {
+    let out = {};
+    try { out = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { out = {}; }
+    const q = new URLSearchParams(location.search);
+    PROTO.controls.forEach((c) => { if (q.has(c.key)) out[c.key] = q.get(c.key); });
+    return out;
+  }
+  function setState(k, v) {
+    S[k] = v;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* privaatti-ikkuna */ }
+    render();
+  }
+  const isB = () => S.view === "b";
+  const view = () => isB() ? "b" : "a";
+  /* Ehtokohta näkyy, ellei sillä ole `requires`-ehtoa joka on pois päältä. */
+  const shown = (i) => !i.requires || S[i.requires] === "yes";
+
+  /* ─── Apurit ──────────────────────────────────────────────────── */
+  const fillInline = (t) => SN.render("fill", { text: t });
+
+  /* Korvaa {muuttujat} demoarvoilla ja merkitsee ne dynaamisiksi. */
+  function vars(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, function (m, key) {
+      const v = src[key];
+      if (v == null) return fillInline(key);
+      return '<span class="var">' + esc(v) + '</span>';
+    });
+  }
+  const fill = (t) => t ? SN.render("fill", { text: t, block: true }) : "";
+  function setMeta(name, content) {
+    let m = document.head.querySelector('meta[name="' + name + '"]');
+    if (!m) { m = document.createElement("meta"); m.name = name; document.head.appendChild(m); }
+    m.content = content || "";
+  }
+
+  function block(inner, o) {
+    o = o || {};
+    const id  = o.id ? ' id="' + esc(o.id) + '"' : "";
+    const lab = o.labelledby ? ' aria-labelledby="' + esc(o.labelledby) + '"'
+              : o.label ? ' aria-label="' + esc(o.label) + '"' : "";
+    const mod = (o.variant || []).map((v) => " block--" + esc(v)).join("");
+    const cls = o.cls ? " " + esc(o.cls) : "";
+    return '<section class="block' + mod + cls + '"' + id + lab + '>' +
+           '<div class="container">' + inner + "</div></section>";
+  }
+
+  /* ─── Proto-palkki ────────────────────────────────────────────── */
+  function renderProto() {
+    const meta = PROTO.meta.map((m) => "<span>" + esc(m) + "</span>")
+      .join('<span aria-hidden="true">·</span>');
+    const ctrls = PROTO.controls.map(function (c) {
+      const opts = c.opts.map((o) =>
+        '<button type="button" data-k="' + esc(c.key) + '" data-v="' + esc(o.v) + '" aria-pressed="' +
+        (S[c.key] === o.v) + '">' + esc(o.label) + "</button>").join("");
+      return '<span class="ctrl"><span class="ctrl__label">' + esc(c.label) +
+             '</span><span class="ctrl__opts">' + opts + "</span></span>";
+    }).join("");
+    document.getElementById("proto").innerHTML =
+      '<div class="proto__title">' + PROTO.title + meta + "</div>" +
+      '<div class="proto__ctrls"><span class="ctrl"><span class="ctrl__label">' +
+      esc(PROTO.hint) + "</span></span>" + ctrls + "</div>" +
+      '<div class="proto__legend">' + PROTO.legend.map((l) =>
+        '<span><i class="lg lg--' + esc(l.cls) + '" aria-hidden="true"></i>' + esc(l.label) + "</span>"
+      ).join("") + "</div>";
+  }
+
+  /* ─── Kehys kirjastosta: header A/B, murupolku, footer ────────── */
+  SN.SHELL.a.nav = SHELL.a.nav;
+  SN.SHELL.a.cta.href = SHELL.a.cta.href;
+  SN.SHELL.b.nav = SHELL.b.nav;
+  SN.SHELL.b.cart.href = SHELL.b.cart.href;
+  SN.SHELL.footer.links = SHELL.footer.links;
+
+  function renderShell() {
+    document.documentElement.lang = SHELL.lang;
+    document.title = PAGE.meta.title + " (wireframe)";
+    setMeta("description", PAGE.meta.description);
+    setMeta("robots", PAGE.meta.robots);
+    document.getElementById("skiplink").textContent = SHELL.skip;
+
+    SN.SHELL.home = SHELL.home[view()];
+    document.getElementById("shell-header").innerHTML = SN.render("header", {
+      state: view(), current: SHELL[view()].current, outlet: true, search: true,
+      cartCount: parseInt(PAGE.vars["rivimäärä"], 10) || 0 });
+
+    /* Murupolun Etusivu vie samaan etusivuun kuin logo (A tai B). */
+    const items = (PAGE.breadcrumb || []).map((x, i) => ({ label: x.label, href: i === 0 ? SN.SHELL.home : x.href }));
+    document.getElementById("crumb").innerHTML = items.length
+      ? '<div class="container crumb">' + SN.render("breadcrumb", { label: SHELL.breadcrumbLabel, items }) + "</div>" : "";
+
+    document.getElementById("shell-footer").innerHTML = SN.render("footer", { loggedIn: isB() });
+  }
+
+  /* ═══════════ T1 otsikko ja tiivistelmä ═══════════ */
+  function renderIntro() {
+    const c = PAGE.intro; if (!c || c.show === false) return "";
+    const items = c.summary.filter(shown).map((i) =>
+      "<li>" + SN.ico("check") + "<span>" + vars(i.text) +
+      (i.fill ? " " + fillInline(i.fill) : "") + "</span></li>").join("");
+    return block(
+      '<div class="intro"><h1 id="page-title">' + esc(c.heading) + "</h1>" +
+        '<p class="lead">' + esc(c.lead) + "</p>" +
+        '<p class="intro__valid">' + vars(c.valid) + "</p></div>" +
+      '<div class="summary"><h2 id="summary-title">' + esc(c.summaryHeading) + "</h2>" +
+        '<ul aria-labelledby="summary-title">' + items + "</ul></div>",
+      { labelledby: "page-title", variant: ["tight"] });
+  }
+
+  /* ═══════════ T2 sisällysluettelo + T3 ehtokohdat ═══════════ */
+  function renderTerms() {
+    const t = PAGE.terms, toc = PAGE.toc; if (!t || t.show === false) return "";
+    const items = t.items.filter(shown);
+
+    const list = '<nav class="toc" aria-label="' + esc(toc.ariaLabel) + '">' +
+      '<p class="toc__label" aria-hidden="true">' + esc(toc.label) + "</p><ol>" +
+      items.map((i) => '<li><a href="#' + esc(i.id) + '" data-toc="' + esc(i.id) + '">' + esc(i.tocLabel) + "</a></li>").join("") +
+      "</ol></nav>";
+
+    const terms = items.map(function (i) {
+      /* E5: toimitusmaksulause valitaan proto-ehdon mukaan (toimitusmaksu avoin) ja
+         sijoitetaan tekstiin ennen muuttujien korvausta, jotta lauseen oma
+         {toimitusmaksu} saa arvon samalla kierroksella. */
+      const feeSentence = i.feeIncluded ? (S.fee === "paid" ? i.feePaid : i.feeIncluded) : "";
+      const shortHtml = vars(i.short.replace("{toimitusmaksu_lause}", feeSentence));
+
+      const links = i.links ? '<ul class="term__links">' + i.links.map((l) =>
+        "<li>" + SN.render("button", { variant: "text", label: l.label, href: l.href, icon: "arrow" }) + "</li>").join("") + "</ul>" : "";
+
+      /* gds/accordion yhdellä kohdalla, oletuksena kiinni. */
+      const detail = i.detail ? SN.render("accordion", { id: i.id + "-ehto", single: false, hashOpen: false,
+        items: [ { q: t.detailLabel, qHidden: i.heading, a: fill(i.detail) + "<p>" + esc(t.detailNote) + "</p>" } ] }) : "";
+
+      return '<section class="term" id="' + esc(i.id) + '" aria-labelledby="' + esc(i.id) + '-title">' +
+        '<h2 id="' + esc(i.id) + '-title">' + esc(i.heading) + "</h2>" +
+        '<div class="term__short"><p class="term__label">' + esc(t.shortLabel) + "</p><p>" + shortHtml + "</p></div>" +
+        links + fill(i.fill) + detail + "</section>";
+    }).join("");
+
+    return block('<div class="terms">' + list + '<div class="terms__body">' + terms + "</div></div>",
+      { label: t.ariaLabel, id: "ehdot" });
+  }
+
+  /* ═══════════ T4 tuki ═══════════ */
+  function renderSupport() {
+    const c = PAGE.support; if (!c || c.show === false) return "";
+    const cards = c.items.map((i) =>
+      "<div>" + SN.render("card", { title: i.title, text: i.text, href: i.href, cta: i.cta }) + fill(i.fill) + "</div>").join("");
+    return block('<div class="cols cols--2">' + cards + "</div>", { label: c.ariaLabel, variant: ["block-bg"], cls: "support" });
+  }
+
+  /* ─── Kokoaminen ──────────────────────────────────────────────── */
+  function render() {
+    renderProto();
+    renderShell();
+    document.getElementById("main").innerHTML = [renderIntro(), renderTerms(), renderSupport()].join("");
+    wire();
+    spy();
+  }
+
+  /* ─── Vuorovaikutus ───────────────────────────────────────────── */
+  function wire() {
+    document.querySelectorAll("#proto button[data-k]").forEach(function (b) {
+      b.addEventListener("click", () => setState(b.dataset.k, b.dataset.v));
+    });
+  }
+
+  /* Sisällysluettelo seuraa lukukohtaa: viimeinen kohta jonka yläreuna on
+     ylittänyt headerin alareunan saa aria-current. Linkit haetaan joka
+     päivityksellä, koska proto-palkki renderöi sisällön uudelleen. */
+  let spyBound = false;
+  function spy() {
+    const offset = () => parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sticky-offset"), 10) || 0;
+    function update() {
+      const links = Array.from(document.querySelectorAll(".toc a[data-toc]"));
+      const secs  = links.map((a) => document.getElementById(a.dataset.toc)).filter(Boolean);
+      if (!secs.length) return;
+      const line = offset() + 40;
+      let cur = secs[0];
+      secs.forEach((s) => { if (s.getBoundingClientRect().top <= line) cur = s; });
+      /* Sivun lopussa viimeinen kohta aktiiviseksi vaikka se olisi lyhyt. */
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 2) cur = secs[secs.length - 1];
+      links.forEach((a) => a.dataset.toc === cur.id ? a.setAttribute("aria-current", "true") : a.removeAttribute("aria-current"));
+    }
+    if (!spyBound) {
+      spyBound = true;
+      let raf = 0;
+      const onScroll = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; update(); }); };
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
+      /* Sisällysluettelon hyppy ei avaa "Tarkempi ehto" -haitaria: hashOpen: false (lib). */
+    }
+    update();
+  }
+
+  render();
+  SN.mount(document);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,719 @@
+/* =================================================================
+ * SNELLMAN RETAIL — komponenttien tyylit
+ * Vaatii: tokens.css. Luokkanimet seuraavat snellmanecomin lohkoja
+ * (gds-card, pch__* = genero/product-card) jotta devaaja tunnistaa ne.
+ * Jokainen osio alkaa lohkon nimellä, jolla se toteutetaan.
+ * ================================================================= */
+
+/* ── Versaalitekstin optinen keskitys ────────────────────────────────
+   TheSansB:n versaalit istuvat ~0,17em keskikohdan yläpuolella (mitattu
+   30.9.2026: navi 4,7 px, painike 3,9 px, merkintä 2,7 px vinossa).
+   text-box rajaa rivilaatikon versaalikorkeuteen; vanhemmille selaimille siirto. */
+.cap { text-box: trim-both cap alphabetic; }
+.badge { text-box: trim-both cap alphabetic; }
+/* TheSansB-OTF:n cap-height-metriikka on ~0,13em todellisia versaaleja pienempi, joten
+   14 px:n versaaleissa jää ~0,9 px ylös. Mitattu tasaus vain tälle koolle. */
+.site-nav .cap, .util .cap, .btn--sm .cap, .btn-text .cap, .menu-toggle .cap { position: relative; top: .03em; }
+.util__count { font-variant-numeric: lining-nums tabular-nums; }
+@supports not (text-box: trim-both cap alphabetic) {
+  .cap { position: relative; top: .085em; }
+  .badge { padding-top: 5px !important; padding-bottom: 4px !important; }
+}
+
+/* ── Painike · core/button ─────────────────────────────────────────
+   radius 0, uppercase, TheSansB Bold. Hover: valkoinen 20 % päälle. */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--gap-12);
+  min-height: var(--touch); padding: 12px 20px; border: 1.5px solid transparent; border-radius: var(--r-none);
+  font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-body); line-height: 1.2;
+  letter-spacing: var(--ls-button); text-transform: uppercase; text-decoration: none;
+  cursor: pointer; transition: background-color .1s ease-out; }
+.btn .ico { font-size: .9em; }
+.btn--primary { background: var(--c-primary); color: #fff; }
+.btn--primary:hover { background-image: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.2)); }
+.btn--outline { background: transparent; color: var(--c-primary); border-color: var(--c-primary); }
+.btn--outline:hover { background: var(--c-bg-accent); }
+.btn--on-dark { background: #fff; color: var(--c-primary); }
+.btn--on-dark:hover { background: var(--c-bg-accent); }
+.btn--outline-on-dark { background: transparent; color: #fff; border-color: #fff; }
+.btn--outline-on-dark:hover { background: rgba(255,255,255,.12); }
+.btn[aria-busy="true"] { cursor: progress; background-image: none; opacity: .85; }
+.btn--sm { padding: 7px 14px; font-size: var(--fs-small); }
+.btn--block { width: 100%; }
+.btn--icon { width: var(--touch); padding: 0; }
+.btn--icon .ico { font-size: 1.1em; }
+.btn:active:not([disabled]) { transform: translateY(1px); background-image: linear-gradient(90deg, rgba(0,0,0,.12), rgba(0,0,0,.12)); }
+/* Estetty: pellava + lisätietoharmaa (6.3:1), ei valkoista harmaalla (2.0:1). */
+.btn[disabled], .btn[aria-disabled="true"] { background: var(--c-bg-block); border-color: var(--c-border); color: var(--c-meta); cursor: not-allowed; background-image: none; }
+.btn-text { display: inline-flex; align-items: center; gap: var(--gap-8); min-height: var(--touch); font-weight: 700; text-transform: uppercase;
+  letter-spacing: var(--ls-button); text-decoration: none; color: var(--c-primary); font-size: var(--fs-small);
+  background: none; border: 0; padding: 0; font-family: var(--font-sans); cursor: pointer; }
+.btn-text .ico { transition: transform .1s ease-out; }
+.btn-text:hover .ico { transform: translateX(6px); }
+.btn-text:active .ico { transform: translateX(3px); }
+.btn-text[disabled] { color: var(--c-meta); cursor: not-allowed; }
+.btn-text[disabled] .ico { transform: none; }
+.link { color: var(--c-primary); font-weight: 700; text-decoration: underline; text-underline-offset: 3px;
+  background: none; border: 0; padding: 0; font: inherit; font-weight: 700; cursor: pointer; }
+button.link { display: inline-flex; align-items: center; min-height: var(--touch); }
+.link:hover { text-decoration-thickness: 2px; }
+.btns { display: flex; flex-wrap: wrap; gap: var(--gap-12); align-items: center; }
+
+/* ── Merkintä · uusi (tuoterivin Boost/Outlet) ─────────────────────
+   Aina teksti, ei pelkkä väri. Boost-teksti #7a5800 (AA), ks. README. */
+.badge { display: inline-block; border-radius: var(--r-tag); padding: 5px 8px; line-height: 1.2; font-size: var(--fs-micro); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+.badge--boost  { background: var(--c-boost-bg);  color: var(--c-boost-text); }
+.badge--outlet { background: var(--c-outlet-bg); color: var(--c-outlet-text); }
+.badge--campaign { background: var(--c-primary); color: #fff; }
+.badge--neutral { background: var(--c-bg-block); color: var(--c-text); }
+
+/* ── Valinta-chip · facetwp-selections ─────────────────────────── */
+.selections { display: flex; flex-wrap: wrap; gap: 10px; }
+.selection { display: inline-flex; align-items: center; gap: 12px; min-height: var(--touch); background: var(--c-bg-block); padding: 8px 12px;
+  font-size: var(--fs-body); line-height: 16px; text-decoration: none; color: var(--c-text); border: 1px solid transparent; font-family: var(--font-sans); cursor: pointer; }
+.selection .ico { font-size: 12px; }
+.selection:hover { border-color: var(--c-primary); }
+.selection:active { transform: translateY(1px); }
+.selection[aria-pressed="true"] { background: var(--c-primary); color: #fff; }
+.selection--link { text-decoration: none; }
+
+/* ── Ilmoitus · core/group + core/paragraph ────────────────────── */
+.notice { display: flex; gap: var(--gap-12); align-items: flex-start; padding: var(--gap-12) var(--gap-16);
+  background: var(--c-bg-block); border: 1px solid var(--c-border-strong); border-radius: var(--r-card); }
+.notice > .ico { font-size: 18px; color: var(--c-primary); margin-top: 5px; }
+.notice--error { background: var(--c-error-bg); border-color: var(--c-error); }
+.notice--error > .ico { color: var(--c-error); }
+.notice--warn { background: var(--c-warn-bg); border-color: var(--c-warn-text); }
+.notice--warn > .ico { color: var(--c-warn-text); }
+.notice--success { background: var(--c-bg-accent); border-color: var(--c-primary); }
+.notice p { margin: 0; }
+.notice__title { font-weight: 700; }
+.notice .btns { margin-top: var(--gap-4); }
+
+/* ── Wireframe-merkinnät (eivät kuulu tuotantoon) ──────────────── */
+.var { border-bottom: 1px dotted currentColor; cursor: help; }
+.fill { display: inline-block; background: var(--c-fill-bg); border: 1px solid var(--c-fill-border); color: var(--c-fill-text);
+  padding: 2px 8px; font-size: var(--fs-small); line-height: 1.5; }
+.fill--block { display: block; margin: var(--gap-16) 0 0; padding: var(--gap-8) var(--gap-12); }
+.fill__title { font-weight: 700; margin: 0 0 4px; }
+.fill__list { list-style: disc; padding-left: 20px; margin: 4px 0 0; }
+.ph { background: var(--c-ph-bg); border: 1px dashed var(--c-ph-border); display: flex; align-items: center;
+  justify-content: center; text-align: center; color: var(--c-text-2); font-size: var(--fs-small); padding: var(--gap-16); }
+
+/* ── Murupolku · genero/breadcrumb ─────────────────────────────── */
+.breadcrumb { font-size: var(--fs-small); color: var(--c-meta); }
+.breadcrumb ol { display: flex; flex-wrap: wrap; gap: 6px; }
+.breadcrumb li::after { content: "›"; margin-left: 6px; color: var(--c-border-strong); }
+.breadcrumb li:last-child::after { content: ""; }
+.breadcrumb li:last-child { color: var(--c-text); font-weight: 700; }
+.breadcrumb a { text-decoration: none; display: inline-flex; align-items: center; min-height: var(--touch); }
+.breadcrumb li { display: inline-flex; align-items: center; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ── Kortti · gds/card ja osion otsikkorivi ───────────────────────── */
+.card { background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: var(--gap-24); }
+.card h3, .card h4 { margin-bottom: var(--gap-8); }
+.card p { color: var(--c-text-2); }
+.card--link { display: block; color: inherit; text-decoration: none; }
+.card--link:hover { box-shadow: 4px 5px 12px #00000029; }
+.card__go { display: block; margin-top: var(--gap-16); }
+.card__go .ico { transition: transform .15s; }
+.card--link:hover .card__go .ico { transform: translateX(6px); }
+.section-head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-8) var(--gap-24); flex-wrap: wrap; margin-bottom: var(--gap-32); }
+.section-head--tight { margin-bottom: var(--gap-16); }
+
+/* ── Header · parts/header.html ────────────────────────────────── */
+/* Sivujen kääre (#shell-header) ei saa rikkoa sticky-sijoitusta */
+#shell-header, #shell-footer { display: contents; }
+.site-header { background: var(--c-primary); color: var(--c-on-dark); position: sticky; top: 0; z-index: 50; }
+.site-header__inner { display: flex; align-items: center; gap: var(--gap-24); min-height: var(--nav-h); }
+.brand { display: inline-flex; align-items: center; text-decoration: none; flex: 0 0 auto; }
+.brand img { height: 64px; width: auto; }
+.site-nav { min-width: 0; }
+.site-nav ul { display: flex; gap: 0; flex-wrap: nowrap; }
+.site-nav a { display: flex; align-items: center; min-height: var(--touch); padding: 0 var(--gap-8); text-decoration: none; white-space: nowrap;
+  font-weight: 700; text-transform: uppercase; font-size: var(--fs-small); letter-spacing: var(--ls-button);
+  text-decoration-thickness: 1px; text-underline-offset: 8px; }
+.site-nav a:hover { text-decoration: underline; }
+/* "Olet tässä" erottuu hoverista: paksu viiva, joka ei ole linkin alleviivaus */
+.site-nav a[aria-current="page"], .util--cart[aria-current="page"] { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 8px; }
+.site-utils { margin-left: auto; display: flex; align-items: center; gap: var(--gap-16); min-width: 0; }
+.util { display: inline-flex; align-items: center; gap: var(--gap-8); min-height: var(--touch); text-decoration: none;
+  font-weight: 700; text-transform: uppercase; font-size: var(--fs-small); letter-spacing: var(--ls-button); }
+.util:hover { text-decoration: underline; text-underline-offset: 6px; }
+.util .ico { font-size: 16px; }
+.util__count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px;
+  height: 22px; padding: 0 6px; background: #fff; color: var(--c-primary); border-radius: 11px;
+  font-size: 12px; font-weight: 700; letter-spacing: 0; }
+.site-search { display: flex; min-width: 0; flex: 0 1 300px; }
+.site-search input { width: 100%; min-width: 0; min-height: var(--touch); font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); /* 16 px: iOS ei zoomaa */
+  border: 1px solid transparent; border-radius: 0; padding: 10px 12px 8px; background: #fff; color: var(--c-text); }
+.site-search input::placeholder { color: var(--c-meta); }
+.site-search button { min-width: var(--touch); min-height: var(--touch); border: 0; background: var(--c-bg-accent);
+  color: var(--c-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.site-search button .ico { font-size: 18px; }
+.site-search button:hover { background: #fff; }
+.menu-toggle { display: none; align-items: center; gap: var(--gap-8); min-height: var(--touch); padding: 0 var(--gap-8); margin-right: calc(-1 * var(--gap-8));
+  border: 0; background: none; color: inherit; cursor: pointer; font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-small);
+  text-transform: uppercase; letter-spacing: var(--ls-button); }
+.menu-toggle .ico { font-size: 20px; }
+/* Kapea: logo + kori + Valikko, haku täysleveänä, navi valikon takana.
+   B tarvitsee tämän jo alle 64em (5 kohtaa + haku), A vasta alle 37.5em. */
+/* Kun B-header ei ole sticky, sivun sticky-elementit nousevat yläreunaan */
+@media (max-width: 63.99em) { :root:has(.site-header--b) { --sticky-offset: 0px; } }
+@media (max-width: 37.49em) { :root:has(.site-header--a) { --sticky-offset: 0px; } }
+@media (max-width: 63.99em) {
+  .site-header--b { position: static; }
+  .site-header--b .site-header__inner { display: grid; gap: 0 var(--gap-16); min-height: 0; padding-top: var(--gap-8); padding-bottom: var(--gap-12);
+    grid-template-columns: auto 1fr auto; grid-template-areas: "brand . utils" "search search search" "nav nav nav"; }
+  .site-header--b .brand { grid-area: brand; } .site-header--b .brand img { height: 48px; }
+  .site-header--b .site-utils { grid-area: utils; }
+  .site-header--b .site-search { grid-area: search; flex: none; margin-top: var(--gap-8); }
+  .site-header--b .site-nav { grid-area: nav; display: none; }
+  .site-header--b .menu-toggle { display: inline-flex; }
+}
+@media (max-width: 37.49em) {
+  .site-header--a { position: static; }
+  .site-header--a .site-header__inner { display: grid; gap: 0 var(--gap-12); min-height: 0; padding-top: var(--gap-8); padding-bottom: var(--gap-8);
+    grid-template-columns: auto 1fr auto; grid-template-areas: "brand . utils" "nav nav nav"; }
+  .site-header--a .brand { grid-area: brand; } .site-header--a .brand img { height: 48px; }
+  .site-header--a .site-utils { grid-area: utils; }
+  .site-header--a .site-nav { grid-area: nav; display: none; }
+  .site-header--a .menu-toggle { display: inline-flex; }
+}
+/* Puhelimessa "Kori"-sana piiloon näkyvistä (ikoni + laskuri jäävät), nimi säilyy ruudunlukijalle */
+@media (max-width: 37.49em) {
+  .util--cart > span:not(.util__count):not(.vh):not(.ico) { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .util--cart { min-width: var(--touch); justify-content: center; }
+  .util--cart .ico { font-size: 20px; }
+}
+.site-header.is-open .site-nav { display: block; margin-top: var(--gap-8); border-top: 1px solid rgba(255,255,255,.25); }
+.site-header.is-open .site-nav ul { flex-direction: column; }
+.site-header.is-open .site-nav a { padding: 0; min-height: 48px; border-bottom: 1px solid rgba(255,255,255,.15); }
+
+/* Alavalikko (Tili): disclosure-painike + linkkilista. Leveässä pudotus, kapeassa Valikon sisällä. */
+.site-nav__group { position: relative; }
+.site-nav__toggle { display: flex; align-items: center; gap: 6px; min-height: var(--touch); padding: 0 var(--gap-8); border: 0; background: none; color: inherit; cursor: pointer;
+  font-family: var(--font-sans); font-weight: 700; text-transform: uppercase; font-size: var(--fs-small); letter-spacing: var(--ls-button); white-space: nowrap; }
+.site-nav__toggle .cap { position: relative; top: .03em; text-decoration-thickness: 1px; text-underline-offset: 8px; }
+.site-nav__toggle:hover .cap { text-decoration: underline; }
+.site-nav__group.is-current .site-nav__toggle .cap { text-decoration: underline; text-decoration-thickness: 3px; }
+.site-nav__toggle .ico { font-size: 12px; transition: transform .15s; }
+.site-nav__toggle[aria-expanded="true"] .ico { transform: rotate(180deg); }
+.site-nav .site-nav__sub { position: absolute; top: 100%; left: 0; z-index: 60; display: block; min-width: 220px; padding: var(--gap-8) 0;
+  background: #fff; color: var(--c-text); border-radius: 8px; box-shadow: var(--shadow-card); }
+.site-nav .site-nav__sub[hidden] { display: none; }
+.site-nav .site-nav__sub a { min-height: var(--touch); padding: 0 var(--gap-16); font-weight: 400; text-transform: none; font-size: var(--fs-body); letter-spacing: 0; color: var(--c-text); }
+.site-nav .site-nav__sub a:hover { background: var(--c-bg-accent); text-decoration: none; }
+.site-nav .site-nav__sub a[aria-current="page"] { font-weight: 700; text-decoration: none; }
+.site-nav .site-nav__sub a:focus-visible { outline-offset: -3px; }
+.site-header.is-open .site-nav__toggle { width: 100%; padding: 0; min-height: 48px; border-bottom: 1px solid rgba(255,255,255,.15); }
+.site-header.is-open .site-nav__toggle .ico { margin-left: auto; font-size: 16px; }
+.site-header.is-open .site-nav .site-nav__sub { position: static; min-width: 0; padding: 0; background: none; color: inherit; border-radius: 0; box-shadow: none; }
+.site-header.is-open .site-nav .site-nav__sub a { padding-left: var(--gap-16); color: inherit; }
+.site-header.is-open .site-nav .site-nav__sub a:hover { background: none; text-decoration: underline; }
+
+/* ── Footer · parts/footer.html ────────────────────────────────── */
+.site-footer { background: var(--c-dark); color: var(--c-on-dark-2); padding: var(--gap-32) 0; font-size: var(--fs-small); }
+.site-footer .container { display: flex; justify-content: space-between; gap: var(--gap-24); flex-wrap: wrap; }
+.site-footer a { text-decoration: none; color: var(--c-on-dark-link); display: inline-flex; align-items: center; min-height: var(--touch); }
+.site-footer a:hover { color: #fff; text-decoration: underline; }
+.site-footer ul { display: flex; gap: 0 var(--gap-24); flex-wrap: wrap; }
+.site-footer .container { align-items: center; }
+
+/* ── Toimituspäivä · gds/warehouse ─────────────────────────────── */
+.warehouse { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-8) var(--gap-16); }
+.warehouse__button { display: inline-flex; align-items: center; gap: 12px; min-height: var(--touch); border: 1px solid var(--c-primary); background: transparent;
+  color: var(--c-primary); font-family: var(--font-sans); font-size: var(--fs-body); font-weight: 700; line-height: 16px;
+  text-transform: uppercase; padding: 8px 12px; text-decoration: none; cursor: pointer; }
+.warehouse__button .ico { font-size: 11px; }
+.warehouse__button:hover { background: var(--c-bg-accent); }
+.warehouse__button--empty { background: var(--c-primary); color: #fff; }
+.warehouse__button--empty:hover { background: var(--c-primary); background-image: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.2)); }
+.warehouse__note { font-size: var(--fs-small); line-height: 1.5; color: var(--c-meta); }
+/* Korin paneelivariantti (07 K2) */
+.delivery { background: var(--c-bg-accent); border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24); }
+.delivery__row { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-8) var(--gap-16); }
+.delivery__label { font-size: var(--fs-eyebrow); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--c-text-2); }
+.delivery__value { font-weight: 700; font-size: var(--fs-h4); color: var(--c-primary); }
+.delivery__value--empty { color: var(--c-text-2); font-weight: 400; font-size: var(--fs-body); }
+.delivery__result { margin-top: var(--gap-4); }
+.delivery__result:empty { display: none; }
+.delivery--empty .delivery__result { color: var(--c-text-2); font-size: var(--fs-small); }
+
+/* ── Kalenteri · gds/warehouse (datepicker) ─────────────────────────
+   Päivät radioryhmänä: valittu täysi vihreä, estetty näyttää syyn
+   tekstinä (ei pelkkä himmennys). 44 px korkeat kohteet. */
+.cal { margin-top: var(--gap-16); padding-top: var(--gap-16); border-top: 1px solid rgba(0, 82, 44, .2); }
+.warehouse + .cal { border-top: 0; padding: var(--gap-16) var(--gap-24); background: var(--c-bg-accent); border-radius: var(--r-card); }
+.cal__h { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); color: var(--c-primary); letter-spacing: 0; margin: 0 0 var(--gap-12); }
+.cal__week { display: flex; align-items: center; gap: var(--gap-12); margin-bottom: var(--gap-12); font-weight: 700; }
+.cal__week .btn { background: var(--c-surface); }
+.cal__days { display: flex; gap: var(--gap-8); flex-wrap: wrap; }
+.cal__day { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-width: 88px; min-height: var(--touch);
+  padding: 8px 12px; background: var(--c-surface); color: var(--c-text); border: 1px solid var(--c-border-strong); border-radius: 0;
+  font: inherit; font-family: var(--font-sans); line-height: 1.3; text-align: left; cursor: pointer; }
+.cal__day:hover:not([aria-disabled="true"]) { border-color: var(--c-primary); }
+.cal__day[aria-checked="true"] { background: var(--c-primary); border-color: var(--c-primary); color: var(--c-on-dark); }
+.cal__day[aria-disabled="true"] { background: var(--c-bg-block); border-color: var(--c-border); color: var(--c-meta); cursor: not-allowed; }
+.cal__wd { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .5px; }
+.cal__n { font-weight: 700; }
+.cal__reason { font-size: var(--fs-micro); line-height: 1.3; margin-top: 2px; }
+.cal__cutoff { margin: var(--gap-12) 0 0; font-size: var(--fs-small); font-weight: 700; color: var(--c-text); }
+.cal__cutoff:empty { display: none; }
+.cal__empty { margin: 0; font-size: var(--fs-small); color: var(--c-text-2); }
+.cal__note { display: flex; gap: var(--gap-8); align-items: flex-start; margin: var(--gap-8) 0 0; font-size: var(--fs-small); color: var(--c-text-2); }
+.cal__note .ico { color: var(--c-primary); margin-top: 3px; }
+@media (max-width: 37.49em) {
+  .cal__days { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+}
+
+/* ── Ryhmän toimituspäivä · gds/cart/groups (retail) ───────────────── */
+.group-date { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-4) var(--gap-12); }
+.group-date__label { font-size: var(--fs-small); font-weight: 700; color: var(--c-text); }
+.group-date select { min-height: var(--touch); padding: 8px 40px 8px 12px; border: 1px solid var(--c-border-strong); border-radius: 0; background-color: var(--c-surface);
+  font: inherit; font-family: var(--font-sans); font-weight: 700; color: var(--c-primary); appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, var(--c-primary) 50%), linear-gradient(135deg, var(--c-primary) 50%, transparent 50%);
+  background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
+.group-date select:hover { border-color: var(--c-primary); }
+.group-date__note { font-size: var(--fs-small); color: var(--c-meta); }
+
+/* ── Määrävalitsin · genero/add-to-cart ────────────────────────────
+   [−] [ n ] [+]. Ikoni 27px kuten kaupassa, osuma-alue 44 × 44.
+   Kentällä näkyvä reuna (näyttää kirjoitettavalta) ja tilaa 4 numerolle. */
+.atc-wrap { display: inline-flex; flex-direction: column; align-items: flex-end; }
+/* Optinen tasaus: 44 px osuma-alue, 27 px ikoni → ikonin reuna on 8,5 px sisempänä.
+   Oikealle tasatussa ostolaatikossa + -ikonin reuna osuu hinnan reunaan, vasemmalle
+   tasatussa − -ikonin reuna tekstin reunaan. Osuma-alue ei pienene. */
+.atc-wrap { --atc-inset: calc((var(--touch) - 27px) / 2); }
+.pch-b:not(.pch--cart) .pch-b__buy .atc-wrap, .pch__add-to-cart .atc-wrap, .pch-a__buy .atc-wrap { margin-right: calc(-1 * var(--atc-inset)); }
+.atc { display: flex; align-items: center; min-height: var(--touch); }
+.atc button { flex: 0 0 var(--touch); width: var(--touch); height: var(--touch); border: 0; background: none; padding: 0; color: var(--c-primary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.atc button .ico { font-size: 27px; transition: transform .1s ease-out; }
+.atc button:hover:not(:disabled) { background: var(--c-bg-accent); }
+.atc button:active:not(:disabled) .ico { transform: scale(.9); }
+.atc button:disabled { color: var(--c-disabled); cursor: default; }
+.atc input { flex: 0 0 auto; width: 52px; height: var(--touch); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 0 4px; background: var(--c-surface);
+  text-align: center; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text); font-variant-numeric: tabular-nums; -moz-appearance: textfield; }
+.atc input:focus { border-color: var(--c-primary); }
+.atc input::-webkit-outer-spin-button, .atc input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.atc input:disabled { color: var(--c-meta); background: var(--c-bg-block); border-color: var(--c-border); }
+.atc[aria-busy="true"] { cursor: progress; }
+.atc[aria-busy="true"] input { color: var(--c-meta); }
+.atc__unit { align-self: center; font-size: var(--fs-xs); line-height: 1; margin-top: 2px; color: var(--c-meta); }
+.atc__note { font-size: var(--fs-xs); line-height: 1.3; margin-top: 4px; text-align: right; max-width: 190px; }
+.atc__note:empty { display: none; }
+.atc__note--cap { color: var(--c-text); font-weight: 700; }
+.atc__note--error { color: var(--c-error); font-weight: 700; }
+.atc__note--muted { color: var(--c-meta); }
+
+/* ── Tuoterivi · genero/product-card (horisontaalinen) ─────────────
+   Listakonteksti: 06-tuoterivi.html (kaupan /shop/-lista, mitattu).
+   Korikonteksti:  07-ostoskori.html (.pch--cart). */
+.product-list__head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 0 var(--gap-16); margin: 0 0 16px; }
+.product-list__subheading { font-family: var(--font-sans); font-size: 28px; font-weight: 700; line-height: 1.4; color: var(--c-text); margin: 0; letter-spacing: 0; }
+.product-list__note { margin: 0; font-size: var(--fs-small); color: var(--c-meta); }
+.product-list__empty { margin: 0; padding: var(--gap-24); background: var(--c-bg-block); border-radius: var(--r-card); color: var(--c-text-2); }
+.product-list + .product-list { margin-top: 48px; }
+.grid { margin: -12px; }
+.cell { margin: 12px; }
+.gds-card { background: var(--c-surface); box-shadow: var(--shadow-card); padding: 16px 24px; display: flex; flex-direction: column; }
+.pch { color: var(--c-text); }
+.pch__inner { display: grid; column-gap: 16px;
+  grid-template: "readmore image title meta price addtocart" auto
+                 "content content content content content content" auto / auto 65px 1fr auto auto auto; }
+.pch__readmore { grid-area: readmore; display: flex; }
+.pch__readmore-button { width: 40px; min-height: 65px; border: 0; background: none; padding: 0; color: var(--c-primary); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: var(--font-sans); }
+.pch__readmore-button .ico { font-size: 27px; transition: transform .2s ease-out; }
+.pch__readmore-button[aria-expanded="true"] .ico { transform: rotate(180deg); }
+.pch__readmore-label { display: block; margin-top: 4px; font-size: var(--fs-micro); line-height: 1; }
+.pch__image { grid-area: image; width: 65px; }
+.pch__image .ph { width: 65px; height: 65px; padding: 0; border-style: solid; color: var(--c-ph-border); font-size: 22px; }
+.pch__title-container { grid-area: title; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-height: 65px; min-width: 0; }
+.pch__title { font-family: var(--font-sans); font-size: 16px; font-weight: 700; line-height: 1.75; color: var(--c-text); margin: 0; letter-spacing: 0; }
+.pch__title a { color: inherit; text-decoration: none; }
+.pch__title a:hover { text-decoration: underline; }
+.pch__meta { grid-area: meta; display: flex; flex-direction: column; justify-content: center; }
+.pch__meta li { font-size: var(--fs-small); line-height: 1.75; white-space: nowrap; }
+.pch__price { grid-area: price; display: flex; flex-direction: column; justify-content: center; text-align: right; }
+.pch__price li { white-space: nowrap; }
+.pch__price-value { font-size: var(--fs-body); line-height: 1.75; }
+.pch__price-compare { font-size: var(--fs-small); line-height: 1.75; color: var(--c-meta); }
+.pch__price-empty { font-size: var(--fs-small); line-height: 1.5; color: var(--c-meta); white-space: normal !important; max-width: 120px; margin-left: auto; }
+.pch--boost .pch__price-value, .pch--outlet .pch__price-value, .pch--campaign .pch__price-value { color: var(--c-primary); font-weight: 700; }
+.pch__add-to-cart { grid-area: addtocart; display: flex; flex-direction: column; align-items: flex-end; justify-content: center; }
+.pch__summary { grid-area: addtocart; display: flex; flex-direction: column; justify-content: center; text-align: right; }
+.pch__summary li { white-space: normal; font-size: var(--fs-small); line-height: 1.5; max-width: 170px; }
+.pch__summary b { font-weight: 700; }
+.pch__helper { display: none; }
+.pch__content { grid-area: content; }
+.pch__content.is-active { border-top: 1px solid var(--c-hairline); margin: 16px -24px 0; padding: 16px 24px 0; }
+.pch__content p { margin: 0 0 8px; }
+.pch__content p:last-child { margin: 0; }
+.pch__content .explain { color: var(--c-text-2); }
+.pch__content-meta { font-size: var(--fs-small); font-weight: 700; }
+.pch__content a { color: var(--c-primary); font-weight: 700; }
+/* Himmennys vain kuvaan: hinta on yhä tietoa, joten se pysyy AA-kontrastissa. */
+.pch--soldout .ph, .pch--unavailable .ph, .pch--expired .ph,
+.pch--soldout .pch-img, .pch--unavailable .pch-img, .pch--expired .pch-img { opacity: .45; }
+/* Tuotekuva: sama laatikko kuin paikkamerkki, koko kuva näkyy (pakkauskuvat ovat eri muotoisia) */
+.pch-img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; border: 1px solid var(--c-border); border-radius: 4px; }
+.pch__image .pch-img { width: 65px; height: 65px; }
+.pch--soldout .pch__price-value, .pch--unavailable .pch__price-value, .pch--expired .pch__price-value { color: var(--c-meta) !important; font-weight: 400 !important; }
+
+/* Korin rivi-ilmoitus ja poistettu rivi */
+.pch__notice { grid-column: 1 / -1; font-size: var(--fs-small); line-height: 1.5; margin: 12px -20px -16px; padding: 4px 20px;
+  border-top: 1px solid var(--c-hairline); display: flex; flex-wrap: wrap; gap: 0 var(--gap-16); align-items: center; }
+.pch__notice > span { padding: 8px 0; }
+.pch__notice:empty { display: none; }
+.pch__notice--error { color: var(--c-error); background: var(--c-error-bg); }
+.pch__notice--warn { color: var(--c-warn-text); background: var(--c-warn-bg); }
+.pch__notice--info { color: var(--c-text-2); background: var(--c-bg-block); }
+.pch__notice .link { font-size: var(--fs-small); }
+.row-removed .link { min-width: var(--touch); justify-content: center; }
+.row-removed { background: var(--c-bg-block); padding: 4px var(--gap-24); font-size: var(--fs-small);
+  display: flex; gap: 0 var(--gap-16); align-items: center; flex-wrap: wrap; border-radius: var(--r-card); }
+
+/* Mobiili — kaupan breakpointit 64em / 37.5em */
+@media (max-width: 63.99em) {
+  .pch-k .pch__inner { display: flex; flex-wrap: wrap; column-gap: 0; align-items: center; }
+  .pch-k .pch__image { order: 1; }
+  .pch-k .pch__title-container { order: 2; width: calc(60% - 65px); min-height: 65px; }
+  .pch-k .pch__title { padding: 0 15px; }
+  .pch-k .pch__meta { order: 3; width: 40%; align-items: flex-end; }
+  .pch-k .pch__helper { display: block; order: 5; width: 100%; height: 1px; background: var(--c-primary); margin: 15px 0; }
+  .pch-k .pch__readmore { order: 6; margin-right: auto; }
+  .pch-k .pch__readmore-button { min-height: 0; }
+  .pch-k .pch__price { order: 7; }
+  .pch-k .pch__add-to-cart, .pch-k .pch__summary { order: 8; }
+  .pch-k .pch__content { order: 10; width: 100%; }
+}
+@media (max-width: 37.49em) {
+  .pch-k .gds-card { padding: 16px; }
+  .pch-k .pch__content.is-active { margin: 16px -16px 0; padding: 16px 16px 0; }
+  .pch-k .pch__title-container { width: calc(100% - 65px); }
+  .pch-k .pch__title { padding-right: 0; }
+  .pch-k .pch__meta { width: 50%; align-items: flex-start; padding-top: 15px; }
+  .pch-k .pch__price { order: 4; width: 50%; padding-top: 15px; }
+  .pch-k .pch__readmore { width: 30%; margin-right: 0; }
+  .pch-k .pch__add-to-cart, .pch-k .pch__summary { width: 70%; }
+}
+
+/* ── Tuoterivin layout-vaihtoehdot A / B / C (vertailu 30.9.2026) ──────
+   Rivi on oma container: asettelu seuraa palstan leveyttä, ei ikkunaa.
+   Yhteiset osat pch-x__*, layoutikohtaiset pch-a / pch-b / pch-c. */
+.pch-a, .pch-b, .pch-c { container-type: inline-size; }
+.pch-x__meta { margin: 0; font-size: var(--fs-small); line-height: 1.5; color: var(--c-meta); }
+.pch-x__meta b { color: var(--c-text); font-weight: 700; }
+.pch-x__tag { text-box: trim-both cap alphabetic; margin: 0 0 6px; font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-primary); }
+.pch-x__state { margin: 0; font-size: var(--fs-small); line-height: 1.4; text-align: right; max-width: 170px; margin-left: auto; }
+.pch-a .pch__title, .pch-b .pch__title, .pch-c .pch__title { line-height: 1.35; }
+.pch-a .ph, .pch-b .ph, .pch-c .ph { width: 100%; aspect-ratio: 1; padding: 0; border-style: solid; color: var(--c-ph-border); border-radius: 4px; }
+.pch-x__more { width: var(--touch); height: var(--touch); border: 0; background: none; padding: 0; color: var(--c-primary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.pch-x__more .ico { font-size: 24px; transition: transform .2s ease-out; }
+.pch-x__more:hover { background: var(--c-bg-accent); }
+.pch-x__more-text { display: inline-flex; align-items: center; gap: 6px; min-height: var(--touch); margin: 0 0 -8px; padding: 0; border: 0; background: none; cursor: pointer;
+  color: var(--c-primary); font-family: var(--font-sans); font-size: var(--fs-small); font-weight: 700; }
+.pch-x__more-text .ico { font-size: 11px; transition: transform .2s ease-out; }
+.pch-x__more-text:hover span { text-decoration: underline; }
+[data-act="details"][aria-expanded="true"] .ico { transform: rotate(180deg); }
+.pch-x__panel.is-active { border-top: 1px solid var(--c-hairline); margin: 0; padding: 12px 16px 16px; font-size: var(--fs-small); }
+.pch-x__state .link { font-size: var(--fs-small); }
+.pch-a.pch--soldout .pch__title, .pch-b.pch--soldout .pch__title, .pch-c.pch--soldout .pch__title { color: var(--c-meta); }
+.pch--soldout .pch__price-compare, .pch--unavailable .pch__price-compare { text-decoration: line-through; }
+
+/* A — Tiivis lista: rivit yhdessä pinnassa, hiusviiva välissä, yksi rivi korkeudeltaan */
+.pl-rows { background: var(--c-surface); box-shadow: var(--shadow-card); border-radius: var(--r-card); overflow: hidden; }
+.pl-rows > li + li { border-top: 1px solid var(--c-hairline); }
+.grid > .cell > .pch-a, .grid > .cell > .pch-c { background: var(--c-surface); box-shadow: var(--shadow-card); border-radius: var(--r-card); overflow: hidden; }
+.pl-rows .cell { margin: 0; }
+.pch-a { background: var(--c-surface); transition: background-color .15s; }
+.pch-a.pch--in-cart, .pch-c.pch--in-cart { background: var(--c-bg-incart); }
+.pch-a__row { display: grid; align-items: center; gap: 4px 16px; padding: 10px 12px 10px 16px;
+  grid-template-columns: 48px minmax(0, 1fr) 120px 150px 44px; grid-template-areas: "img main price buy more"; }
+.pch-a__img { grid-area: img; } .pch-a__main { grid-area: main; min-width: 0; }
+.pch-a__price { grid-area: price; } .pch-a__buy { grid-area: buy; display: flex; justify-content: flex-end; } .pch-a__more { grid-area: more; }
+.pch-a .pch__price li, .pch-c .pch__price li { line-height: 1.4; }
+@container (max-width: 559px) {
+  .pch-a__row { grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-areas: "img main more" "price price buy"; padding: 12px 8px 12px 12px; }
+  .pch-a__price .pch__price { text-align: left; }
+}
+
+/* B — Kortti: iso kuva, nimi ja tiedot vasemmalla, ostolaatikko oikealla */
+.grid--b { margin: -6px; } .grid--b .cell { margin: 6px; }
+.pch-b__card { background: var(--c-surface); box-shadow: var(--shadow-card); border-radius: var(--r-card); overflow: hidden;
+  display: grid; grid-template-columns: 88px minmax(0, 1fr) auto; column-gap: 20px; padding: 16px 20px; align-items: start; }
+.pch-b.pch--in-cart .pch-b__card { box-shadow: 0 0 0 2px var(--c-primary), var(--shadow-card); }
+.pch-b__img { padding-top: 2px; }
+.pch-b__info { min-width: 0; align-self: center; }
+.pch-b .pch__title { font-size: 18px; margin: 2px 0 2px; }
+.pch-b__buy { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: 150px; align-self: center; }
+.pch-b__price .pch__price-value { font-size: 20px; font-weight: 700; line-height: 1.2; }
+.pch-b__price .pch__price-compare { line-height: 1.4; }
+.pch-b .pch-x__panel { grid-area: auto; grid-column: 1 / -1; }
+.pch-b .pch-x__panel.is-active { margin: 16px -20px -16px; }
+@container (max-width: 519px) {
+  .pch-b__card { grid-template-columns: 72px minmax(0, 1fr); column-gap: 14px; padding: 14px 16px; }
+  /* Merkintä mahtuu kuvan levyiseksi (katselmointi: Outlet 90 px > 64 px kuva) */
+  .pch-b__img .pch-media .badge { padding: 4px 6px; letter-spacing: .3px; max-width: calc(100% + 8px); }
+  .pch-b__buy { grid-column: 1 / -1; flex-direction: row; justify-content: space-between; align-items: center; min-width: 0;
+    margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--c-hairline); }
+  .pch-b__price .pch__price { text-align: left; }
+  .pch-b .pch-x__panel.is-active { margin: 12px -16px -14px; }
+}
+
+/* C — Tilauslista: sarakkeet otsikoineen, rivisumma näkyy heti */
+.pl-c__head, .pch-c__row { display: grid; align-items: center; column-gap: 16px;
+  grid-template-columns: minmax(0, 1fr) 100px 110px 150px 84px 44px; }
+.pl-c__head { padding: 10px 12px 8px 16px; background: var(--c-bg-block); font-size: var(--fs-micro); font-weight: 700; letter-spacing: .5px;
+  text-transform: uppercase; color: var(--c-text-2); }
+.pl-c__head span:nth-child(n+3) { text-align: right; }
+.pl-c__head span:nth-child(4) { text-align: center; }
+.pl-rows--c > ul > li { border-top: 1px solid var(--c-hairline); }
+.pch-c { background: var(--c-surface); }
+.pch-c__row { padding: 8px 12px 8px 16px; }
+.pch-c__prod { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pch-c__img { flex: 0 0 40px; }
+.pch-c__name { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; }
+.pch-c__name .badge { margin: 0; }
+.pch-c__name .pch__title { font-size: 16px; }
+.pch-c__name .pch-x__meta { width: 100%; }
+.pch-c__sku-inline { display: none; }
+.pch-c__sku { font-size: var(--fs-small); color: var(--c-meta); font-variant-numeric: tabular-nums; }
+.pch-c__price .pch__price-value { font-size: 16px; }
+.pch-c__price .pch__price-compare { font-size: var(--fs-xs); }
+.pch-c__buy { display: flex; justify-content: center; }
+.pch-c__buy .atc__note { text-align: center; }
+.pch-c__sum { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pch-c__price, .pch-c .pch__price { font-variant-numeric: tabular-nums; }
+@container (max-width: 639px) {
+  .pch-c__row { grid-template-columns: minmax(0, 1fr) auto auto 44px; grid-template-areas: "prod prod prod more" "price buy sum sum"; row-gap: 8px; padding: 12px 8px 12px 12px; }
+  .pch-c__prod { grid-area: prod; } .pch-c__more { grid-area: more; } .pch-c__price { grid-area: price; } .pch-c__buy { grid-area: buy; } .pch-c__sum { grid-area: sum; }
+  .pch-c__sku { display: none; } .pch-c__batch { display: none; } .pch-c__sku-inline { display: block; }
+  .pch-c__price .pch__price { text-align: left; }
+}
+@media (max-width: 639px) { .pl-c__head { display: none; } }
+
+/* ── Merkintä kuvan päällä (kaikki tuoterivit, 30.9.2026) ───────────
+   Tarra kuvan alareunan keskellä, puoliksi reunan yli. Valkoinen rengas
+   erottaa sen kuvasta ja rivin pohjasta. Nimi alkaa aina samasta kohdasta. */
+.pch-media { position: relative; }
+.pch-media .badge { position: absolute; left: 50%; bottom: -7px; transform: translateX(-50%); z-index: 1; margin: 0;
+  font-size: var(--fs-micro); padding: 4px 6px; white-space: nowrap; box-shadow: 0 0 0 2px var(--c-surface); }
+.pch-b__img .pch-media .badge { font-size: var(--fs-micro); padding: 5px 8px; bottom: -8px; }
+
+/* ── Kori · B-kortti (07 K3) ─────────────────────────────────────────
+   Sama kortti kuin listassa. Ostolaatikossa hinta, määrä, rivisumma ja
+   poisto; kapeassa kaksi riviä: hinta | summa, määrä | poisto. */
+.pch--cart .pch-b__buy { display: grid; align-items: start; justify-items: end; column-gap: var(--gap-16); row-gap: 4px;
+  grid-template-columns: auto minmax(84px, auto) var(--touch); grid-template-areas: "price price price" "qty sum remove"; }
+.pch--cart .pch-b__price { grid-area: price; } .pch--cart .pch-b__qty { grid-area: qty; }
+.pch--cart .pch-b__sum { grid-area: sum; text-align: right; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.pch--cart .pch-b__sum small { display: block; font-weight: 400; font-size: var(--fs-xs); color: var(--c-meta); line-height: 1.3; white-space: normal; max-width: 130px; }
+.pch--cart .pch-b__sum.is-excluded { font-weight: 400; font-size: var(--fs-small); color: var(--c-meta); white-space: normal; max-width: 110px; }
+.pch--cart .pch-b__remove { grid-area: remove; }
+/* Optinen tasaus kuten listassa: 44 px osuma-alue, 18 px roskakori-ikoni →
+   ikonin oikea reuna osuu hinnan oikeaan reunaan. */
+.pch--cart .pch-b__remove button { margin-right: calc(-1 * (var(--touch) - 18px) / 2); }
+.pch--cart .pch-b__remove button { width: var(--touch); height: var(--touch); border: 0; background: none; padding: 0; color: var(--c-meta); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.pch--cart .pch-b__remove button:hover { color: var(--c-error); background: var(--c-error-bg); }
+.pch--cart .pch-b__remove .ico { font-size: 18px; }
+.pch--cart .pch-b__price .pch__price-value { font-size: var(--fs-body); }
+@container (max-width: 519px) {
+  .pch--cart .pch-b__buy { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "price sum" "qty remove"; justify-items: stretch; }
+  .pch--cart .pch-b__qty, .pch--cart .pch-b__price { justify-self: start; }
+  .pch--cart .pch-b__sum, .pch--cart .pch-b__remove { justify-self: end; }
+  .pch--cart .pch-b__qty .atc-wrap { align-items: flex-start; margin-left: calc(-1 * var(--atc-inset)); margin-right: 0; }
+  .pch__notice { margin: 12px -16px -14px; padding: 4px 16px; }
+}
+
+/* ── Haitari · gds/accordion ─────────────────────────────────────── */
+.acc { border-top: 1px solid var(--c-border); }
+.acc__item { border-bottom: 1px solid var(--c-border); }
+.acc__h { margin: 0; font-size: inherit; letter-spacing: 0; }
+.acc__btn { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: var(--gap-16); min-height: 56px; padding: 12px 0;
+  border: 0; background: none; cursor: pointer; text-align: left; font-family: var(--font-sans); font-size: var(--fs-body); font-weight: 700; color: var(--c-text); }
+.acc__btn:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.acc__btn .ico { flex: 0 0 auto; font-size: 14px; color: var(--c-primary); transition: transform .2s ease-out; }
+.acc__btn[aria-expanded="true"] .ico { transform: rotate(180deg); }
+.acc__panel { padding: 0 0 var(--gap-16); color: var(--c-text-2); max-width: 72ch; }
+/* Tulostus ja PDF: kaikki paneelit auki */
+@media print {
+  .acc__panel[hidden] { display: block !important; }
+  .acc__btn .ico { display: none; }
+  .acc__item { break-inside: avoid; }
+}
+
+/* ── Lomake · genero/access-request (08) ─────────────────────────────
+   Kenttä 44 px, radius 0, reuna 3.26:1 (WCAG 1.4.11), virhe 2 px punainen +
+   ikoni + teksti (ei pelkkä väri). Fokus: tokens.css (--c-focus). */
+.field { margin-bottom: var(--gap-24); }
+.field__label { display: block; font-size: var(--fs-small); font-weight: 700; color: var(--c-text); margin-bottom: var(--gap-4); }
+.field__opt { font-weight: 400; color: var(--c-text-2); }
+.field__help { display: block; font-size: var(--fs-small); color: var(--c-text-2); margin: -2px 0 var(--gap-8); line-height: 1.5; }
+.field input, .field select, .field textarea { width: 100%; font: inherit; font-family: var(--font-sans); color: var(--c-text);
+  background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: var(--r-none); padding: 10px 16px; min-height: var(--touch); }
+.field input:hover, .field select:hover, .field textarea:hover { border-color: var(--c-text-2); }
+.field input:focus, .field select:focus, .field textarea:focus { border-color: var(--c-primary); }
+.field input[readonly] { background: var(--c-bg-block); border-color: var(--c-border); }
+.field select { appearance: none; padding-right: 44px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--c-primary) 50%), linear-gradient(135deg, var(--c-primary) 50%, transparent 50%);
+  background-position: calc(100% - 22px) 50%, calc(100% - 16px) 50%; background-size: 6px 6px; background-repeat: no-repeat; }
+.field textarea { min-height: 104px; resize: vertical; line-height: 1.5; }
+.field--short input { max-width: 180px; }
+.field .fill--block { margin-top: var(--gap-8); }
+.field[data-invalid] input, .field[data-invalid] select, .field[data-invalid] textarea { border: 2px solid var(--c-error); padding: 9px 15px; }
+.field__err { display: flex; gap: var(--gap-8); align-items: baseline; color: var(--c-error); font-size: var(--fs-small);
+  font-weight: 700; margin: var(--gap-4) 0 0; line-height: 1.5; }
+.field__err .ico { position: relative; top: .15em; }
+.field-row { display: grid; grid-template-columns: var(--field-cols, 140px minmax(0, 1fr)); gap: var(--gap-16); margin-bottom: var(--gap-24); }
+.field-row > .field { margin-bottom: 0; min-width: 0; }
+
+.choices { border: 0; padding: 0; margin: 0 0 var(--gap-32); min-width: 0; }
+.choices__legend { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); color: var(--c-text); margin-bottom: var(--gap-16); padding: 0; }
+.choices__opts { display: grid; grid-template-columns: repeat(var(--choice-cols, 2), minmax(0, 1fr)); gap: var(--gap-16); }
+.choice-card { position: relative; display: grid; grid-template-columns: 24px 1fr; gap: var(--gap-4) var(--gap-12); align-items: start;
+  background: var(--c-surface); border: 1.5px solid var(--c-border-strong); border-radius: var(--r-card); padding: var(--gap-16); cursor: pointer; min-height: var(--touch); }
+.choice-card:hover { border-color: var(--c-primary); }
+.choice-card input { width: 20px; height: 20px; margin: 3px 0 0; accent-color: var(--c-primary); grid-row: span 2; }
+.choice-card__t { font-weight: 700; color: var(--c-text); line-height: 1.4; }
+.choice-card__s { font-size: var(--fs-small); color: var(--c-text-2); line-height: 1.5; grid-column: 2; }
+.choice-card:has(input:checked) { border-color: var(--c-primary); background: var(--c-bg-accent); box-shadow: 0 0 0 1px var(--c-primary); }
+.choice-card:has(input:focus-visible) { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+.choice-card input:focus-visible { outline: 0; }
+
+.error-summary { margin-bottom: var(--gap-24); }
+.error-summary__title { font-family: var(--font-sans); font-size: var(--fs-body); font-weight: 700; color: var(--c-error); letter-spacing: 0; line-height: 1.5; margin: 0 0 var(--gap-4); }
+.error-summary__list { list-style: disc; padding-left: 1.1em; }
+.error-summary__list li + li { margin-top: var(--gap-4); }
+.error-summary a { color: var(--c-error); font-weight: 700; display: inline-flex; align-items: center; min-height: var(--touch); }
+.error-summary:focus { outline: 3px solid var(--c-focus); outline-offset: 2px; }
+
+.readonly-value { background: var(--c-bg-block); border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24); margin-bottom: var(--gap-24); font-size: var(--fs-small); }
+.readonly-value b { display: block; font-size: var(--fs-body); color: var(--c-text); }
+
+.step-list { background: var(--c-bg-block); border-radius: var(--r-card); padding: var(--gap-24); }
+.step-list__h { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); color: var(--c-primary); margin-bottom: var(--gap-16); letter-spacing: 0; }
+.step-list ol { display: grid; gap: var(--gap-16); counter-reset: s; }
+.step-list li { display: grid; grid-template-columns: 36px 1fr; gap: var(--gap-12); align-items: start; counter-increment: s;
+  font-size: var(--fs-small); line-height: 1.6; color: var(--c-text); }
+.step-list li::before { content: counter(s); width: 36px; height: 36px; border-radius: 50%; background: var(--c-primary);
+  color: var(--c-on-dark); font-family: var(--font-display); font-size: 20px; display: inline-flex; align-items: center; justify-content: center; }
+
+.honeypot { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+
+@media (max-width: 37.49em) {
+  .choices__opts { grid-template-columns: 1fr; }
+  .field-row { grid-template-columns: 1fr; gap: 0; margin-bottom: 0; }
+  .field-row > .field { margin-bottom: var(--gap-24); }
+  .field--short input { max-width: none; }
+}
+
+.field__control { position: relative; display: flex; }
+.field__control > input { flex: 1 1 auto; }
+.checkfield { margin-bottom: var(--gap-24); }
+.checkfield__label { display: flex; gap: var(--gap-12); align-items: flex-start; min-height: var(--touch); cursor: pointer; font-size: var(--fs-body); line-height: 1.5; }
+.checkfield__label input { flex: 0 0 auto; width: 22px; height: 22px; margin: 2px 0 0; accent-color: var(--c-primary); }
+.checkfield[data-invalid] .checkfield__label input { outline: 2px solid var(--c-error); outline-offset: 2px; }
+
+/* ── Tili: kirjautuminen, salasanan palautus ja asetus, kutsuviesti (lib/components/account.js, TP1, TP3) ── */
+.login-card { background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: var(--gap-32); display: grid; gap: 0; }
+.login-card--page { max-width: 480px; width: 100%; margin-inline: auto; }
+.login-card .eyebrow { margin-bottom: var(--gap-8); }
+.login-card__h { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h3); color: var(--c-text); margin-bottom: var(--gap-16); }
+.login-card__lead { color: var(--c-text-2); margin: 0 0 var(--gap-24); }
+.login-card .notice { margin-bottom: var(--gap-24); }
+.login-card .checkfield { margin-bottom: var(--gap-24); }
+.login-card .checkfield__label { min-height: var(--touch); align-items: center; }
+.login-card__lost { margin: var(--gap-8) 0 0; }
+.login-card__lost a { display: inline-flex; align-items: center; min-height: var(--touch); color: var(--c-primary); font-weight: 700; font-size: var(--fs-small); }
+.login-card__request { margin-top: var(--gap-16); padding-top: var(--gap-24); border-top: 1px solid var(--c-border); display: grid; gap: var(--gap-8); }
+.login-card__request p { margin: 0; font-size: var(--fs-small); font-weight: 700; }
+/* Näytä/Piilota salasanakentän sisällä (K4). Kenttien teksti on 16 px (K3), korkeus --touch (K7). */
+.field__control { position: relative; }
+.field__control:has(.pw-toggle) input { padding-right: 104px; }
+.pw-toggle { position: absolute; right: 0; top: 0; bottom: 0; min-width: var(--touch); padding: 0 var(--gap-16); background: none; border: 0; cursor: pointer;
+  font: inherit; font-family: var(--font-sans); font-size: var(--fs-small); font-weight: 700; text-transform: uppercase; letter-spacing: var(--ls-button); color: var(--c-primary); }
+.field__help--ok { color: var(--c-primary); }
+@media (max-width: 600px) { .login-card { padding: var(--gap-24) var(--gap-16); } }
+/* TP3 käyttöönotto: kirjautumisen tunnuspyyntöpolku, käyttäjätunnus salasanan asetuksessa, kutsuviesti. */
+.pw-toggle { display: inline-flex; align-items: center; justify-content: center; }
+.pw-toggle .cap { position: relative; top: .03em; }
+.login-card__request p.login-card__request-lead { font-weight: 400; color: var(--c-text-2); }
+.login-card__next { margin: var(--gap-16) 0 0; font-size: var(--fs-small); color: var(--c-text-2); }
+.invite-mail { max-width: 640px; width: 100%; background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); overflow: hidden; }
+.invite-mail__head { display: grid; grid-template-columns: max-content 1fr; gap: 2px var(--gap-12); margin: 0; padding: var(--gap-16) var(--gap-24);
+  border-bottom: 1px solid var(--c-border); font-size: var(--fs-small); }
+.invite-mail__head dt { color: var(--c-meta); }
+.invite-mail__head dd { margin: 0; color: var(--c-text); overflow-wrap: anywhere; }
+.invite-mail__subj { font-weight: 700; }
+.invite-mail__pre { font-weight: 400; color: var(--c-meta); }
+.invite-mail__body { padding: var(--gap-32); }
+.invite-mail__body > p { margin: 0 0 var(--gap-16); }
+.invite-mail__brand { margin-bottom: var(--gap-8); }
+.invite-mail__h { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-h2); line-height: 1.16; color: var(--c-text); margin-bottom: var(--gap-24); }
+.invite-mail__points { list-style: none; margin: 0 0 var(--gap-16); padding: 0; display: grid; gap: var(--gap-8); }
+.invite-mail__points li { display: grid; grid-template-columns: 20px 1fr; gap: var(--gap-8); align-items: baseline; }
+.invite-mail__points .ico { color: var(--c-primary); }
+.invite-mail__user { font-weight: 700; overflow-wrap: anywhere; }
+.invite-mail__body .btn { margin: var(--gap-8) 0 var(--gap-16); }
+.invite-mail__body > p.invite-mail__small { font-size: var(--fs-small); color: var(--c-text-2); }
+.invite-mail__body > p.invite-mail__sign { margin: var(--gap-24) 0 0; }
+@media (max-width: 600px) {
+  .invite-mail__head { padding: var(--gap-12) var(--gap-16); }
+  .invite-mail__body { padding: var(--gap-24) var(--gap-16); }
+  .invite-mail__pre { display: none; }
+}
+
+/* Korin rivin 2 tasaus: summa ja roskakori määrävalitsimen (44 px) keskilinjaan,
+   ei yksikkötekstin kasvattaman solun keskelle (katselmointi: 7,5 px). */
+.pch--cart .pch-b__price { align-self: center; }
+.pch--cart .pch-b__sum { min-height: var(--touch); display: flex; flex-direction: column; justify-content: center; align-items: flex-end; }
+.pch--cart .pch-b__remove { min-height: var(--touch); display: flex; align-items: center; }
+
+/* ── Etusivu tila B: aloituskortit ja kategoriat (lib/components/home.js, TP2) ──
+   Puhelin ensin: kortit ovat matalia rivejä peukalon ulottuvilla (koko rivi linkki),
+   768 px:stä ylöspäin korkeita kortteja rinnakkain. */
+.start-links h2, .cat-grid h2 { margin-bottom: var(--gap-16); }
+.start-links__list, .cat-grid__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap-8); }
+.start-link { display: grid; grid-template-columns: 1fr auto; grid-template-areas: "t go" "s go"; align-items: center;
+  column-gap: var(--gap-16); row-gap: 2px; min-height: 64px; padding: var(--gap-12) var(--gap-16);
+  background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); text-decoration: none; color: var(--c-text); }
+.start-link:hover { box-shadow: 4px 5px 12px #00000029; }
+.start-link__t { grid-area: t; font-family: var(--font-sans); font-size: 18px; font-weight: 500; line-height: 1.25; color: var(--c-primary); }
+.start-link__s { grid-area: s; font-size: var(--fs-small); line-height: 1.35; color: var(--c-text-2); }
+.start-link__go { grid-area: go; display: inline-flex; align-items: center; gap: var(--gap-8); color: var(--c-primary);
+  font-family: var(--font-sans); font-size: var(--fs-small); font-weight: 700; text-transform: uppercase; letter-spacing: var(--ls-button); }
+.start-link__cta { display: none; }
+.start-link--primary { background: var(--c-primary); }
+.start-link--primary .start-link__t, .start-link--primary .start-link__go { color: #fff; }
+.start-link--primary .start-link__s { color: rgba(255,255,255,.9); }
+.start-link--primary:focus-visible { outline-offset: 3px; }
+.start-link--outlet { background: var(--c-warn-bg); }
+.start-link--outlet .start-link__t, .start-link--outlet .start-link__s, .start-link--outlet .start-link__go { color: var(--c-warn-text); }
+@media (min-width: 768px) {
+  .start-links h2, .cat-grid h2 { margin-bottom: var(--gap-24); }
+  .start-links__list { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--gap-24); }
+  .start-link { grid-template-columns: 1fr; grid-template-areas: "t" "s" "go"; align-content: start; row-gap: var(--gap-8);
+    min-height: 148px; padding: var(--gap-24); }
+  .start-link__t { font-size: var(--fs-h4); }
+  .start-link__go { align-self: end; margin-top: var(--gap-8); }
+  .start-link__cta { display: inline; }
+}
+
+/* Kategoriat: puhelimella kaksi saraketta 56 px, leveässä kolme saraketta 96 px. */
+.cat-grid__list { grid-template-columns: 1fr 1fr; }
+.cat-link { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-8); height: 100%; min-height: 56px;
+  padding: var(--gap-12) var(--gap-16); background: var(--c-surface); box-shadow: var(--shadow-card); text-decoration: none;
+  font-family: var(--font-sans); font-weight: 500; font-size: 16px; line-height: 1.25; color: var(--c-text); }
+.cat-link:hover { box-shadow: 4px 5px 12px #00000029; }
+.cat-link .ico { flex: none; color: var(--c-primary); }
+.cat-link--all { background: var(--c-bg-accent); color: var(--c-primary); box-shadow: none; }
+@media (min-width: 768px) {
+  .cat-grid__list { grid-template-columns: repeat(3, 1fr); gap: var(--gap-16); }   /* 5 + Kaikki = 3 × 2, ei yksinäistä korttia */
+  .cat-link { min-height: 96px; padding: var(--gap-24); font-size: var(--fs-h4); }
+}

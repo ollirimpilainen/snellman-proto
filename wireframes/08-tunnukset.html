@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title></title>
+<!-- Kirjasto välimuistin ohi: lib/load.js (tokens, components, core, basics, product, shell, forms, account) -->
+<script src="lib/load.js" data-with="forms account"></script>
+<!--
+  SNELLMAN RETAIL — PYYDÄ TUNNUKSET (wireframe)
+  ==================================================================
+  Spec:  08-tunnukset.md v1.0, 30.9.2026
+  Pohja: lib/ (komponenttikirjasto): tokenit, header A/B, footer, murupolku,
+         painikkeet, ilmoitus, TÄYTTÖ. Lomakekentät ovat vielä sivun omia
+         (kirjastossa ei ole lomakekomponentteja), mutta käyttävät lib-tokeneita.
+
+  Yksi URL (/tunnukset/), julkinen. Tilat URL:sta:
+    ?asiakas=nykyinen|uusi   R1-esivalinta (A4 → uusi, kutsuton julkaisuviesti → nykyinen)
+    ?view=b                  kirjautunut: R6 lisäkäyttäjä
+    ?step=errors|mail        validointivirheet / sähköpostit R-S1–R-S4
+    ?lahetetty=1             R4 lähetetty
+  Lomake validoi oikeasti (pakolliset, sähköposti, y-tunnuksen tarkiste,
+  postinumero). Täytetyt arvot kulkevat R4:ään ja sähköposteihin.
+
+  Kaikki näkyvä teksti on PROTO/SHELL/PAGE-objekteissa.
+  ==================================================================
+-->
+<style>
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Header, footer, murupolku,
+     painikkeet, ilmoitus, TÄYTTÖ: lib/components.css. Tässä vain sivun omat. */
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto { background: #2b2b28; color: #e9e8e1; font-size: var(--fs-xs); line-height: 1.5; }
+  .proto .container { padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl { display: flex; align-items: center; gap: var(--gap-8); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .lg { width: 18px; height: 10px; display: inline-block; }
+  .lg--var { border-bottom: 1px dotted #e9e8e1; }
+  .lg--fill { background: var(--c-fill-bg); border: 1px solid var(--c-fill-border); }
+
+  /* ── Kehys ─────────────────────────────────────────────────────── */
+  .crumb { padding-top: var(--gap-8); }
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--tightTop { padding-top: var(--gap-32); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+
+  /* ══════════ 08 Pyydä tunnukset ══════════════════════════════════ */
+
+  /* R1–R3 asettelu: desktop 60/40, mobiili valinta → askeleet → lomake (spec R2) */
+  .req { display: grid; grid-template-columns: 60fr 40fr; gap: 0 var(--gap-48);
+    grid-template-areas: "intro aside" "choice aside" "form aside"; align-items: start; }
+  .req > * { min-width: 0; }
+  .req__intro  { grid-area: intro; }
+  .req__choice { grid-area: choice; }
+  .req__form   { grid-area: form; }
+  .req__aside  { grid-area: aside; position: sticky; top: calc(var(--nav-h) + 24px); display: grid; gap: var(--gap-24); }
+  .req__intro h1 { margin-bottom: var(--gap-16); }
+  .req__intro .lead { margin-bottom: var(--gap-16); }
+  .req__intro .have { display: flex; flex-wrap: wrap; align-items: center; gap: 0 var(--gap-24); margin-bottom: var(--gap-32); }
+  .req__intro .have a { display: inline-flex; align-items: center; min-height: var(--touch); font-weight: 700; }
+
+  /* R1 valintakortit: lib choiceCards */
+
+  /* R3 lomake: kehys sivun, kentät kirjastosta (lib/components/forms.js). */
+  .form { background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: var(--gap-32); }
+  .form h2:not(.error-summary__title) { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h3); color: var(--c-primary); margin-bottom: var(--gap-24); }
+  /* Kentät, kenttärivi, virheyhteenveto, piilokenttä: lib/components/forms.js */
+  .privacy { font-size: var(--fs-small); color: var(--c-text-2); margin: var(--gap-8) 0 var(--gap-16); }
+  .privacy a { color: var(--c-primary); font-weight: 700; }
+  .form .btn[aria-disabled="true"] { cursor: progress; }
+  .other { font-size: var(--fs-small); color: var(--c-text-2); margin-top: var(--gap-24); }
+  /* R2 askellista: lib stepList */
+
+  /* R4 lähetetty */
+  .sent { background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: var(--gap-40);
+    border-top: 6px solid var(--c-primary); }
+  .sent__ico { width: 56px; height: 56px; border-radius: 50%; background: var(--c-bg-accent); color: var(--c-primary);
+    display: inline-flex; align-items: center; justify-content: center; font-size: 24px; margin-bottom: var(--gap-16); }
+  .sent h1 { margin-bottom: var(--gap-16); font-size: var(--fs-h2); }
+  .sent p { max-width: 60ch; }
+  .sent .small { font-size: var(--fs-small); color: var(--c-text-2); margin-top: var(--gap-16); }
+  .sent .btn { margin-top: var(--gap-24); }
+  .sent h1:focus { outline: none; }
+
+  /* Sähköpostit (proto-näkymä) */
+  .mails__intro { margin-bottom: var(--gap-32); }
+  .mails { display: grid; gap: var(--gap-32); }
+  .mail { background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); overflow: hidden; }
+  .mail__tag { background: var(--c-dark); color: var(--c-on-dark-2); font-size: var(--fs-xs); padding: var(--gap-8) var(--gap-24);
+    display: flex; justify-content: space-between; gap: var(--gap-16); flex-wrap: wrap; }
+  .mail__tag b { color: var(--c-on-dark); }
+  .mail__head { padding: var(--gap-16) var(--gap-24); border-bottom: 1px solid var(--c-border); font-size: var(--fs-small);
+    display: grid; grid-template-columns: 90px 1fr; gap: 2px var(--gap-12); }
+  .mail__head dt { color: var(--c-meta); }
+  .mail__head dd { margin: 0; color: var(--c-text); word-break: break-word; }
+  .mail__head dd.subj { font-weight: 700; }
+  .mail__body { padding: var(--gap-24); max-width: 640px; }
+  .mail__body .btn { margin: var(--gap-8) 0 var(--gap-16); }
+  .mail__body .small { font-size: var(--fs-small); color: var(--c-text-2); }
+  .mail__kv { display: grid; grid-template-columns: 170px 1fr; gap: 2px var(--gap-16); font-size: var(--fs-small);
+    border: 1px solid var(--c-border); padding: var(--gap-12) var(--gap-16); margin: var(--gap-8) 0 var(--gap-16); }
+  .mail__kv dt { color: var(--c-meta); }
+  .mail__kv dd { margin: 0; font-weight: 700; word-break: break-word; }
+  .mail__todo { font-size: var(--fs-small); background: var(--c-bg-block); padding: var(--gap-12) var(--gap-16); }
+  .mail__todo ol { list-style: decimal; padding-left: 1.2em; }
+
+  .annot { border: 1px dashed var(--c-ph-border); background: var(--c-ph-bg); padding: var(--gap-12) var(--gap-16);
+    margin-top: var(--gap-32); font-size: var(--fs-small); }
+  .annot > summary { cursor: pointer; font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); }
+  .annot table { width: 100%; border-collapse: collapse; margin-top: var(--gap-8); }
+  .annot th, .annot td { text-align: left; padding: 4px 8px 4px 0; vertical-align: top; border-top: 1px solid var(--c-ph-border); }
+
+  @media (max-width: 960px) {
+    .req { grid-template-columns: 1fr; grid-template-areas: "intro" "choice" "aside" "form"; }
+    .req__aside { position: static; margin-bottom: var(--gap-32); }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+  }
+  @media (max-width: 600px) {
+    .form, .sent { padding: var(--gap-24) var(--gap-16); }
+    .mail__head, .mail__kv { grid-template-columns: 1fr; }
+    .mail__head dt, .mail__kv dt { margin-top: var(--gap-8); }
+    .sent .btn, .form__submit .btn { width: 100%; }
+  }
+</style>
+</head>
+
+<!-- ══════════ PROTO / SHELL / PAGE ══════════ -->
+<script>
+const PROTO = {
+  title: "<b>Wireframe</b>",
+  meta: ["Snellman Retail", "08 Pyydä tunnukset", "spec v1.0 / 30.9.2026"],
+  hint: "Kokeile tiloja:",
+  legend: [
+    { cls: "var",  label: "pisteviiva = dynaaminen arvo" },
+    { cls: "fill", label: "keltainen = avoin kysymys Snellmanille" }
+  ],
+  controls: [
+    { key: "view",    label: "Tila",        opts: [ { v: "a", label: "Kirjautumaton" }, { v: "b", label: "Kirjautunut (lisäkäyttäjä)" } ] },
+    { key: "asiakas", label: "Esivalinta",  opts: [ { v: "", label: "Ei (A1, virheet)" }, { v: "nykyinen", label: "?asiakas=nykyinen" }, { v: "uusi", label: "?asiakas=uusi (A4)" } ], only: "a" },
+    { key: "step",    label: "Vaihe",       opts: [ { v: "form", label: "Lomake" }, { v: "errors", label: "Virheet" }, { v: "sent", label: "R4 Lähetetty" }, { v: "mail", label: "Sähköpostit" } ] }
+  ],
+  defaults: { view: "a", asiakas: "", step: "form" }
+};
+
+/* ══════════ SHELL: kehys (01-etusivu.md A0/B0, A6/B7) ══════════
+   Kehys ja sen linkit ovat kirjastossa (lib/components/shell.js: Kirjaudu → 09,
+   Tilaukset, Tili-alavalikko, footer). Sivu antaa vain etusivun tilan mukaan
+   ja nykyisen kohdan. */
+const SHELL = {
+  lang: "fi",
+  skip: "Siirry sisältöön",
+  breadcrumbLabel: "Murupolku",
+  home: { a: "01-etusivu.html?view=a", b: "01-etusivu.html?view=b" },
+  /* Lisäkäyttäjä kuuluu tilin hallintaan */
+  current: { b: "tili" }
+};
+
+/* ══════════ PAGE: sivun koko sisältö (08-tunnukset.md) ══════════ */
+const PAGE = {
+  meta: {
+    title: "Pyydä tunnukset | Snellman tilauskanava",
+    description: "Tilaa Snellmanin tuotteet verkosta. Pyydä tunnukset lomakkeella, niin saat sähköpostiin linkin salasanan asettamiseen."
+  },
+  breadcrumb: {
+    home: { label: "Etusivu", hrefA: "01-etusivu.html?view=a", hrefB: "01-etusivu.html?view=b" },
+    currentA: "Pyydä tunnukset", currentB: "Pyydä lisäkäyttäjä"
+  },
+
+  /* Demoarvot. Lähetetyn lomakkeen arvot korvaavat nämä R4:ssä ja sähköposteissa. */
+  vars: {
+    "rivimäärä": "6",
+    "puhelinnumero": "020 XXX XXXX",
+    "aukioloaika": "ma–pe 8–16",
+    "sähköposti": "asiakaspalvelu@snellman.fi",
+    "tunnuspyynnot_sähköposti": "asiakaspalvelu@snellman.fi",
+    "aikaraja_tunnukset": "1–2 arkipäivän kuluessa",
+    "aikaraja_asiakkuus": "2 arkipäivän kuluessa",
+    "yritys": "Ravintola Toivola",
+    "asiakasnumero": "104233",
+    "company": "Ravintola Toivola",
+    "customer_id": "104233",
+    "business_id": "1234567-1",
+    "name": "Jarkko Toivola",
+    "email": "jarkko@toivola.fi",
+    "phone": "040 123 4567"
+  },
+
+  /* ── R1 ── */
+  intro: {
+    block: "core/group → core/heading H1 + core/paragraph",
+    h1: "Pyydä tunnukset",
+    lead: "Tunnuksilla tilaat Snellmanin lihatuotteet ja Kokkikartanon valmisruoat suoraan verkosta. Täytä tiedot, niin asiakaspalvelu avaa tunnukset.",
+    /* Kutsun saanut nykyinen asiakas voi päätyä tänne: polku takaisin kirjautumiseen */
+    have: { text: "Onko sinulla jo tunnukset?", login: { label: "Kirjaudu", href: "09-kirjautuminen.html" },
+      lost: { label: "Unohtuiko salasana?", href: "09-kirjautuminen.html?view=lost" } }
+  },
+  choice: {
+    block: "genero/access-request, vaihe 1: radio-kortit",
+    legend: "Oletko jo Snellmanin asiakas?",
+    opts: [
+      { v: "nykyinen", title: "Kyllä, tilaan jo Snellmanilta", sub: "Tilaat nyt puhelimella tai sähköpostilla. Tarvitset vain tunnukset." },
+      { v: "uusi",     title: "En vielä",                     sub: "Haluat avata asiakkuuden ja tilata verkosta." }
+    ],
+    pending: "Valitse ensin, oletko jo Snellmanin asiakas. Näytämme sen jälkeen oikeat kentät."
+  },
+
+  /* ── R2 ── */
+  steps: {
+    block: "core/list (järjestetty), vaihtuu R1:n valinnan mukaan",
+    heading: "Näin se etenee",
+    none:     ["Lähetä pyyntö. Saat kuittauksen sähköpostiin heti.", "Asiakaspalvelu käsittelee pyynnön {aikaraja_tunnukset}.", "Saat sähköpostiin linkin, jolla asetat salasanan ja pääset tilaamaan."],
+    nykyinen: ["Lähetä pyyntö. Saat kuittauksen sähköpostiin heti.", "Asiakaspalvelu liittää tunnukset asiakkuuteesi {aikaraja_tunnukset}.", "Saat sähköpostiin linkin, jolla asetat salasanan ja pääset tilaamaan."],
+    uusi:     ["Lähetä pyyntö. Saat kuittauksen sähköpostiin heti.", "Asiakaspalvelu soittaa sinulle ja avaa asiakkuuden {aikaraja_asiakkuus}.", "Saat sähköpostiin linkin, jolla asetat salasanan ja pääset tilaamaan."],
+    lisa:     ["Lähetä pyyntö. Saat kuittauksen sähköpostiin heti.", "Asiakaspalvelu lisää käyttäjän {aikaraja_tunnukset}.", "Työkaverisi saa sähköpostiin linkin, jolla hän asettaa salasanan."],
+    fill: "Aikarajat ovat palvelulupauksia: Snellman, Linda."
+  },
+
+  /* ── R3 ── */
+  form: {
+    block: "genero/access-request (uusi, jaettu lohko)",
+    headings: { nykyinen: "Tietosi", uusi: "Yrityksen ja yhteyshenkilön tiedot", lisa: "Työkaverin tiedot" },
+    optional: "(valinnainen)",
+    fields: {
+      nykyinen: [
+        { id: "company", label: "Yrityksen nimi", type: "text", ac: "organization", req: true },
+        { id: "customer_id", label: "Asiakasnumero tai y-tunnus", help: "Asiakasnumero löytyy Snellmanin laskusta.", type: "text", req: true, rule: "customer",
+          fill: "Näkyykö asiakasnumero laskulla? (Linda)" },
+        { id: "name", label: "Nimesi", mailLabel: "Yhteyshenkilö", type: "text", ac: "name", req: true },
+        { id: "email", label: "Sähköposti", help: "Tunnukset lähetetään tähän osoitteeseen.", type: "email", ac: "email", req: true, rule: "email" },
+        { id: "phone", label: "Puhelin", type: "tel", ac: "tel", req: false, rule: "phone" }
+      ],
+      uusi: [
+        { id: "company", label: "Yrityksen nimi", type: "text", ac: "organization", req: true },
+        { id: "business_id", label: "Y-tunnus", help: "Muodossa 1234567-1.", type: "text", mode: "numeric", req: true, rule: "ytunnus", short: true },
+        { id: "business_type", label: "Toimipaikka", type: "select", req: true,
+          options: ["Ravintola", "Kahvila", "Kioski", "Lähikauppa", "Muu"], placeholder: "Valitse" },
+        { id: "street", label: "Toimitusosoite", type: "text", ac: "street-address", req: true },
+        { row: [
+          { id: "postcode", label: "Postinumero", type: "text", mode: "numeric", ac: "postal-code", req: true, rule: "postcode" },
+          { id: "city", label: "Postitoimipaikka", type: "text", ac: "address-level2", req: true }
+        ] },
+        { id: "name", label: "Nimesi", mailLabel: "Yhteyshenkilö", type: "text", ac: "name", req: true },
+        { id: "email", label: "Sähköposti", help: "Tunnukset lähetetään tähän osoitteeseen.", type: "email", ac: "email", req: true, rule: "email" },
+        { id: "phone", label: "Puhelin", errName: "puhelinnumero", help: "Asiakaspalvelu soittaa ennen asiakkuuden avaamista.", type: "tel", ac: "tel", req: true, rule: "phone",
+          fill: "Onko puhelin pakollinen uudelle asiakkaalle? (myynti)" },
+        { id: "message", label: "Mitä aiot tilata?", help: "Esimerkiksi valmisruokia viikoittain tai lihatuotteita grillikauteen.", type: "textarea", req: false }
+      ],
+      lisa: [
+        { id: "name", label: "Työkaverin nimi", type: "text", req: true },
+        { id: "email", label: "Työkaverin sähköposti", help: "Tunnukset lähetetään tähän osoitteeseen.", type: "email", req: true, rule: "email" }
+      ]
+    },
+    /* Vain kirjautuneelle: esitäytetty yritys */
+    readonly: { label: "Yritys", value: "{yritys}, asiakasnumero {asiakasnumero}" },
+    privacy: { text: "Käytämme tietoja vain tunnusten ja asiakkuuden avaamiseen. Lue ", link: "tietosuojaseloste", href: "#" },
+    submit: "Lähetä pyyntö",
+    sending: "Lähetetään…",
+    honeypot: "Jätä tämä kenttä tyhjäksi",
+    errors: {
+      required: "Täytä {kenttä}.",
+      select: "Valitse toimipaikan tyyppi.",
+      email: "Tarkista sähköpostiosoite. Esimerkiksi nimi@yritys.fi.",
+      ytunnus: "Kirjoita y-tunnus muodossa 1234567-1.",
+      ytunnusCheck: "Y-tunnus ei täsmää. Tarkista numerot.",
+      customer: "Tarkista asiakasnumero tai y-tunnus.",
+      postcode: "Postinumerossa on 5 numeroa.",
+      phone: "Tarkista puhelinnumero. Esimerkiksi 040 123 4567.",
+      summary: "Tarkista merkityt kentät.",
+      technical: "Pyyntö ei lähtenyt. Yritä uudelleen hetken päästä tai soita {puhelinnumero}. Täyttämäsi tiedot ovat tallessa."
+    },
+    fillShared: "Toteutus: olemassa oleva lomakeratkaisu multisitessa (esim. Gravity Forms) vai oma lohko? Roskapostisuoja: piilokenttä + lähetysaika alle 3 s hylätään, ei CAPTCHAa. (Oskar)"
+  },
+
+  /* ── R4 ── */
+  sent: {
+    heading: "Kiitos, pyyntö on lähetetty",
+    t1: "Lähetimme kuittauksen osoitteeseen {email}.",
+    t2: {
+      nykyinen: "Asiakaspalvelu liittää tunnukset asiakkuuteesi {aikaraja_tunnukset}. Saat sen jälkeen sähköpostiin linkin salasanan asettamiseen.",
+      uusi: "Asiakaspalvelu soittaa sinulle {aikaraja_asiakkuus} numeroon {phone} ja avaa asiakkuuden. Saat sen jälkeen sähköpostiin linkin salasanan asettamiseen.",
+      lisa: "Asiakaspalvelu lisää käyttäjän {aikaraja_tunnukset}. {name} saa sähköpostiin linkin salasanan asettamiseen."
+    },
+    t3: "Etkö saanut kuittausta? Tarkista roskaposti tai soita {puhelinnumero}.",
+    back: { label: "Takaisin etusivulle", hrefA: "01-etusivu.html?view=a", hrefB: "01-etusivu.html?view=b" }
+  },
+
+  /* ── R5 ── */
+  other: "Voit pyytää tunnukset myös soittamalla {puhelinnumero} arkisin {aukioloaika} tai sähköpostilla {sähköposti}.",
+
+  /* ── R6 ── */
+  lisa: {
+    h1: "Pyydä lisäkäyttäjä",
+    lead: "Lisää työkaverille omat tunnukset. Hän näkee saman valikoiman, hinnat ja tilaushistorian kuin sinä.",
+    fill: "Riippuu siitä, voiko yrityksellä olla useita käyttäjiä (Oskar). Jos ei voi, kirjautunut ohjataan etusivulle."
+  },
+
+  /* ── Sähköpostit R-S1–R-S4 ── */
+  mails: {
+    label: "Sähköpostit",
+    intro: "Sähköpostit, jotka pyynnöstä syntyy. Arvot tulevat lomakkeelta, jos lähetit sen, muuten demoarvot.",
+    from: "Snellman tilauskanava",
+    head: { from: "Lähettäjä", to: "Vastaanottaja", replyTo: "Vastaa", subj: "Aihe", company: "Yritys" },
+    s1: {
+      tag: "R-S1 · Ilmoitus asiakaspalveluun (notifikaatio Snellmanille)", when: "Heti lähetyksestä",
+      to: "{tunnuspyynnot_sähköposti}", replyTo: "{email}",
+      subj: { nykyinen: "Tunnuspyyntö, nykyinen asiakas: {company} ({customer_id})", uusi: "Tunnuspyyntö, uusi asiakas: {company} ({business_id})", lisa: "Lisäkäyttäjä: {yritys} ({asiakasnumero})" },
+      intro: "Uusi pyyntö tilauskanavan tunnuksista. Vastaa tähän viestiin, niin vastaus menee suoraan pyytäjälle.",
+      meta: "Lähetetty 30.9.2026 klo 10.42 sivulta /tunnukset/",
+      todoLabel: "Näin käsittelet",
+      todo: {
+        nykyinen: ["Tarkista asiakasnumero M3:sta.", "Lisää sähköposti asiakkaan verkkokäyttäjäksi.", "Synkka luo tunnuksen, ja asiakas saa linkin salasanan asettamiseen automaattisesti."],
+        uusi: ["Soita asiakkaalle.", "Avaa asiakkuus M3:ssa.", "Lisää sähköposti asiakkaan verkkokäyttäjäksi. Synkka lähettää linkin salasanan asettamiseen."],
+        lisa: ["Lisää sähköposti asiakkaan {asiakasnumero} verkkokäyttäjäksi.", "Synkka luo tunnuksen ja lähettää linkin salasanan asettamiseen."]
+      },
+      fill: "Vastaanottaja ja käsittelyvaiheet vahvistetaan (Teija, Oskar). Pyyntö tallennetaan myös WordPressiin."
+    },
+    s2: {
+      tag: "R-S2 · Kuittaus pyytäjälle", when: "Heti lähetyksestä", to: "{email}",
+      subj: "Saimme tunnuspyyntösi",
+      body: "Hei {name}, saimme pyyntösi tunnuksista Snellmanin tilauskanavaan yritykselle {company}.",
+      outro: "Jos sinulla on kysyttävää, vastaa tähän viestiin tai soita {puhelinnumero}."
+    },
+    /* R-S3 ja R-S4: sisältö kirjaston inviteEmail-komponentissa (lib/components/account.js,
+       SN.UI.inviteEmail), sama kuin 09:n kutsuviesti. Tässä vain tunniste ja ajankohta. */
+    s3: {
+      tag: "R-S3 · Tunnukset valmiina (WooCommerce customer_new_account, muokattu)", when: "Kun synkka luo käyttäjän", variant: "ready", id: "rs3-h",
+      fill: "WooCommerce-asetus „Send password setup link” päällä. Luoko M3-synkka WP-käyttäjät? (Oskar)"
+    },
+    s4: {
+      tag: "R-S4 · Kutsu nykyisille asiakkaille (julkaisu)", when: "Julkaisuerän synkka, vain jos Snellman kutsuu", variant: "launch", id: "rs4-h",
+      fill: "Avoin: kutsutaanko nykyiset asiakkaat? Edellyttää tilaajan sähköpostia M3:ssa (Kent, Olga)."
+    }
+  },
+
+  /* Mittaus (08-tunnukset.md: Mittaus). Tapahtumat lähtevät dataLayeriin (ks. track); tämä on annotaatio. */
+  tracking: {
+    label: "Wireframe-annotaatio: mittaus",
+    rows: [
+      ["access_request_start (oma)", "R1-valinta tai ensimmäinen kenttä saa fokuksen", "lead_type: existing, new, additional_user"],
+      ["form_error (oma)", "Lähetys hylätään validoinnissa", "field, lead_type"],
+      ["generate_lead (avaintapahtuma)", "R4 näkyy", "lead_type, method = form"]
+    ]
+  }
+};
+</script>
+
+<body>
+<a href="#main" class="skip" id="skiplink"></a>
+<div class="proto"><div class="container" id="proto"></div></div>
+<div id="shell-header"></div>
+<div id="crumb"></div>
+<main id="main"></main>
+<div id="shell-footer"></div>
+
+
+<!-- ══════════ RENDER ══════════ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ─── Tila: vain URL:sta, ei localStoragea.
+     Speksi R1: ilman ?asiakas=-parametria kumpikaan kortti ei ole valittuna,
+     joten edellistä valintaa ei saa muistaa. ─────────────────────── */
+  const S = Object.assign({}, PROTO.defaults);
+  (function readState() {
+    const q = new URLSearchParams(location.search);
+    PROTO.controls.forEach((c) => { if (q.has(c.key)) S[c.key] = q.get(c.key); });
+    if (q.get("lahetetty") === "1") S.step = "sent";
+  })();
+  function syncUrl() {
+    const q = new URLSearchParams();
+    Object.keys(PROTO.defaults).forEach((k) => { if (S[k] !== PROTO.defaults[k]) q.set(k, S[k]); });
+    if (S.step === "sent") { q.delete("step"); q.set("lahetetty", "1"); }
+    const qs = q.toString();
+    history.replaceState(null, "", location.pathname + (qs ? "?" + qs : "") + location.hash);
+  }
+  function setState(k, v) { S[k] = v; syncUrl(); render(); }
+  const isB = () => S.view === "b";
+  /* Lomakkeen tyyppi: nykyinen / uusi / lisa (kirjautunut) / "" (ei valittu) */
+  const lead = () => isB() ? "lisa" : S.asiakas;
+
+  /* Täytetyt arvot säilyvät uudelleenpiirroissa ja päätyvät R4:ään ja sähköposteihin. */
+  const VKEY = "snellman-wf-08-values";
+  /* Kaksi erillistä joukkoa: pyytäjän omat tiedot (nykyinen ja uusi jakavat nimen ja sähköpostin)
+     ja kirjautuneen lisäkäyttäjälomake, jossa nimi ja sähköposti ovat työkaverin. */
+  let STORE = {};
+  try { STORE = JSON.parse(sessionStorage.getItem(VKEY) || "{}") || {}; } catch (e) { STORE = {}; }
+  const bucket = () => (STORE[isB() ? "lisa" : "a"] = STORE[isB() ? "lisa" : "a"] || {});
+  let VALUES = bucket();
+  function saveValues() { try { sessionStorage.setItem(VKEY, JSON.stringify(STORE)); } catch (e) { /* privaatti */ } }
+  const val = (id) => VALUES[id] == null ? "" : VALUES[id];
+  /* Demoarvot + käyttäjän arvot (vain ei-tyhjät) */
+  function mailVals() {
+    const out = {};
+    Object.keys(VALUES).forEach((k) => { if (String(VALUES[k]).trim()) out[k] = VALUES[k]; });
+    if (isB()) { out.company = PAGE.vars.yritys; }
+    return out;
+  }
+
+  /* ─── Apurit ──────────────────────────────────────────────────── */
+  const esc = SN.esc;
+  /* Sivun omat ikonit samasta Snellmanin FA Pro -kitistä (Light), jonka lib/core.js lataa */
+  const ico = (n) => '<span class="ico" aria-hidden="true"><i class="fa-light fa-' + n + '"></i></span>';
+  function vars(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, function (m, key) {
+      const v = src[key];
+      if (v == null) return SN.render("fill", { text: key });
+      return '<span class="var">' + esc(v) + '</span>';
+    });
+  }
+  function varsPlain(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, (m, k) => (src[k] == null ? m : src[k]));
+  }
+  /* TÄYTTÖ-merkintä kirjastosta (basics.js: fill) */
+  const fill = (t) => t ? SN.render("fill", { text: t, block: true }) : "";
+  const button = (a) => SN.render("button", a);
+
+  function block(inner, o) {
+    o = o || {};
+    const lab = o.labelledby ? ' aria-labelledby="' + esc(o.labelledby) + '"' : o.label ? ' aria-label="' + esc(o.label) + '"' : "";
+    const mod = (o.variant ? " block--" + esc(o.variant) : "") + (o.cls ? " " + o.cls : "");
+    const cw = o.narrow ? " container--text" : "";
+    return '<section class="block' + mod + '"' + lab + '><div class="container' + cw + '">' + inner + "</div></section>";
+  }
+
+  /* ─── Proto-palkki ────────────────────────────────────────────── */
+  function renderProto() {
+    const meta = PROTO.meta.map((m) => "<span>" + esc(m) + "</span>").join('<span aria-hidden="true">·</span>');
+    const ctrls = PROTO.controls.filter((c) => !c.only || c.only === S.view).map(function (c) {
+      const opts = c.opts.map((o) =>
+        '<button type="button" data-k="' + esc(c.key) + '" data-v="' + esc(o.v) + '" aria-pressed="' +
+        (S[c.key] === o.v) + '">' + esc(o.label) + "</button>").join("");
+      return '<span class="ctrl"><span class="ctrl__label">' + esc(c.label) + '</span><span class="ctrl__opts">' + opts + "</span></span>";
+    }).join("");
+    document.getElementById("proto").innerHTML =
+      '<div class="proto__title">' + PROTO.title + meta + "</div>" +
+      '<div class="proto__ctrls"><span class="ctrl"><span class="ctrl__label">' + esc(PROTO.hint) + "</span></span>" + ctrls + "</div>" +
+      '<div class="proto__legend">' + PROTO.legend.map((l) =>
+        '<span><i class="lg lg--' + esc(l.cls) + '" aria-hidden="true"></i>' + esc(l.label) + "</span>").join("") + "</div>";
+  }
+
+  /* ─── Kehys ───────────────────────────────────────────────────── */
+  function renderShell() {
+    document.documentElement.lang = SHELL.lang;
+    document.title = (isB() ? PAGE.lisa.h1 + " | Snellman tilauskanava" : PAGE.meta.title) + " (wireframe)";
+    let md = document.head.querySelector('meta[name="description"]');
+    if (!md) { md = document.createElement("meta"); md.name = "description"; document.head.appendChild(md); }
+    md.content = PAGE.meta.description;
+    document.getElementById("skiplink").textContent = SHELL.skip;
+    /* Kehys kirjastosta. Sivu antaa vain omat linkkinsä SN.SHELLiin. */
+    SN.SHELL.home = isB() ? SHELL.home.b : SHELL.home.a;
+    document.getElementById("shell-header").innerHTML = SN.render("header", {
+      state: isB() ? "b" : "a", current: isB() ? SHELL.current.b : "", outlet: false, search: true,
+      cartCount: parseInt(PAGE.vars["rivimäärä"], 10) || 0 });
+    document.getElementById("shell-footer").innerHTML = SN.render("footer", { loggedIn: isB() });
+  }
+  function renderBreadcrumb() {
+    const b = PAGE.breadcrumb;
+    document.getElementById("crumb").innerHTML = '<div class="container crumb">' + SN.render("breadcrumb", {
+      label: SHELL.breadcrumbLabel,
+      items: [ { label: b.home.label, href: isB() ? b.home.hrefB : b.home.hrefA }, { label: isB() ? b.currentB : b.currentA } ] }) + "</div>";
+  }
+
+  /* ─── Validointi (08-tunnukset.md R3) ─────────────────────────── */
+  function flatFields(t) {
+    const out = [];
+    (PAGE.form.fields[t] || []).forEach((f) => { if (f.row) f.row.forEach((r) => out.push(r)); else out.push(f); });
+    return out;
+  }
+  const ytunnusOk = SN.validators.ytunnus;   /* tarkiste: lib/components/forms.js */
+  function validate(t) {
+    const E = PAGE.form.errors, errs = {};
+    flatFields(t).forEach(function (f) {
+      const v = String(val(f.id)).trim();
+      if (!v) {
+        if (f.req) errs[f.id] = f.type === "select" ? E.select : varsPlain(E.required, { "kenttä": f.errName || f.label.toLowerCase() });
+        return;
+      }
+      if (f.rule === "email" && !SN.validators.email(v)) errs[f.id] = E.email;
+      if (f.rule === "ytunnus" && !ytunnusOk(v)) errs[f.id] = SN.validators.ytunnusFormat(v) ? E.ytunnusCheck : E.ytunnus;
+      if (f.rule === "postcode" && !SN.validators.postcode(v)) errs[f.id] = E.postcode;
+      if (f.rule === "phone" && !SN.validators.phone(v)) errs[f.id] = E.phone;
+      /* Asiakasnumero (numeroita) tai y-tunnus */
+      if (f.rule === "customer" && !SN.validators.customer(v)) errs[f.id] = E.customer;
+    });
+    return errs;
+  }
+
+  /* ─── Kentät ──────────────────────────────────────────────────── */
+  /* Sivun kenttäkonfiguraatio → lib field -argumentit */
+  const fieldArgs = (f, errs) => ({ name: f.id, label: f.label, type: f.type, value: val(f.id), help: f.help || "", error: errs[f.id] || "",
+    required: !!f.req, short: !!f.short, autocomplete: f.ac || "", inputmode: f.mode || "", placeholder: f.placeholder || "",
+    options: f.options || [], rule: f.rule || "", fill: f.fill || "" });
+  const fieldHTML = (f, errs) => SN.render("field", fieldArgs(f, errs));
+
+  /* ═══════════ R1 + R2 + R3 ═══════════ */
+  function renderChoice() {
+    if (isB()) return "";
+    const c = PAGE.choice;
+    return '<div class="req__choice">' + SN.render("choiceCards", { name: "asiakas", legend: c.legend, value: S.asiakas,
+      options: c.opts.map((o) => ({ value: o.v, title: o.title, sub: o.sub })) }) + "</div>";
+  }
+
+  function renderForm(errs) {
+    const F = PAGE.form, t = lead();
+    if (!t) return '<div class="req__form">' + SN.render("notice", { tone: "info", text: PAGE.choice.pending }) + "</div>";
+    const ids = Object.keys(errs);
+    const summary = SN.render("errorSummary", { id: "errsum", title: F.errors.summary,
+      items: flatFields(t).filter((f) => errs[f.id]).map((f) => ({ field: "f-" + f.id, label: f.label, text: errs[f.id] })) });
+    const fields = F.fields[t].map((f) => f.row
+      ? SN.render("fieldRow", { fields: f.row.map((r) => fieldArgs(r, errs)) })
+      : fieldHTML(f, errs)).join("");
+    const ro = isB()
+      ? SN.render("readonlyValue", { label: F.readonly.label, valueHtml: vars(F.readonly.value) }) : "";
+    return '<form class="form req__form" id="wf-form" novalidate aria-labelledby="form-title">' +
+      '<h2 id="form-title">' + esc(F.headings[t]) + "</h2>" + summary + ro + fields +
+      SN.render("honeypot", { name: "website" }) +
+      '<p class="privacy">' + esc(F.privacy.text) + '<a href="' + esc(F.privacy.href) + '">' + esc(F.privacy.link) + "</a>.</p>" +
+      '<div class="form__submit" id="wf-submit">' + button({ label: F.submit, type: "submit", variant: "primary" }) + "</div>" +
+      (isB() ? "" : '<p class="other">' + vars(PAGE.other) + "</p>") +
+      fill(F.fillShared) +
+      "</form>";
+  }
+
+  function renderSteps() {
+    const c = PAGE.steps, t = lead() || "none";
+    return '<aside class="req__aside" aria-labelledby="steps-title">' +
+      SN.render("stepList", { id: "steps-title", heading: c.heading, itemsHtml: c[t].map((x) => vars(x)) }) + fill(c.fill) + "</aside>";
+  }
+
+  function haveAccount() {
+    const h = PAGE.intro.have;
+    return '<p class="have"><span>' + esc(h.text) + ' <a href="' + esc(h.login.href) + '">' + esc(h.login.label) + '</a></span>' +
+      '<a href="' + esc(h.lost.href) + '">' + esc(h.lost.label) + "</a></p>";
+  }
+
+  function renderRequest(errs) {
+    const intro = isB()
+      ? '<div class="req__intro"><h1 id="page-title">' + esc(PAGE.lisa.h1) + '</h1><p class="lead">' + esc(PAGE.lisa.lead) + "</p>" + fill(PAGE.lisa.fill) + "</div>"
+      : '<div class="req__intro"><h1 id="page-title">' + esc(PAGE.intro.h1) + '</h1><p class="lead">' + esc(PAGE.intro.lead) + "</p>" + haveAccount() + "</div>";
+    return block('<div class="req">' + intro + renderChoice() + renderSteps() + renderForm(errs) + "</div>" + renderTracking(),
+      { labelledby: "page-title", cls: "block--tightTop" });
+  }
+
+  /* ═══════════ R4 Lähetetty ═══════════ */
+  function renderSent() {
+    const c = PAGE.sent, t = lead() || "nykyinen", mv = mailVals();
+    return block('<div class="sent" role="status" aria-live="polite">' +
+      '<span class="sent__ico">' + ico("check") + "</span>" +
+      '<h1 id="sent-title" tabindex="-1">' + esc(c.heading) + "</h1>" +
+      "<p>" + vars(c.t1, mv) + "</p><p>" + vars(c.t2[t], mv) + "</p>" +
+      '<p class="small">' + vars(c.t3) + "</p>" +
+      button({ label: c.back.label, href: isB() ? c.back.hrefB : c.back.hrefA, variant: "outline" }) +
+      "</div>" + renderTracking(), { narrow: true, labelledby: "sent-title", cls: "block--tightTop" });
+  }
+
+  /* ═══════════ Sähköpostit R-S1–R-S4 ═══════════ */
+  function mail(m, subj, body, to, extraHead) {
+    const H = PAGE.mails.head;
+    return '<article class="mail"><div class="mail__tag"><b>' + esc(m.tag) + "</b><span>" + esc(m.when) + "</span></div>" +
+      '<dl class="mail__head"><dt>' + esc(H.from) + "</dt><dd>" + esc(PAGE.mails.from) + "</dd>" +
+      "<dt>" + esc(H.to) + "</dt><dd>" + to + "</dd>" + (extraHead || "") +
+      "<dt>" + esc(H.subj) + '</dt><dd class="subj">' + subj + "</dd></dl>" +
+      '<div class="mail__body">' + body + fill(m.fill) + "</div></article>";
+  }
+  /* R-S3/R-S4: kirjaston kutsuviesti, arvot lomakkeelta (tai demoarvot) */
+  function invite(m, mv) {
+    const v = (k) => varsPlain("{" + k + "}", mv);
+    return '<div class="mail mail--invite"><div class="mail__tag"><b>' + esc(m.tag) + "</b><span>" + esc(m.when) + "</span></div>" +
+      SN.render("inviteEmail", { variant: m.variant, id: m.id, name: v("name"), company: v("company"), email: v("email"),
+        phone: PAGE.vars.puhelinnumero, headingLevel: "h3" }) + fill(m.fill) + "</div>";
+  }
+  function renderMails() {
+    const M = PAGE.mails, t = lead() || "nykyinen", mv = mailVals();
+    const labels = {};
+    flatFields(t).forEach((f) => { labels[f.id] = f.label; });
+    const kv = flatFields(t).map((f) => {
+      const v = mv[f.id] != null ? mv[f.id] : PAGE.vars[f.id];
+      return "<dt>" + esc(f.mailLabel || f.label) + "</dt><dd>" + (v ? esc(v) : "–") + "</dd>";
+    }).join("");
+    const s1 = M.s1;
+    const s1body = "<p>" + esc(s1.intro) + "</p>" +
+      (isB() ? '<dl class="mail__kv"><dt>' + esc(M.head.company) + "</dt><dd>" + esc(PAGE.vars.yritys) + " (" + esc(PAGE.vars.asiakasnumero) + ")</dd>" + kv + "</dl>"
+             : '<dl class="mail__kv">' + kv + "</dl>") +
+      '<p class="small">' + esc(s1.meta) + "</p>" +
+      '<div class="mail__todo"><b>' + esc(s1.todoLabel) + "</b><ol>" + s1.todo[t].map((x) => "<li>" + vars(x, mv) + "</li>").join("") + "</ol></div>";
+    const out = [
+      mail(s1, vars(s1.subj[t], mv), s1body, vars(s1.to), "<dt>" + esc(M.head.replyTo) + "</dt><dd>" + vars(s1.replyTo, mv) + "</dd>"),
+      mail(M.s2, esc(M.s2.subj),
+        "<p>" + vars(M.s2.body, mv) + "</p><p>" + vars(PAGE.sent.t2[t], mv) + "</p><p>" + vars(M.s2.outro) + "</p>", vars(M.s2.to, mv)),
+      invite(M.s3, mv)
+    ];
+    if (t === "nykyinen") out.push(invite(M.s4, mv));
+    return block('<p class="lead mails__intro">' + esc(M.intro) + '</p><div class="mails">' + out.join("") + "</div>",
+      { narrow: true, label: M.label, cls: "block--tightTop" });
+  }
+
+  function renderTracking() {
+    const c = PAGE.tracking;
+    return '<details class="annot"><summary>' + esc(c.label) + "</summary><table><tbody>" +
+      c.rows.map((r) => "<tr>" + r.map((x) => "<td>" + esc(x) + "</td>").join("") + "</tr>").join("") + "</tbody></table></details>";
+  }
+
+  /* ─── Kokoaminen ──────────────────────────────────────────────── */
+  let pendingErrs = null;
+  function render(focus) {
+    VALUES = bucket();
+    renderProto();
+    renderShell();
+    const main = document.getElementById("main");
+    renderBreadcrumb();
+    let errs = {};
+    if (S.step === "errors") {
+      if (!lead()) S.asiakas = "nykyinen";
+      errs = pendingErrs || validate(lead());
+    }
+    main.innerHTML = S.step === "sent" ? renderSent() : S.step === "mail" ? renderMails() : renderRequest(errs);
+    pendingErrs = null;
+    wire();
+    if (focus) { const el = document.querySelector(focus); if (el) el.focus(); }
+  }
+
+  /* ─── Mittaus (08-tunnukset.md: Mittaus) ──────────────────────── */
+  const LEAD_TYPE = { nykyinen: "existing", uusi: "new", lisa: "additional_user" };
+  let started = false;
+  function track(event, params) {
+    const data = Object.assign({ event }, params);
+    (window.dataLayer = window.dataLayer || []).push(data);
+    SN.emit(document.body, "track", data);   /* näkyy kirjaston Toiminnot-lokissa */
+  }
+  function trackStart() {
+    if (started || !lead()) return;
+    started = true; track("access_request_start", { lead_type: LEAD_TYPE[lead()] });
+  }
+
+  /* ─── Vuorovaikutus ───────────────────────────────────────────── */
+  function wire() {
+    document.querySelectorAll("#proto button[data-k]").forEach(function (b) {
+      b.addEventListener("click", () => setState(b.dataset.k, b.dataset.v));
+    });
+    document.querySelectorAll('input[name="asiakas"]').forEach(function (r) {
+      r.addEventListener("change", function () {
+        S.asiakas = r.value; trackStart();
+        if (S.step === "errors") S.step = "form";
+        syncUrl(); render('input[name="asiakas"][value="' + r.value + '"]');
+      });
+    });
+    const form = document.getElementById("wf-form");
+    if (!form) return;
+    form.addEventListener("focusin", trackStart);
+    form.addEventListener("input", function (e) {
+      const el = e.target; if (!el.name || el.name === "website") return;
+      VALUES[el.name] = el.value; saveValues();
+      /* Korjattu kenttä vapautuu virheestä heti: lib (forms.js, data-rule). */
+    });
+    form.addEventListener("change", function (e) {
+      const el = e.target; if (el.name && el.name !== "website") { VALUES[el.name] = el.value; saveValues(); }
+    });
+    form.addEventListener("submit", function (e) {
+      e.preventDefault(); trackStart();
+      const errs = validate(lead());
+      if (Object.keys(errs).length) {
+        track("form_error", { field: Object.keys(errs).join(","), lead_type: LEAD_TYPE[lead()] });
+        pendingErrs = errs; S.step = "errors"; syncUrl(); render("#errsum");
+        return;
+      }
+      if (document.getElementById("f-website").value) return; /* piilokenttä täytetty → hiljainen hylkäys */
+      const btn = document.querySelector("#wf-submit button");
+      btn.setAttribute("aria-disabled", "true"); btn.innerHTML = SN.cap(PAGE.form.sending);
+      setTimeout(function () {
+        S.step = "sent"; syncUrl(); render("#sent-title"); window.scrollTo(0, 0);
+        track("generate_lead", { lead_type: LEAD_TYPE[lead()], method: "form" });
+      }, 700);
+    });
+  }
+
+  SN.mount(document);
+  render();
+})();
+</script>
+</body>
+</html>

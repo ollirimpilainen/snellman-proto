@@ -1,0 +1,117 @@
+/* =================================================================
+ * SNELLMAN RETAIL — jaetut tokenit ja perustyylit
+ * ------------------------------------------------------------------
+ * Yksi totuus kaikille wireframe-sivuille ja komponenttikirjastolle.
+ * Arvot: 07-ostoskori.html:n :root (uusin, katselmoitu setti), joka
+ * on koottu Henkilöstökaupan computed-arvoista 15.9.2026.
+ * Perustelut: ../../design-system/visual-reference.md, ../../DESIGN.md
+ *
+ * Tekstiväri: kuusi seitsemästä sivusta käyttää #333031. Kauppa
+ * piirtää tuotelistan tekstin #000 (06-tuoterivi.html). Ero on
+ * tietoinen ja kirjattu kirjaston Värit-sivulle.
+ * ================================================================= */
+
+@font-face { font-family: tabernaserif; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("https://shop.snellman.fi/app/themes/wp-gds-theme/public/fonts/TabernaSerif/TabernaSerif-Regular.otf") format("opentype"); }
+@font-face { font-family: thesansb; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("https://shop.snellman.fi/app/themes/wp-gds-theme/public/fonts/TheSansB/TheSansB-W5Plain.otf") format("opentype"); }
+@font-face { font-family: thesansb; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("https://shop.snellman.fi/app/themes/wp-gds-theme/public/fonts/TheSansB/TheSansB-W7Bold.otf") format("opentype"); }
+
+:root {
+  /* ── Värit — theme.json-presetit, nämä piirtävät sivun ─────────── */
+  --c-primary:       #00522c;   /* header, painikkeet, otsikot */
+  --c-bg:            #fcfcfc;   /* sivun pohja */
+  --c-bg-block:      #f3f2eb;   /* lohkotausta, pellava, chip */
+  --c-bg-accent:     #e2f1ec;   /* korostuspinta, sivupalkit */
+  --c-surface:       #ffffff;   /* kortti */
+  --c-dark:          #333031;
+  --c-text:          #333031;   /* leipäteksti */
+  --c-text-2:        #57534f;   /* toissijainen — AA valkoisella */
+  --c-meta:          #595959;   /* lisätiedot, normaalihinta — AA valkoisella */
+  --c-on-dark:       #ffffff;
+  --c-border:        #dcdcd6;
+  --c-border-strong: #8f8f86;   /* 3.26:1 valkoisella — WCAG 1.4.11 */
+  --c-hairline:      rgba(0,0,0,.098);
+  --c-disabled:      #b9b9b1;
+  --c-ph-bg:         #ecebe4;   /* placeholder */
+  --c-ph-border:     #c9c8bf;
+  --c-error:         #bd0a0a;
+  --c-error-bg:      #fdeceb;
+  --c-warn-bg:       #fff5ed;
+  --c-warn-text:     #9b4a08;
+  --c-bg-incart:     #f1f8f4;   /* korissa oleva rivi (A/C) */
+  --c-on-dark-2:     #e8e7e1;   /* footerin teksti */
+  --c-on-dark-link:  #cdccc4;   /* footerin linkit, 9.9:1 antrasiitilla */
+  --c-focus:         #00522c;   /* fokusrengas vaalealla */
+  --c-focus-on-dark: #ffffff;   /* fokusrengas vihreällä/tummalla */
+  --c-fill-bg:       #fff6d6;   /* TÄYTTÖ / avoin kysymys */
+  --c-fill-border:   #e0c86a;
+  --c-fill-text:     #5c4a00;
+  /* Merkinnät — 06-tuoterivi.md + README:n AA-poikkeama Boost-tekstissä */
+  --c-boost-bg:      #ffdc4a;  --c-boost-text:  #7a5800;
+  --c-outlet-bg:     #fe9f4d;  --c-outlet-text: #542700;
+
+  /* ── Typografia ────────────────────────────────────────────────── */
+  --font-display: tabernaserif, Georgia, "Times New Roman", serif;
+  --font-sans:    thesansb, arial, helvetica, sans-serif;
+  --fs-body: 16px;  --lh-body: 1.75;
+  --fs-small: 14px; --fs-xs: 13px; --fs-eyebrow: 12px; --fs-micro: 11px;
+  --fs-h1: clamp(32px, calc(32 / 600 * 100vw), 48px);
+  --fs-h2: clamp(28px, calc(28 / 600 * 100vw), 34px);
+  --fs-h3: 24px; --fs-h4: 20px;
+  --ls-heading: 0.02em;
+  --ls-button: 1.28px;
+
+  /* ── Välistys — GDS-skaala ─────────────────────────────────────── */
+  --gap-4: 4px; --gap-8: 8px; --gap-12: 12px; --gap-16: 16px;
+  --gap-24: 24px; --gap-32: 32px; --gap-40: 40px; --gap-48: 48px;
+  --gap-60: 60px; --gap-80: 80px;
+
+  /* ── Muodot ────────────────────────────────────────────────────── */
+  --r-none: 0; --r-card: 8px; --r-tag: 10px;
+  --shadow-card: 2px 3px 8px #0000001f;
+  --touch: 44px;
+
+  /* ── Layout ────────────────────────────────────────────────────── */
+  --container: 1200px; --container-text: 792px; --pad: 24px; --nav-h: 100px;
+  /* Sivun omien sticky-elementtien etäisyys yläreunasta: headerin korkeus
+     silloin kun header on sticky, muuten 0. Käytä: top: calc(var(--sticky-offset) + 16px) */
+  --sticky-offset: var(--nav-h);
+}
+@media (max-width: 63.99em) { :root { --nav-h: 80px; } }
+@media (max-width: 37.49em) { :root { --nav-h: 70px; --pad: 15px; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+/* until-found: selaimen haku löytää ja avaa suljetun haitarin sisällön */
+[hidden]:not([hidden="until-found"]) { display: none !important; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--c-bg); color: var(--c-text);
+  font-family: var(--font-sans); font-size: var(--fs-body); line-height: var(--lh-body);
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+img, svg { display: block; max-width: 100%; height: auto; }
+a { color: inherit; }
+p { margin: 0 0 0.7em; }
+p:last-child { margin-bottom: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+h1, h2, h3, h4 { margin: 0; color: var(--c-primary); letter-spacing: var(--ls-heading); }
+h1 { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-h1); line-height: 1.08; }
+h2 { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-h2); line-height: 1.16; }
+h3 { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h3); line-height: 1.2; }
+h4 { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); line-height: 1.2; }
+a:focus-visible, button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-visible, summary:focus-visible {
+  outline: 3px solid var(--c-focus); outline-offset: 2px; }
+/* Tummalla pohjalla rengas on valkoinen: vihreä vihreällä on 1:1 (WCAG 2.4.7). */
+.site-header :focus-visible, .site-footer :focus-visible, .on-dark :focus-visible { outline-color: var(--c-focus-on-dark); }
+.skip { position: absolute; left: -9999px; top: 0; background: var(--c-primary); color: #fff;
+  padding: var(--gap-8) var(--gap-16); z-index: 200; }
+.skip:focus { left: 8px; top: 8px; }
+.container { max-width: var(--container); margin: 0 auto; padding-left: var(--pad); padding-right: var(--pad); }
+.container--text { max-width: var(--container-text); }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+.ico { display: inline-flex; width: 1em; height: 1em; flex: 0 0 auto; }
+.ico svg { width: 100%; height: 100%; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+}

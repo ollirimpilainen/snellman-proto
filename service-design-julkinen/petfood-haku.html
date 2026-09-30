@@ -1,0 +1,246 @@
+<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Petfood-kaupan haku</title><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600&family=Source+Sans+3:wght@400;600;700&display=swap">
+<style>
+/* Layout: one reading column; figures row, two worked examples side by side, test table, then fixes. Snellman green from the project's tokens. */
+:root {
+  --bg: #faf9f5;
+  --surface: #ffffff;
+  --fg: #1d2721;
+  --muted: #5b6a61;
+  --line: #dcdfd6;
+  --green: #00522c;
+  --green-soft: #e2f1ec;
+  --hit: #0b7a2a;
+  --hit-bg: #dff2e3;
+  --part: #7a5a00;
+  --part-bg: #fbefc8;
+  --miss: #b0301c;
+  --miss-bg: #f9e0db;
+  --font-display: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --font-body: "Source Sans 3", "Segoe UI", Arial, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111814; --surface: #18221c; --fg: #e8ece7; --muted: #9fb0a5; --line: #2c3a31;
+    --green: #7cc79a; --green-soft: #1d3326;
+    --hit: #8fe0a4; --hit-bg: #1b3a24; --part: #f2cd5b; --part-bg: #3a3115; --miss: #f19a88; --miss-bg: #41211b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111814; --surface: #18221c; --fg: #e8ece7; --muted: #9fb0a5; --line: #2c3a31;
+  --green: #7cc79a; --green-soft: #1d3326;
+  --hit: #8fe0a4; --hit-bg: #1b3a24; --part: #f2cd5b; --part-bg: #3a3115; --miss: #f19a88; --miss-bg: #41211b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font: 400 1rem/1.55 var(--font-body); }
+.wrap { max-width: 60rem; margin: 0 auto; padding-inline: 16px; padding-block: 2.5rem 4rem; display: grid; gap: 3rem; }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; margin: 0; color: var(--green); }
+h1 { font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.15; }
+h2 { font-size: 1.45rem; line-height: 1.25; }
+h3 { font-size: 1.1rem; }
+p { margin: 0; max-width: 65ch; }
+.eyebrow { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+header { display: grid; gap: .75rem; }
+.lede { font-size: 1.12rem; color: var(--fg); }
+.source { font-size: .9rem; color: var(--muted); }
+section { display: grid; gap: 1.25rem; }
+
+.figures { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.fig { background: var(--surface); padding: 1rem 1.1rem; display: grid; gap: .25rem; align-content: start; }
+.fig b { font: 600 2rem/1.1 var(--font-display); color: var(--green); font-variant-numeric: tabular-nums; }
+.fig span { font-size: .92rem; color: var(--muted); }
+@media (max-width: 720px) { .figures { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.verdict { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+@media (max-width: 720px) { .verdict { grid-template-columns: 1fr; } }
+.col { background: var(--surface); border: 1px solid var(--line); padding: 1.1rem 1.2rem; display: grid; gap: .6rem; align-content: start; }
+.col ul { margin: 0; padding-left: 1.1rem; display: grid; gap: .45rem; }
+.col li { max-width: 60ch; }
+.col h3 { display: flex; align-items: center; gap: .5rem; }
+
+.pill { display: inline-block; font-size: .78rem; font-weight: 700; letter-spacing: .03em; padding: .12rem .5rem; border-radius: 999px; white-space: nowrap; }
+.pill.hit { color: var(--hit); background: var(--hit-bg); }
+.pill.part { color: var(--part); background: var(--part-bg); }
+.pill.miss { color: var(--miss); background: var(--miss-bg); }
+
+.examples { display: grid; grid-template-columns: 1.4fr 1fr; gap: 1rem; align-items: start; }
+@media (max-width: 760px) { .examples { grid-template-columns: 1fr; } }
+.ex { background: var(--surface); border: 1px solid var(--line); padding: 1.1rem 1.2rem; display: grid; gap: .9rem; min-width: 0; }
+.query { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .95rem; border: 1px solid var(--fg); padding: .35rem .6rem; display: inline-block; background: var(--bg); }
+.chips { display: grid; gap: .4rem; }
+.chip { display: flex; justify-content: space-between; align-items: center; gap: .75rem; padding: .45rem .65rem; border: 1px solid var(--line); font-size: .9rem; font-weight: 600; letter-spacing: .02em; }
+.chip.found { background: var(--hit-bg); border-color: transparent; }
+.chip.wrong { background: var(--miss-bg); border-color: transparent; }
+.chip.missed { color: var(--muted); border-style: dashed; }
+.chip small { font-weight: 600; font-size: .75rem; white-space: nowrap; }
+.chip.found small { color: var(--hit); }
+.chip.wrong small { color: var(--miss); }
+.note { font-size: .92rem; color: var(--muted); }
+
+.phone { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: start; }
+.phone svg { width: 9.5rem; height: auto; max-width: 100%; }
+.phone svg text { font-family: var(--font-body); }
+
+.tablewrap { overflow-x: auto; border: 1px solid var(--line); background: var(--surface); }
+table { border-collapse: collapse; width: 100%; min-width: 40rem; font-size: .93rem; }
+th, td { text-align: left; padding: .55rem .8rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: .75rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+tbody tr.group td { background: var(--green-soft); color: var(--green); font-weight: 700; font-size: .82rem; letter-spacing: .05em; text-transform: uppercase; padding-block: .35rem; }
+td code { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: .88rem; }
+td.n { font-variant-numeric: tabular-nums; white-space: nowrap; }
+tr:last-child td { border-bottom: 0; }
+
+ol.fixes { margin: 0; padding: 0; list-style: none; display: grid; gap: .75rem; counter-reset: fix; }
+ol.fixes li { counter-increment: fix; background: var(--surface); border: 1px solid var(--line); padding: 1rem 1.2rem 1rem 3.2rem; position: relative; display: grid; gap: .3rem; }
+ol.fixes li::before { content: counter(fix); position: absolute; left: 1.1rem; top: .95rem; font: 600 1.35rem/1 var(--font-display); color: var(--green); }
+ol.fixes b { font-weight: 700; }
+ol.fixes span { color: var(--muted); font-size: .94rem; max-width: 65ch; }
+footer { font-size: .86rem; color: var(--muted); display: grid; gap: .4rem; border-top: 1px solid var(--line); padding-top: 1.25rem; }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Snellman Petfood + Mush · kaupan haku</div>
+    <h1>Asiakkaat hakevat tuotteen nimellä, mutta nimet eivät vastaa sitä, mitä he kirjoittavat</h1>
+    <p class="lede">Tuotenumerohaku toimii, ja tuotteen voi lisätä koriin suoraan hakutuloksista. Värejä ja raaka-aineita haetaan eniten, mutta ne löytyvät vain osittain. Tuotenimissä sekoittuvat suomi, englanti ja vanha sarjanimi.</p>
+    <p class="source">Lähteet: GA4 10/2025–9/2026 ja hakutesti kaupassa 30.9.2026 yhden asiakkaan valikoimalla (78 tuotetta, fi ja sv).</p>
+  </header>
+
+  <section aria-labelledby="h-fig">
+    <h2 id="h-fig">Kuinka paljon hakua käytetään</h2>
+    <div class="figures">
+      <div class="fig"><b>20 %</b><span>kaupan käyttäjistä hakee (206 / 1 045)</span></div>
+      <div class="fig"><b>3 → 86</b><span>hakuistuntoa kuukaudessa, 10/2025 → 9/2026</span></div>
+      <div class="fig"><b>1 / 5</b><span>hakuistunnoista haetaan tuotenumerolla</span></div>
+      <div class="fig"><b>8 %</b><span>hakuistunnoista puhelimella (8–9/2026)</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-verdict">
+    <h2 id="h-verdict">Mikä toimii ja mikä ei</h2>
+    <div class="verdict">
+      <div class="col">
+        <h3><span class="pill hit">Toimii</span></h3>
+        <ul>
+          <li><b>Tuotenumero</b> löytää tuotteen, myös numeron alku (<code>502</code> → kaikki 502-alkuiset).</li>
+          <li><b>Koriin suoraan hakutuloksesta.</b> Jokaisessa tuloksessa on määräkenttä.</li>
+          <li><b>Sanan osa yhdyssanan sisältä:</b> <code>ruokatorvi</code> löytää NAUDANRUOKATORVI-tuotteen, <code>sydän</code> kaikki kolme sydäntä.</li>
+          <li><b>Kirjainkoko ja välilyönnit</b> eivät haittaa: <code>Vaisto</code>, <code>VAISTO</code> ja <code>vaisto&nbsp;</code> antavat saman tuloksen.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <h3><span class="pill miss">Ei toimi</span></h3>
+        <ul>
+          <li><b>Värit</b> löytyvät vain, jos väri on tuotenimessä samalla kielellä, ja samassa sarjassa nimet ovat sekaisin suomeksi ja englanniksi.</li>
+          <li><b>Raaka-aine eri kielellä:</b> <code>kana</code> ei löydä CHICKEN-tuotteita.</li>
+          <li><b>Monen sanan haku</b> hakee minkä tahansa sanoista, ja täsmäosuma ei tule ensimmäisenä.</li>
+          <li><b>Ryhmän nimet ja synonyymit:</b> <code>pakastekuivattu</code>, <code>kissa</code> ja <code>pentu</code> eivät löydä mitään.</li>
+          <li><b>Puhelimella</b> tulokset jäävät ruudun alapuolelle.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-ex">
+    <h2 id="h-ex">Kaksi esimerkkiä</h2>
+    <div class="examples">
+      <div class="ex">
+        <h3>Väri hakusanana</h3>
+        <p class="note">Bannerissa lukee "Vaisto® on nyt Everyday". Koiran sarjan nimet vaihtuivat englanniksi, mutta pakastekuivatut jäivät suomeksi. Asiakkaat hakevat yhä vanhoilla väreillä: <b>sininen</b> ja <b>vihreä</b> ovat kaupan yleisimmät haut.</p>
+        <div><span class="query">sininen</span></div>
+        <div class="chips">
+          <div class="chip found">MUSH FD EVERYDAY SININEN 400 G <small>löytyi</small></div>
+          <div class="chip missed">EVERYDAY BLUE 800G <small>ei löytynyt</small></div>
+          <div class="chip missed">EVERYDAY BLUE 3 KG <small>ei löytynyt</small></div>
+          <div class="chip missed">EVERYDAY BLUE 9 KG <small>ei löytynyt</small></div>
+        </div>
+        <div><span class="query">blå</span> <span class="note">ruotsinkielinen kauppa</span></div>
+        <div class="chips">
+          <div class="chip wrong">EVERYDAY BLACK 9 KG <small>väärä, ensimmäisenä</small></div>
+          <div class="chip found">MUSH FD EVERYDAY BLÅ 400 G <small>löytyi</small></div>
+          <div class="chip missed">EVERYDAY BLUE ×3 <small>ei löytynyt</small></div>
+        </div>
+        <p class="note"><code>harmaa</code>, <code>musta</code>, <code>liila</code>, <code>röd</code> ja <code>svart</code> eivät löydä mitään. <code>punainen</code> löytää vain vaaleanpunaisen kissanruoan. Nimissä on myös kirjoitusvirheitä: EVERYDAY HARMA, VAISTO KELTAI.</p>
+      </div>
+      <div class="ex">
+        <h3>Haku puhelimella</h3>
+        <div class="phone">
+          <svg viewBox="0 0 250 700" role="img" aria-labelledby="phone-t">
+            <title id="phone-t">Puhelimen ruutu 844 px. Hakukenttä on kohdassa 172 px ja ensimmäinen tulos kohdassa 1 091 px, ruudun alapuolella.</title>
+            <!-- scale: 1 px = 0.55 units; page 0..1200 -> 0..660 -->
+            <rect x="10" y="10" width="140" height="464" rx="14" fill="var(--surface)" stroke="var(--fg)" stroke-width="2"/>
+            <rect x="10" y="474" width="140" height="196" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="4 4"/>
+            <rect x="20" y="104" width="120" height="20" fill="var(--green-soft)" stroke="var(--green)" stroke-width="1.5"/>
+            <rect x="34" y="140" width="92" height="400" fill="var(--line)"/>
+            <text x="80" y="300" text-anchor="middle" font-size="11" fill="var(--muted)">banneri</text>
+            <rect x="20" y="610" width="120" height="30" fill="var(--hit-bg)" stroke="var(--hit)" stroke-width="1.5"/>
+            <line x1="156" y1="114" x2="170" y2="114" stroke="var(--green)" stroke-width="1.5"/>
+            <text x="174" y="112" font-size="12" fill="var(--fg)">hakukenttä</text>
+            <text x="174" y="126" font-size="11" fill="var(--muted)">172 px</text>
+            <line x1="156" y1="474" x2="170" y2="474" stroke="var(--fg)" stroke-width="1.5"/>
+            <text x="174" y="472" font-size="12" fill="var(--fg)">ruutu loppuu</text>
+            <text x="174" y="486" font-size="11" fill="var(--muted)">844 px</text>
+            <line x1="156" y1="625" x2="170" y2="625" stroke="var(--hit)" stroke-width="1.5"/>
+            <text x="174" y="623" font-size="12" fill="var(--fg)">1. tulos</text>
+            <text x="174" y="637" font-size="11" fill="var(--muted)">1 091 px</text>
+          </svg>
+          <p class="note">Haun jälkeen tuoteluettelon banneri ja logot jäävät hakukentän ja tulosten väliin. Sivu ei vieritä tuloksiin, joten kirjoittaessa asiakas ei näe listan muuttuvan. Näppäimistö peittää vielä lisää. Kentän fonttikoko on 14 px, joten iPhone zoomaa sivua, kun kenttään napauttaa.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-test">
+    <h2 id="h-test">Testatut haut</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Haku</th><th>Odotettu</th><th>Tulos</th><th></th></tr></thead>
+        <tbody>
+          <tr class="group"><td colspan="4">Värit (GA:n yleisimmät haut)</td></tr>
+          <tr><td><code>sininen</code></td><td>3 × EVERYDAY BLUE + FD SININEN</td><td class="n">1 / 4</td><td><span class="pill part">Osittain</span></td></tr>
+          <tr><td><code>punainen</code></td><td>2 × EVERYDAY RED</td><td>0 / 2, lisäksi yksi väärä osuma</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>harmaa</code>, <code>musta</code>, <code>liila</code></td><td>GREY, BLACK, LIGHT PURPLE</td><td class="n">0</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>blå</code> (sv)</td><td>3 × BLUE + FD BLÅ</td><td>1 / 4, BLACK ensimmäisenä</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>blue</code>, <code>red</code></td><td>englanninkieliset nimet</td><td class="n">kaikki</td><td><span class="pill hit">Löytyy</span></td></tr>
+          <tr class="group"><td colspan="4">Raaka-aineet ja osat</td></tr>
+          <tr><td><code>kana</code></td><td>myös 3 × CHICKEN</td><td>9, ei yhtään CHICKEN-tuotetta</td><td><span class="pill part">Osittain</span></td></tr>
+          <tr><td><code>sika-nauta</code></td><td>2 × SIKA-NAUTA</td><td>7 tulosta, SIKA-KANA ensimmäisenä</td><td><span class="pill part">Osittain</span></td></tr>
+          <tr><td><code>sikanauta</code></td><td>2 × SIKA-NAUTA</td><td class="n">0</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>kaula</code></td><td>KANANKAULAT, SNACKS KANANKAULA</td><td class="n">1 / 2</td><td><span class="pill part">Osittain</span></td></tr>
+          <tr><td><code>rustoluu</code>, <code>ruokatorvi</code>, <code>sydän</code>, <code>keuhko</code></td><td>myös yhdyssanan sisältä</td><td class="n">kaikki</td><td><span class="pill hit">Löytyy</span></td></tr>
+          <tr class="group"><td colspan="4">Sarjat, ryhmät ja synonyymit</td></tr>
+          <tr><td><code>vaisto</code></td><td>koiran Vaisto, nyt Everyday</td><td>vain kissan ja pakastekuivatut</td><td><span class="pill part">Osittain</span></td></tr>
+          <tr><td><code>pakastekuivattu</code>, sv <code>frystorkad</code></td><td>FREEZE-DRIED-tuotteet</td><td class="n">0</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>fodax</code></td><td>Fodax-tuotteet</td><td>fi 0, sv 1</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>kissa</code>, <code>pentu</code></td><td>CAT, PUPPY</td><td class="n">0</td><td><span class="pill miss">Ei löydy</span></td></tr>
+          <tr><td><code>Vaisto</code>, <code>VAISTO</code>, <code>vaisto&nbsp;</code></td><td>sama tulos</td><td class="n">sama</td><td><span class="pill hit">Löytyy</span></td></tr>
+          <tr class="group"><td colspan="4">Tuotenumerot</td></tr>
+          <tr><td><code>50212</code>, <code>79353</code></td><td>tuote</td><td class="n">1, oikea</td><td><span class="pill hit">Löytyy</span></td></tr>
+          <tr><td><code>502</code></td><td>numeron alku</td><td class="n">6 alkavaa</td><td><span class="pill hit">Löytyy</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-fix">
+    <h2 id="h-fix">Mitä korjata, tärkein ensin</h2>
+    <ol class="fixes">
+      <li><b>Lisää tuotteille hakusanat, jotka asiakas oikeasti kirjoittaa.</b><span>Väri kaikilla kielillä (sininen, blå, blue), vanha sarjanimi Vaisto Everyday-tuotteille, raaka-aine molemmilla kielillä (kana, chicken), ryhmä (pakastekuivattu) ja merkki (Fodax). Samalla korjataan nimien kirjoitusvirheet (HARMA, KELTAI).</span></li>
+      <li><b>Hae kaikilla sanoilla ja nosta täsmäosuma ensimmäiseksi.</b><span>Silloin <code>sika-nauta</code> palauttaa sika-nautaa eikä kaikkea, missä on sika tai nauta. <code>sikanauta</code> ja <code>sika-nauta</code> antavat saman tuloksen.</span></li>
+      <li><b>Synonyymit yleisimmille sanoille.</b><span>kissa → cat, pentu → puppy, herkku → treats, sv katt, valp.</span></li>
+      <li><b>Puhelimella tulokset heti hakukentän alle.</b><span>Banneri pois hakutilasta tai haku sen alle. Kentän fonttikoko vähintään 16 px ja korkeus vähintään 44 px.</span></li>
+      <li><b>Mittaa haku.</b><span><code>search</code>-tapahtuma, jossa on hakusana ja tulosmäärä ja joka lähtee vasta, kun kirjoittaminen on hetken tauolla. Vasta sillä nähdään tyhjiksi jääneet haut ja se, johtaako haku tilaukseen.</span></li>
+    </ol>
+  </section>
+
+  <footer>
+    <p>Testi on tehty yhden asiakkaan valikoimalla, ja valikoima vaihtelee asiakkaittain. Muilla asiakkailla näkyy tuotteita, joita tässä ei ollut (esim. VAISTO SININEN 10 KG, hevostuotteet). Haut <code>hepo</code>, <code>hellä</code> ja <code>vainu</code> antoivat tyhjän tuloksen siksi, että tuotteita ei ollut tässä valikoimassa, ei haun vian takia.</p>
+    <p>GA4 näkee vain seurantaan suostuneet kävijät, noin 70 %. Haku päivittyy joka näppäinpainalluksella, joten luvut on laskettu istunnoista eikä sivunäytöistä.</p>
+  </footer>
+</div>
+
+</body></html>

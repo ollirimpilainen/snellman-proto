@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title></title>
+<link rel="stylesheet" href="lib/tokens.css">
+<link rel="stylesheet" href="lib/components.css">
+<!--
+  SNELLMAN RETAIL — KIRJAUTUMINEN JA KÄYTTÖÖNOTTO (wireframe, TP1 + TP3)
+  ==================================================================
+  Työpaketti: service-design/prototyypin-tyopaketit.md › TP1, TP3
+  Kitkat:     service-design/selvitys-mittaus-ja-kirjautuminen.md K1–K9
+  Koodi:      service-design/data/selvitys-vk40/repo-audit.md B1–B5
+  Komponentit: lib/components/account.js (login, lostPassword, setPassword, inviteEmail)
+
+  Sama sivupohja kaikille kuudelle kaupalle. Tuotannossa uudet ylikirjoitukset
+  teemaan: woocommerce/myaccount/form-login.php, form-lost-password.php,
+  form-reset-password.php. Kaupan nimi ja kenelle-teksti kaupan asetuksista.
+
+  Näkymät URL:sta:
+    ?view=login | lost | lost-sent | mail | invite | reset | expired
+    ?mail=launch | ready                          (kutsuviestin versio, view=mail)
+    ?login=osoite@yritys.fi                       (kutsun/palautuksen linkistä, kuten WP:n rp-linkki)
+  TP3-ketju: mail → Aseta salasana (UTM) → invite → Tallenna → 01-etusivu.html?view=b.
+  Vanhentunut linkki (expired) lähettää uuden samaan osoitteeseen yhdellä painalluksella.
+    ?state=invalid | empty | locked | nocustomer   (kirjautumisen tilat)
+    ?redirect_to=07-ostoskori.html                (syvälinkki: kohde säilyy)
+  Kirjautuminen vie syvälinkin kohteeseen, muuten etusivun tilaan B.
+  Kaikki näkyvä teksti on PROTO/PAGE-objekteissa ja lib-komponenteissa.
+  ==================================================================
+-->
+<style>
+  .proto { background: #2b2b28; color: #e9e8e1; font-size: var(--fs-xs); line-height: 1.5; }
+  .proto .container { padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl { display: flex; align-items: center; gap: var(--gap-8); flex-wrap: wrap; }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left-width: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+
+  .auth--mail .invite-mail { margin-inline: auto; }
+  .auth { padding: var(--gap-60) 0 var(--gap-80); background: var(--c-bg-block); }
+  .auth .login-card { max-width: 480px; width: 100%; margin-inline: auto; }
+  .annot { max-width: 480px; margin: var(--gap-24) auto 0; border: 1px dashed var(--c-ph-border); background: var(--c-ph-bg);
+    padding: var(--gap-12) var(--gap-16); font-size: var(--fs-small); }
+  .annot > summary { cursor: pointer; font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); }
+  .annot ul { margin: var(--gap-8) 0 0; padding-left: 1.1em; display: grid; gap: 4px; }
+  .annot code { font-size: 12px; }
+  @media (max-width: 600px) { .auth { padding: var(--gap-24) 0 var(--gap-60); } }
+</style>
+</head>
+
+<script>
+const PROTO = {
+  title: "<b>Wireframe</b> · 09 Kirjautuminen ja käyttöönotto · TP1 + TP3 · 30.9.2026",
+  controls: [
+    { key: "view", label: "Näkymä", opts: [
+      { v: "login", label: "Kirjautuminen" }, { v: "lost", label: "Palautus" }, { v: "lost-sent", label: "Palautus lähetetty" },
+      { v: "mail", label: "Kutsuviesti" }, { v: "invite", label: "Kutsu: aseta salasana" }, { v: "reset", label: "Vaihda salasana" }, { v: "expired", label: "Linkki vanhentunut" } ] },
+    { key: "state", label: "Kirjautumisen tila", only: "login", opts: [
+      { v: "idle", label: "Normaali" }, { v: "invalid", label: "Väärä" }, { v: "empty", label: "Tyhjä" }, { v: "locked", label: "Lukittu" }, { v: "nocustomer", label: "Ei asiakkuutta" } ] },
+    { key: "mail", label: "Viesti", only: "mail", opts: [
+      { v: "launch", label: "Kutsu julkaisussa (nykyiset asiakkaat)" }, { v: "ready", label: "Tunnukset valmiit (pyynnön jälkeen)" } ] }
+  ],
+  defaults: { view: "login", state: "idle", mail: "launch" }
+};
+
+const PAGE = {
+  meta: { title: "Kirjaudu | Snellman Retail",
+    titles: { mail: "Kutsuviesti | Snellman Retail", invite: "Aseta salasana | Snellman Retail", reset: "Vaihda salasana | Snellman Retail",
+      expired: "Linkki on vanhentunut | Snellman Retail", lost: "Uusi salasana | Snellman Retail", "lost-sent": "Tarkista sähköpostisi | Snellman Retail" }, description: "Snellmanin tilauskauppa ravintoloille, kioskeille ja lähikaupoille." },
+  store: { name: "Snellman Retail", audience: "Tilauskauppa ravintoloille, kioskeille ja lähikaupoille. Kirjaudu sähköpostiosoitteella, jonka annoit Snellmanille." },
+  vars: { puhelin: "{puhelinnumero}" },
+  afterLogin: "01-etusivu.html?view=b",
+  /* Kutsuviestin demoarvot. Linkki kuten WP:n rp-linkki: login-parametri + UTM (mittaus). */
+  invite: { name: "Jarkko", company: "Ravintola Toivola", email: "ravintola@esimerkki.fi", validFor: "7 vuorokautta", until: "7.10.2026",
+    domain: "{kaupan osoite}", href: "?view=invite&login={email}&utm_source=email&utm_medium=invite&utm_campaign={variant}" },
+  measure: {
+    label: "Wireframe-annotaatio: mittaus ja toteutus tässä näkymässä",
+    login: ["<code>login</code> kun kirjautuminen onnistuu, <code>login_failed</code> (reason: invalid, locked) kun ei",
+            "Kirjautunut tila käyttäjäominaisuutena, jotta tilisivu ja lomake erottuvat analytiikassa",
+            "Ohjaus: syvälinkki (<code>redirect_to</code>), muuten etusivun tila B. Retailin filtteri <code>woocommerce_login_redirect</code>",
+            "Istunto: Pidä minut kirjautuneena oletuksena päällä (14 vrk), tai pidempi <code>auth_cookie_expiration</code>"],
+    lost: ["<code>password_reset_request</code> kun linkki pyydetään", "Linkin voimassaolo 7 vrk: <code>password_reset_expiration</code>, vain Retail"],
+    set: ["<code>form_error</code> (form = set_password, field) kun salasana hylätään: liian lyhyt tai eivät täsmää",
+          "<code>login</code> (method = set_password) kun salasana on asetettu. Kutsusta tultaessa istunnon lähde on UTM:stä <code>email / invite / launch|ready</code>",
+          "Kutsu vie etusivun tilaan B (Retailin filtteri, sama kuin kirjautumisessa). Palautus vie kirjautumiseen",
+          "Vanhentunut linkki: osoite tulee linkistä, joten uusi linkki lähtee yhdellä painalluksella (<code>password_reset_request</code>)"],
+    mail: ["WooCommercen uuden tilin viesti (<code>customer_new_account</code>), kauppakohtainen sisältö: aihe, otsikko ja teksti kaupan sähköpostiasetuksissa, runko ylikirjoituksena <code>emails/customer-new-account.php</code>",
+           "Asetus ”Send password setup link” päällä, jotta viestissä on linkki eikä salasanaa. Kutsu on nyt pois päältä (<code>M3_CUSTOMERS_WELCOME_EMAIL</code>)",
+           "Linkin voimassaolo 7 vrk: <code>password_reset_expiration</code>, vain Retail. UTM linkkiin Retailin filtterillä: <code>utm_source=email&utm_medium=invite&utm_campaign=launch|ready</code>",
+           "Avoin: milloin nykyiset asiakkaat kutsutaan (julkaisuerä vai porrastettuna) ja täydennetäänkö puuttuvat sähköpostit M3:een ensin"]
+  }
+};
+</script>
+<body>
+<a class="skip" href="#main" id="skiplink">Siirry sisältöön</a>
+<div class="proto" id="proto"></div>
+<div id="shell-header"></div>
+<main id="main"><section class="auth"><div class="container" id="auth"></div></section></main>
+<div id="shell-footer"></div>
+
+<script src="lib/core.js"></script>
+<script src="lib/components/basics.js"></script>
+<script src="lib/components/shell.js"></script>
+<script src="lib/components/forms.js"></script>
+<script src="lib/components/account.js"></script>
+<script>
+(function () {
+  "use strict";
+  const esc = SN.esc;
+  const S = Object.assign({}, PROTO.defaults);
+  const q = new URLSearchParams(location.search);
+  PROTO.controls.forEach((c) => { if (q.has(c.key)) S[c.key] = q.get(c.key); });
+  const redirectTo = q.get("redirect_to");
+  const setState = (k, v) => {
+    S[k] = v;
+    const p = new URLSearchParams();
+    Object.keys(PROTO.defaults).forEach((key) => { if (S[key] !== PROTO.defaults[key]) p.set(key, S[key]); });
+    if (redirectTo) p.set("redirect_to", redirectTo);
+    history.replaceState(null, "", location.pathname + (p.toString() ? "?" + p : ""));
+    render();
+  };
+
+  function renderProto() {
+    document.getElementById("proto").innerHTML = '<div class="container"><div class="proto__title">' + PROTO.title + '</div><div class="proto__ctrls">' +
+      PROTO.controls.filter((c) => !c.only || c.only === S.view).map((c) => '<div class="ctrl"><span class="ctrl__label">' + esc(c.label) + '</span><div class="ctrl__opts">' +
+        c.opts.map((o) => '<button type="button" data-k="' + c.key + '" data-v="' + o.v + '" aria-pressed="' + (S[c.key] === o.v) + '">' + esc(o.label) + '</button>').join("") +
+      '</div></div>').join("") + '</div></div>';
+  }
+  function annot(items) {
+    return '<details class="annot"><summary>' + esc(PAGE.measure.label) + '</summary><ul>' + items.map((i) => '<li>' + i + '</li>').join("") + '</ul></details>';
+  }
+  /* Linkin login-parametri. Protossa demo-osoite, jos näkymä valitaan ohjaimista. */
+  const loginParam = q.get("login") || PAGE.invite.email;
+  function renderMail() {
+    const I = PAGE.invite;
+    return SN.render("inviteEmail", { variant: S.mail, name: I.name, company: I.company, email: I.email, validFor: I.validFor, until: I.until,
+      domain: I.domain, phone: PAGE.vars.puhelin, headingLevel: "h1",
+      href: SN.t(I.href, { email: encodeURIComponent(I.email), variant: S.mail }) });
+  }
+  function setPw(state) {
+    return SN.render("setPassword", { mode: S.view === "reset" ? "reset" : "invite", state, lostHref: "?view=lost", email: loginParam });
+  }
+  function renderAuth() {
+    const el = document.getElementById("auth");
+    const lostHref = "?view=lost", backHref = "?view=login";
+    const mail = S.view === "mail";
+    el.closest(".auth").classList.toggle("auth--mail", mail);
+    /* Viesti on sähköposti, ei sivu: kaupan header ja footer pois esikatselusta. */
+    ["shell-header", "shell-footer"].forEach((id) => { document.getElementById(id).hidden = mail; });
+    if (S.view === "mail")
+      el.innerHTML = renderMail() + annot(PAGE.measure.mail);
+    else if (S.view === "lost" || S.view === "lost-sent")
+      el.innerHTML = SN.render("lostPassword", { step: S.view === "lost-sent" ? "sent" : "form", email: q.get("email") || "", backHref }) + annot(PAGE.measure.lost);
+    else if (S.view === "invite" || S.view === "reset" || S.view === "expired")
+      el.innerHTML = setPw(S.view === "expired" ? "expired" : "form") + annot(PAGE.measure.set);
+    else
+      el.innerHTML = SN.render("login", { context: "page", state: S.state, storeName: PAGE.store.name, audience: PAGE.store.audience,
+        phone: PAGE.vars.puhelin, lostHref, requestHref: "08-tunnukset.html",
+        email: S.state === "invalid" || S.state === "locked" ? "ravintola@esimerkki.fi" : "" }) + annot(PAGE.measure.login);
+  }
+  function render() {
+    document.title = (PAGE.meta.titles[S.view] || PAGE.meta.title) + " (wireframe)";
+    renderProto(); renderAuth();
+  }
+
+  document.getElementById("shell-header").innerHTML = SN.render("header", { state: "a", current: "", search: false });
+  document.getElementById("shell-footer").innerHTML = SN.render("footer", { loggedIn: false });
+  render();
+  SN.mount(document);
+
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("#proto [data-k]"); if (!b) return;
+    setState(b.dataset.k, b.dataset.v);
+  });
+  /* Lähetykset: wireframe ohjaa itse (GET veisi salasanan osoiteriville). */
+  document.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const f = e.target;
+    window.dataLayer = window.dataLayer || [];
+    if (f.matches('[data-sn="login"]')) {
+      const u = f.querySelector("#login-user").value.trim(), p = f.querySelector("#login-pass").value;
+      if (!u || !p) { S.state = "empty"; renderAuth(); return; }
+      window.dataLayer.push({ event: "login", method: "password" });
+      location.href = redirectTo || PAGE.afterLogin;
+    } else if (f.matches('[data-sn="lost-password"]')) {
+      window.dataLayer.push({ event: "password_reset_request" });
+      location.search = "?view=lost-sent&email=" + encodeURIComponent(f.querySelector("#lost-user").value.trim());
+    } else if (f.matches('[data-sn="set-password"]')) {
+      const p1 = f.querySelector("#set-pass1").value, p2 = f.querySelector("#set-pass2").value;
+      const st = p1.length < 12 ? "short" : p1 !== p2 ? "mismatch" : "";
+      if (st) {
+        window.dataLayer.push({ event: "form_error", form: "set_password", field: st === "short" ? "password_1" : "password_2" });
+        document.getElementById("auth").innerHTML = setPw(st) + annot(PAGE.measure.set);
+        const bad = document.querySelector('#auth [aria-invalid="true"]'); if (bad) bad.focus();
+        return;
+      }
+      window.dataLayer.push({ event: "login", method: "set_password" });
+      location.href = S.view === "reset" ? "?view=login" : PAGE.afterLogin;
+    }
+  });
+})();
+</script>
+</body>
+</html>

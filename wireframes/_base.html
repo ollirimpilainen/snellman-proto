@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snellman Retail — [sivu] (wireframe)</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<!--
+  SNELLMAN RETAIL — WIREFRAME-POHJA
+  ==================================================================
+  Kopioi tämä tiedosto uudelle sivulle, kirjoita SHELL + PAGE, lisää
+  tarvittavat render<Block>()-funktiot ja listaa ne `html`-taulukkoon.
+
+  SÄÄNTÖ: markkupissa ei ole yhtään sanaa. Kaikki näkyvä teksti —
+  navigaatio, footer, title, painikkeet — tulee configista. Tämä on
+  se yksi asia joka tekee ruotsinkielisestä versiosta myöhemmin
+  sisältötyötä eikä uudelleenrakentamista.
+
+  Tokenit: design-system/tokens-henkilostokauppa.css
+  Lähde:   shop.snellman.fi, todennetut computed-arvot 15.9.2026
+  Alusta:  generoi/snellmanecom · wp-gds-theme
+  ==================================================================
+-->
+<style>
+  /* Lisensoidut brändifontit, ladataan Henkilöstökaupan omalta palvelimelta.
+     Tuotannossa ne tulevat teeman mukana; wireframessä tämä antaa oikean mitan. */
+  @font-face { font-family: tabernaserif; font-style: normal; font-weight: 400; font-display: swap;
+    src: url("https://shop.snellman.fi/app/themes/wp-gds-theme/public/fonts/TabernaSerif/TabernaSerif-Regular.otf") format("opentype"); }
+  @font-face { font-family: thesansb; font-style: normal; font-weight: 400; font-display: swap;
+    src: url("https://shop.snellman.fi/app/themes/wp-gds-theme/public/fonts/TheSansB/TheSansB-W5Plain.otf") format("opentype"); }
+  @font-face { font-family: thesansb; font-style: normal; font-weight: 700; font-display: swap;
+    src: url("https://shop.snellman.fi/app/themes/wp-gds-theme/public/fonts/TheSansB/TheSansB-W7Bold.otf") format("opentype"); }
+
+  :root {
+    /* ── Värit — theme.json-presetit, nämä piirtävät sivun ─────────── */
+    --c-primary:        #00522c;   /* header, painikkeet, otsikot */
+    --c-bg:             #fcfcfc;   /* sivun pohja */
+    --c-bg-block:       #f3f2eb;   /* lohkotausta, pellava */
+    --c-bg-accent:      #e2f1ec;   /* korostuspinta, sivupalkit */
+    --c-surface:        #ffffff;   /* kortti */
+    --c-text:           #333031;   /* leipäteksti */
+    --c-text-2:         #57534f;   /* toissijainen — AA valkoisella */
+    --c-text-muted:     #6b6b6b;   /* vaimennettu — AA, älä vaalenna */
+    --c-text-on-dark:   #ffffff;
+    --c-border:         #dcdcd6;
+    --c-border-strong:  #b9b9b1;
+    --c-ph-bg:          #ecebe4;   /* placeholder */
+    --c-ph-border:      #c9c8bf;
+    /* Tilasignaalit */
+    --c-boost:          #00522c;   /* Boost ≈ −30 %, brändinvihreä */
+    --c-outlet:         #a8432c;   /* Outlet ≈ −50 %, erottuva mutta ei kirkuva */
+    --c-success:        #089528;
+    --c-error:          #f54d4d;
+
+    /* ── Typografia ────────────────────────────────────────────────── */
+    --font-display: tabernaserif, Georgia, "Times New Roman", serif;
+    --font-sans:    thesansb, arial, helvetica, sans-serif;
+    --fs-body:      16px;   --lh-body: 1.75;
+    --fs-small:     14px;
+    --fs-xs:        13px;
+    --fs-eyebrow:   12px;
+    --fs-h1:        clamp(32px, calc(32 / 600 * 100vw), 48px);
+    --fs-h2:        clamp(28px, calc(28 / 600 * 100vw), 34px);
+    --fs-h3:        clamp(24px, calc(24 / 600 * 100vw), 28px);
+    --fs-h4:        20px;
+    --fs-stat:      48px;
+    --ls-heading:   0.02em;  /* HUOM: 0.02em, ei snellman.fi:n 0.05em */
+
+    /* ── Välistys — GDS-skaala ─────────────────────────────────────── */
+    --gap-4: 4px;  --gap-8: 8px;  --gap-12: 12px; --gap-16: 16px;
+    --gap-24: 24px; --gap-32: 32px; --gap-40: 40px; --gap-48: 48px;
+    --gap-60: 60px; --gap-80: 80px;
+
+    /* ── Muodot ────────────────────────────────────────────────────── */
+    --r-none: 0;      /* painike, input, kortti — terävä kulma on brändi */
+    --r-accordion: 8px;
+    --r-tag: 10px;
+    --shadow-card: 2px 3px 8px #0000001f;
+
+    /* ── Layout ────────────────────────────────────────────────────── */
+    --container: 1200px;   /* alignwide */
+    --container-text: 792px;  /* contentSize */
+    --pad: 24px;
+    --nav-h: 100px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--c-bg); color: var(--c-text);
+    font-family: var(--font-sans); font-size: var(--fs-body); line-height: var(--lh-body);
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+  img, svg { display: block; max-width: 100%; height: auto; }
+  a { color: inherit; }
+  p { margin: 0 0 0.7em; }
+  ul { margin: 0; padding: 0; }
+  h1, h2, h3, h4 { margin: 0; color: var(--c-primary); letter-spacing: var(--ls-heading); }
+  h1 { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-h1); line-height: 1.08; }
+  h2 { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-h2); line-height: 1.16; }
+  h3 { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h3); line-height: 1.16; }
+  h4 { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); line-height: 1.2; }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 3px solid var(--c-bg-accent); outline-offset: 2px; }
+  .skip { position: absolute; left: -9999px; top: 0; background: var(--c-primary); color: #fff; padding: var(--gap-8) var(--gap-16); z-index: 100; }
+  .skip:focus { left: 8px; top: 8px; }
+  .container { max-width: var(--container); margin: 0 auto; padding-left: var(--pad); padding-right: var(--pad); }
+  .container--text { max-width: var(--container-text); }
+
+  /* ── Header: täysleveä tumma vihreä palkki ───────────────────────── */
+  .site-header { background: var(--c-primary); color: var(--c-text-on-dark); position: sticky; top: 0; z-index: 50; }
+  .site-header__inner { display: flex; align-items: center; gap: var(--gap-32); min-height: var(--nav-h); }
+  .brand { display: inline-flex; align-items: center; text-decoration: none; flex: 0 0 auto; }
+  .brand__mark { width: 64px; height: 64px; border: 1px dashed rgba(255,255,255,.5); display: flex; align-items: center; justify-content: center; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; text-align: center; line-height: 1.2; padding: 4px; }
+  .site-nav ul { list-style: none; display: flex; gap: var(--gap-8); flex-wrap: wrap; }
+  .site-nav a { display: block; padding: var(--gap-16); text-decoration: none; font-weight: 700; text-transform: uppercase; font-size: var(--fs-body); }
+  .site-nav a:hover { text-decoration: underline; text-underline-offset: 8px; }
+  .site-nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 8px; }
+  .site-utils { margin-left: auto; display: flex; align-items: center; gap: var(--gap-24); }
+  .util { display: inline-flex; align-items: center; gap: var(--gap-8); text-decoration: none; font-weight: 700; text-transform: uppercase; font-size: var(--fs-small); }
+  .util__meta { font-weight: 400; text-transform: none; opacity: .85; }
+  .langs { display: flex; gap: var(--gap-4); }
+  .langs a { text-decoration: none; padding: 2px 6px; font-size: var(--fs-small); }
+  .langs a[aria-current="true"] { background: rgba(255,255,255,.18); font-weight: 700; }
+
+  /* ── Proto-merkintä ──────────────────────────────────────────────── */
+  .proto-note { background: #2b2b28; color: #f0efe8; font-size: var(--fs-xs); }
+  .proto-note .container { display: flex; gap: var(--gap-12); flex-wrap: wrap; padding-top: 6px; padding-bottom: 6px; }
+  .proto-note b { color: #fff; }
+
+  /* ── Breadcrumb ──────────────────────────────────────────────────── */
+  .breadcrumb { font-size: var(--fs-small); color: var(--c-text-muted); }
+  .breadcrumb .container { padding-top: var(--gap-16); }
+  .breadcrumb ol { list-style: none; display: flex; flex-wrap: wrap; gap: 6px; }
+  .breadcrumb li::after { content: "›"; margin-left: 6px; color: var(--c-border-strong); }
+  .breadcrumb li:last-child::after { content: ""; }
+  .breadcrumb li:last-child { color: var(--c-text); font-weight: 700; }
+  .breadcrumb a { text-decoration: none; }
+  .breadcrumb a:hover { text-decoration: underline; }
+
+  /* ── Painikkeet — radius 0, uppercase, TheSansB Bold ─────────────── */
+  .btn { display: inline-flex; align-items: center; gap: var(--gap-16); padding: 12px 20px 10px; border: 1.5px solid transparent;
+         border-radius: var(--r-none); font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-body);
+         text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background-color .1s ease-out; }
+  .btn--primary { background: var(--c-primary); color: #fff; }
+  .btn--primary:hover { background-image: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.2)); }
+  .btn--outline { background: transparent; color: var(--c-primary); border-color: var(--c-primary); }
+  .btn--outline:hover { background: var(--c-bg-accent); }
+  .btn--on-dark { background: #fff; color: var(--c-primary); }
+  .btn--sm { padding: 7px 12px 5px; font-size: var(--fs-small); }
+  .btn-text { display: inline-flex; align-items: center; gap: var(--gap-16); font-weight: 600; text-transform: uppercase;
+              text-decoration: none; color: var(--c-primary); font-size: var(--fs-body); }
+  .btn-text .ico { transition: transform .1s ease-out; }
+  .btn-text:hover .ico { transform: translateX(8px); }
+
+  /* ── Placeholderit ───────────────────────────────────────────────── */
+  .ph { background: var(--c-ph-bg); border: 1px dashed var(--c-ph-border); display: flex; align-items: center;
+        justify-content: center; text-align: center; color: var(--c-text-2); font-size: var(--fs-small); padding: var(--gap-16); }
+  .fill { display: inline-block; background: #fff6d6; border: 1px solid #e0c86a; color: #5c4a00;
+          padding: 2px 8px; font-size: var(--fs-small); }
+  .fill--block { display: block; margin: var(--gap-16) 0; padding: var(--gap-12) var(--gap-16); }
+
+  /* ── Sektiot ─────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--accent { background: var(--c-bg-accent); }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
+  .section-head { max-width: var(--container-text); margin-bottom: var(--gap-32); }
+  .section-head .eyebrow { font-family: var(--font-sans); font-size: var(--fs-eyebrow); font-weight: 600;
+                           letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-2); margin-bottom: var(--gap-8); }
+  .section-head p { margin-top: var(--gap-16); color: var(--c-text-2); }
+
+  /* ── Kortit ──────────────────────────────────────────────────────── */
+  .card { background: var(--c-surface); border-radius: var(--r-none); box-shadow: var(--shadow-card); padding: var(--gap-16) var(--gap-24); }
+  .grid { display: grid; gap: var(--gap-24); }
+  .grid--auto { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+  /* ── Tagit ───────────────────────────────────────────────────────── */
+  .tag { display: inline-block; border-radius: var(--r-tag); padding: 6px 12px; line-height: 1;
+         font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; background: var(--c-text); color: #fff; }
+  .tag--boost  { background: var(--c-boost); }
+  .tag--outlet { background: var(--c-outlet); }
+
+  /* ── Footer ──────────────────────────────────────────────────────── */
+  .site-footer { border-top: 1px solid var(--c-border); margin-top: var(--gap-80); padding: var(--gap-32) 0; font-size: var(--fs-small); }
+  .site-footer .container { display: flex; justify-content: space-between; gap: var(--gap-24); flex-wrap: wrap; }
+  .site-footer a { text-decoration: none; }
+  .site-footer a:hover { text-decoration: underline; }
+  .site-footer ul { list-style: none; display: flex; gap: var(--gap-24); flex-wrap: wrap; }
+
+  /* ── Responsiivisuus ─────────────────────────────────────────────── */
+  @media (max-width: 960px) { :root { --fs-stat: 38px; --nav-h: 80px; } }
+  @media (max-width: 768px) {
+    :root { --nav-h: 70px; --pad: 15px; }
+    .site-header__inner { flex-wrap: wrap; padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+    .site-nav { order: 3; width: 100%; }
+    .site-nav ul { gap: 0; }
+    .site-nav a { padding: var(--gap-8) var(--gap-12); font-size: var(--fs-small); }
+    .site-utils { gap: var(--gap-12); }
+    .block { padding: var(--gap-40) 0; }
+    .grid--auto { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+
+<!-- ══════════ SHELL: kehyksen sisältö, jaettu kaikkien sivujen kesken ══════════ -->
+<script>
+const SHELL = {
+  lang: "fi",
+  brandLabel: "Snellman",
+  logoNote: "Snellman-vaakuna",
+  proto: [
+    "<b>Wireframe</b>",
+    "Snellman Retail",
+    "[TÄYTTÖ: sivun nimi]"
+  ],
+  nav: [
+    { label: "[Nav 1]", href: "#" }
+  ],
+  utils: {
+    account: { label: "Tili", href: "#" },
+    cart:    { label: "Ostoskori", meta: "0 kg", href: "#" }
+  },
+  langs: [
+    { code: "FI", href: "?lang=fi", current: true }
+    /* Ruotsi lisätään tänne vasta kun kieliversio on päätetty.
+       Rakenne kestää sen: markkupissa ei ole sanoja. */
+  ],
+  footer: {
+    company: "Snellmanin Lihanjalostus Oy",
+    links: [
+      { label: "Yksityisyys ja evästeet", href: "#" },
+      { label: "Tietosuoja", href: "#" }
+    ]
+  }
+};
+
+/* ══════════ PAGE: tämän sivun koko sisältö ══════════ */
+const PAGE = {
+  title: "[Sivun title]",
+  breadcrumb: [
+    { label: "Etusivu", href: "index.html" },
+    { label: "[Tämä sivu]", href: "#" }
+  ]
+  /* Lisää lohkot tähän. Jokainen renderöijä palauttaa "" jos avain puuttuu
+     tai show === false — näin lohko voi odottaa sisältöä valmiina koodissa. */
+};
+</script>
+
+<body>
+<a href="#main" class="skip" id="skiplink"></a>
+<div class="proto-note"><div class="container" id="proto-note"></div></div>
+<header class="site-header"><div class="container site-header__inner" id="shell-header"></div></header>
+<main id="main"></main>
+<footer class="site-footer"><div class="container" id="shell-footer"></div></footer>
+
+<!-- ══════════ RENDER ══════════ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ── Apurit ────────────────────────────────────────────────────── */
+  const esc = (s) => String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+  const ico = (name) => '<span class="ico" aria-hidden="true"><i class="fa-solid fa-' + name + '"></i></span>';
+  const fill = (text) => '<span class="fill">TÄYTTÖ: ' + esc(text) + '</span>';
+
+  function block(inner, opts) {
+    opts = opts || {};
+    const id  = opts.id ? ' id="' + esc(opts.id) + '"' : "";
+    const lab = opts.labelledby ? ' aria-labelledby="' + esc(opts.labelledby) + '"' : "";
+    const mod = opts.variant ? " block--" + esc(opts.variant) : "";
+    const cw  = opts.narrow ? " container--text" : "";
+    return '<section class="block' + mod + '"' + id + lab + '><div class="container' + cw + '">' + inner + '</div></section>';
+  }
+  function head(cfg, id) {
+    if (!cfg) return "";
+    return '<div class="section-head">' +
+      (cfg.eyebrow ? '<div class="eyebrow">' + esc(cfg.eyebrow) + '</div>' : "") +
+      (cfg.heading ? '<h2 id="' + esc(id) + '">' + esc(cfg.heading) + '</h2>' : "") +
+      (cfg.intro ? '<p>' + esc(cfg.intro) + '</p>' : "") + '</div>';
+  }
+  function cta(c, cls) {
+    if (!c) return "";
+    return '<a class="btn ' + (cls || "btn--primary") + '" href="' + esc(c.href || "#") + '">' +
+           esc(c.label) + (c.icon ? " " + ico(c.icon) : "") + '</a>';
+  }
+
+  /* ── Kehys ─────────────────────────────────────────────────────── */
+  function renderShell() {
+    document.documentElement.lang = SHELL.lang;
+    document.title = PAGE.title + " — Snellman Retail (wireframe)";
+    document.getElementById("skiplink").textContent = "Siirry sisältöön";
+    document.getElementById("proto-note").innerHTML =
+      SHELL.proto.map((s) => '<span>' + s + '</span>').join('<span aria-hidden="true">·</span>');
+
+    const u = SHELL.utils;
+    document.getElementById("shell-header").innerHTML =
+      '<a class="brand" href="index.html" aria-label="' + esc(SHELL.brandLabel) + '">' +
+        '<span class="brand__mark">' + esc(SHELL.logoNote) + '</span></a>' +
+      '<nav class="site-nav" aria-label="Päävalikko"><ul>' +
+        SHELL.nav.map((n) =>
+          '<li><a href="' + esc(n.href) + '"' + (n.current ? ' aria-current="page"' : "") + '>' +
+          esc(n.label) + '</a></li>').join("") +
+      '</ul></nav>' +
+      '<div class="site-utils">' +
+        '<a class="util" href="' + esc(u.account.href) + '">' + ico("user") + esc(u.account.label) + '</a>' +
+        '<a class="util" href="' + esc(u.cart.href) + '">' + ico("cart-shopping") + esc(u.cart.label) +
+          '<span class="util__meta">' + esc(u.cart.meta) + '</span></a>' +
+        '<span class="langs">' + SHELL.langs.map((l) =>
+          '<a href="' + esc(l.href) + '"' + (l.current ? ' aria-current="true"' : "") + '>' + esc(l.code) + '</a>'
+        ).join("") + '</span>' +
+      '</div>';
+
+    document.getElementById("shell-footer").innerHTML =
+      '<span>' + esc(SHELL.footer.company) + '</span><ul>' +
+      SHELL.footer.links.map((l) => '<li><a href="' + esc(l.href) + '">' + esc(l.label) + '</a></li>').join("") +
+      '</ul>';
+  }
+
+  function renderBreadcrumb() {
+    const b = PAGE.breadcrumb; if (!b || !b.length) return "";
+    return '<nav class="breadcrumb" aria-label="Murupolku"><div class="container"><ol>' +
+      b.map((x, i, a) => i === a.length - 1
+        ? '<li>' + esc(x.label) + '</li>'
+        : '<li><a href="' + esc(x.href) + '">' + esc(x.label) + '</a></li>').join("") +
+      '</ol></div></nav>';
+  }
+
+  /* ── Sivun lohkot: lisää render<Block>() tähän väliin ───────────── */
+
+  /* ── Kokoaminen ────────────────────────────────────────────────── */
+  renderShell();
+  const main = document.getElementById("main");
+  main.insertAdjacentHTML("beforebegin", renderBreadcrumb());
+  main.innerHTML = [
+    /* renderHero(), renderCards(), ... */
+  ].join("");
+})();
+</script>
+</body>
+</html>

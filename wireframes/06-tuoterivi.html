@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tuoterivi on komponenttikirjastossa — Snellman Retail (wireframe)</title>
+<!--
+  06-tuoterivi.html oli tuoterivin komponenttiproto (v2, 15.9.2026).
+  30.9.2026 alkaen tuoterivi kaikkine variantteineen ja tiloineen on
+  komponenttikirjastossa: library/#docs=tuoterivi (layout B Kortti).
+  Tämä sivu ohjaa sinne, jotta vanhat linkit (Miro, kommentit) toimivat.
+  ?state=open ja ?state=cap vastaavat tarinoita "Lue lisää auki" ja "Erä katossa".
+-->
+<script>document.write('<link rel="stylesheet" href="lib/tokens.css?v=' + Date.now() + '"><link rel="stylesheet" href="lib/components.css?v=' + Date.now() + '">');</script>
+<script>
+  (function () {
+    var st = new URLSearchParams(location.search).get("state") || "";
+    var target = st.indexOf("cap") > -1 ? "library/#story=tuoterivi--katto"
+               : st.indexOf("open") > -1 ? "library/#story=tuoterivi--paneeli"
+               : "library/#docs=tuoterivi";
+    document.write('<meta http-equiv="refresh" content="0; url=' + target + '">');
+    window.__target = target;
+  })();
+</script>
+</head>
+<body>
+<main class="container container--text" style="padding-top:var(--gap-60)">
+  <h1>Tuoterivi</h1>
+  <p id="msg"></p>
+</main>
+<script>
+  document.getElementById("msg").innerHTML = 'Tuoterivi kaikkine variantteineen ja tiloineen on nyt komponenttikirjastossa. ' +
+    '<a class="link" href="' + window.__target + '">Avaa kirjastossa</a>';
+</script>
+</body>
+</html>

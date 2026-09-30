@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title></title>
+<!-- Kirjasto välimuistin ohi: lib/load.js (tokens, components, core, basics, product, shell, tuotedata) -->
+<script src="lib/load.js" data-with="data/products"></script>
+<!--
+  SNELLMAN RETAIL — SNELLMAN OUTLET (wireframe)
+  ==================================================================
+  Spec:  03-snellman-outlet.md v1.0, 15.9.2026
+  Rivi:  06-tuoterivi.md (Boost- ja Outlet-variantit)
+  Pohja: lib/ (komponenttikirjasto): tokenit, header, footer, murupolku, painikkeet,
+         merkintä, chip, toimituspäivä, tuoterivi (B Kortti).
+         Rivin variantit ja tilat: library/ → Tuoterivi.
+
+  Yksi URL (/outlet/), kirjautunut ja oikeusrajattu. Proto-palkista
+  voi kokeilla specin "Ehdollinen näkyvyys" -taulukon ehdot:
+  Outlet-oikeus, toimituspäivä, erätilanne, tuoteperheet, ilmoituslause.
+  Suodattimet, järjestys ja määrät toimivat oikeasti demodatalla.
+
+  Kaikki näkyvä teksti on PROTO/SHELL/PAGE-objekteissa (ja SN.UI:ssa).
+  Markkupissa ei ole sanoja — ruotsin lisääminen olisi sisältötyötä.
+  ==================================================================
+-->
+<style>
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Tässä vain sivun omat. */
+  :root { --c-bg-quiet: #f7f7f7; --r-accordion: 8px; }
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto { background: #2b2b28; color: #e9e8e1; font-size: var(--fs-xs); line-height: 1.5; }
+  .proto .container { padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl { display: flex; align-items: center; gap: var(--gap-8); flex-wrap: wrap; }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .lg { width: 18px; height: 10px; display: inline-block; }
+  .lg--var { border-bottom: 1px dotted #e9e8e1; }
+  .lg--fill { background: #fff6d6; border: 1px solid #e0c86a; }
+
+  /* Header, murupolku, painikkeet, placeholderit, merkinnät, chipit,
+     toimituspäivä, tuoterivi, footer: lib/components.css */
+  .crumb { padding-top: var(--gap-8); }
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--tight { padding-top: var(--gap-32); padding-bottom: var(--gap-24); }
+  .block--list { padding-top: var(--gap-24); }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block--quiet { background: var(--c-bg-quiet); }
+  .block[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+  .intro .lead { margin-top: var(--gap-16); }
+  .how h2 { margin-bottom: var(--gap-24); }
+
+  /* ── Ruudukot ja kortit ────────────────────────────────────────── */
+  .cols { display: grid; gap: var(--gap-32); }
+  .cols--2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── O1 toimituspäivä: lib gds/warehouse + sivun päivävalinta ──── */
+  .odate { margin-top: var(--gap-24); }
+  /* Kalenteri: lib calendar (lib/components.css) */
+    border: 1px solid var(--c-border-strong); border-radius: 0; padding: 10px 14px 8px; min-width: 104px;
+    text-align: left; line-height: 1.3; }
+  .cal__days button:hover { border-color: var(--c-primary); }
+  .cal__days button[aria-pressed="true"] { background: var(--c-primary); border-color: var(--c-primary); color: #fff; }
+  .cal__days .d { display: block; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: .5px; opacity: .8; }
+  .cal__days .n { display: block; font-weight: 700; }
+  .cal__days button[disabled] { opacity: .45; cursor: not-allowed; }
+
+  /* ── O2 selite ─────────────────────────────────────────────────── */
+  /* Selitekortit: tyyppi kerrotaan merkinnällä kortin sisällä, ei sivuraidalla (projektin sääntö) */
+  .legend .badge { margin-bottom: var(--gap-12); }
+  .legend h4 { font-size: var(--fs-h4); }
+  .legend__summary { margin-bottom: var(--gap-8); }
+  .acc__panel .cols { padding-bottom: var(--gap-16); }
+
+  /* ── O3 suodatus ja järjestys — genero/list-controls (uusi) ─────
+     Chipit: lib chip (toggle). Sivulla vain ryhmän asettelu. */
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-16) var(--gap-32);
+    padding: var(--gap-16) 0; border-top: 1px solid var(--c-border); border-bottom: 1px solid var(--c-border); }
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-8); }
+  .chips__label { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--c-text-2); margin-right: var(--gap-4); }
+  .sort { display: flex; align-items: center; gap: var(--gap-8); font-size: var(--fs-small); min-width: 0; }
+  .sort label { font-weight: 700; text-transform: uppercase; letter-spacing: .5px; font-size: var(--fs-xs); color: var(--c-text-2); }
+  .sort select { font: inherit; font-family: var(--font-sans); font-size: var(--fs-small); color: var(--c-text); min-width: 0; max-width: 100%;
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 7px 12px 5px; min-height: var(--touch); }
+  .count { margin-left: auto; font-size: var(--fs-small); color: var(--c-text-2); font-weight: 700; }
+  /* Leveässä valinnat näkyvät aina: painike ja aktiivirivi piiloon, paneeli osa riviä */
+  .controls__bar, .controls__active { display: none; }
+  .controls__panel { display: contents; }
+  .controls__toggle { display: inline-flex; align-items: center; gap: var(--gap-8); min-height: var(--touch); padding: 0 var(--gap-16);
+    border: 1px solid var(--c-border-strong); background: var(--c-surface); color: var(--c-primary); cursor: pointer;
+    font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-small); text-transform: uppercase; letter-spacing: var(--ls-button); }
+  .controls__toggle .cap { position: relative; top: .03em; }
+  .controls__toggle .ico:last-child { font-size: 12px; transition: transform .15s; }
+  .controls__toggle[aria-expanded="true"] .ico:last-child { transform: rotate(180deg); }
+  .controls__n { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--c-text-2); }
+  @media (max-width: 47.99em) {
+    .controls { display: block; }
+    .controls > .count { display: none; }
+    .controls__bar { display: flex; align-items: center; gap: var(--gap-16); }
+    .controls__active { display: flex; flex-wrap: wrap; gap: var(--gap-8); margin-top: var(--gap-12); }
+    .controls__panel { display: none; }
+    .controls.is-open .controls__panel { display: flex; flex-direction: column; align-items: stretch; gap: var(--gap-16); margin-top: var(--gap-16); }
+    .controls.is-open .sort { flex-wrap: wrap; }
+  }
+
+  /* ── O4 erät: lib tuoterivi (genero/product-card, B Kortti). Sivulla vain listan rytmi. */
+  .grid--b { margin-top: var(--gap-24); }
+
+  /* ── O5 tyhjätilat ─────────────────────────────────────────────── */
+  .empty { background: var(--c-bg-quiet); border: 1px dashed var(--c-border-strong); margin-top: var(--gap-24);
+    padding: var(--gap-40) var(--gap-32); text-align: center; color: var(--c-text-2); }
+  .empty p { max-width: 56ch; margin: 0 auto var(--gap-24); }
+
+  /* ── O6 haitari ────────────────────────────────────────────────── */
+  .how-acc { background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-accordion); margin-bottom: var(--gap-12); }
+  .how-acc summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center;
+    gap: var(--gap-16); padding: var(--gap-16) var(--gap-24); font-weight: 700; color: var(--c-primary); }
+  .how-acc summary::-webkit-details-marker { display: none; }
+  .how-acc summary .ico { transition: transform .15s ease-out; }
+  .how-acc[open] summary .ico { transform: rotate(180deg); }
+  .how-acc__body { padding: 0 var(--gap-24) var(--gap-24); color: var(--c-text-2); }
+
+  /* ── Ei oikeutta ───────────────────────────────────────────────── */
+  .noaccess { max-width: var(--container-text); }
+  .noaccess .lead { margin: var(--gap-24) 0 var(--gap-32); }
+  .noaccess__actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-24); }
+
+  /* ── Responsiivisuus ───────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .count { margin-left: 0; }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+    .block--tight { padding-top: var(--gap-24); padding-bottom: var(--gap-16); }
+    .block--list { padding-top: var(--gap-16); }
+    .cols--2 { grid-template-columns: 1fr; gap: var(--gap-16); }
+    .empty { padding: var(--gap-32) var(--gap-16); }
+  }
+</style>
+</head>
+
+<!-- ══════════ PROTO: kokeiltavat ehdot (ei osa designia) ══════════ -->
+<script>
+const PROTO = {
+  title: "<b>Wireframe</b>",
+  meta: ["Snellman Retail", "03 Snellman Outlet", "spec v1.0 / 15.9.2026"],
+  hint: "Kokeile specin ehdollista näkyvyyttä:",
+  legend: [
+    { cls: "var",  label: "pisteviiva = dynaaminen arvo" },
+    { cls: "fill", label: "keltainen = avoin kysymys Snellmanille" }
+  ],
+  controls: [
+    { key: "access",   label: "Outlet-oikeus",   opts: [ { v: "yes", label: "On" }, { v: "no", label: "Ei (suora URL)" } ] },
+    { key: "date",     label: "Toimituspäivä",   opts: [ { v: "yes", label: "Valittu" }, { v: "no", label: "Ei valittu" } ], only: "yes" },
+    { key: "batches",  label: "Eriä",            opts: [ { v: "yes", label: "On" }, { v: "otherday", label: "Vain muille päiville" }, { v: "none", label: "Ei lainkaan" } ], only: "yes" },
+    { key: "families", label: "Eriä lastauspaikoista", opts: [ { v: "both", label: "Molemmista" }, { v: "meat", label: "Vain lihatuotteet" } ], only: "yes" },
+    { key: "notify",   label: "Ilmoituslause",   opts: [ { v: "yes", label: "Näkyy" }, { v: "no", label: "Piilossa" } ], only: "yes" }
+  ],
+  defaults: { access: "yes", date: "yes", batches: "yes", families: "both", notify: "yes" }
+};
+
+/* ══════════ SHELL: kehys, kirjautuneen variantti (01-etusivu.md B0) ══════════
+   Header, footer ja niiden sanasto ovat kirjastossa (SN.SHELL, lib/components/shell.js).
+   Tässä vain sivun linkit, jotka annetaan SN.SHELLiin. */
+const SHELL = {
+  lang: "fi",
+  home: "01-etusivu.html?view=b",
+  skip: "Siirry sisältöön",
+  breadcrumbLabel: "Murupolku",
+  nav: [
+    { key: "kategoriat", label: "Kategoriat",      href: "02-kategoriat.html" },
+    { key: "pikatilaus", label: "Pikatilaus",      href: "02-kategoriat.html?view=quick" },
+    { key: "outlet",     label: "Snellman Outlet", href: "03-snellman-outlet.html", requires: "outlet" },
+    { key: "tilaukset",  label: "Tilaukset",       href: "#" },
+    { key: "tili",       label: "Tili",            href: "#" }
+  ],
+  cart: { href: "07-ostoskori.html" },
+  footer: {
+    links: [
+      { label: "Tietosuoja",               href: "#" },
+      { label: "Yksityisyys ja evästeet",  href: "#" },
+      { label: "Tilausehdot",              href: "05-tilausehdot.html" },
+      { label: "Asiakaspalvelu",           href: "04-asiakaspalvelu.html" }
+    ]
+  }
+};
+
+/* ══════════ PAGE: sivun koko sisältö ══════════ */
+const PAGE = {
+  meta: {
+    title: "Snellman Outlet",
+    /* noindex, nofollow: ei julkista näkymää (spec: Indeksointi) */
+    robots: "noindex, nofollow"
+  },
+  breadcrumb: [
+    { label: "Etusivu",          href: "01-etusivu.html?view=b" },
+    { label: "Snellman Outlet",  href: "#" }
+  ],
+
+  /* Muuttujien demoarvot. Sivulla ne näkyvät pisteviivalla alleviivattuina. */
+  vars: {
+    "rivimäärä": "6",
+    "pvm": "ke 24.9.2026",
+    "seuraava_pvm": "pe 26.9.2026"
+  },
+  /* Toimituspäivä koneluettavana: rivien suodatus ja "n päivää toimituksesta" lasketaan tästä. */
+  deliveryISO: "2026-09-24",
+
+  /* ── O1 ── */
+  intro: {
+    block: "core/group → core/heading H1 + core/paragraph → gds/warehouse (lib toimituspäivä, button)",
+    h1: "Snellman Outlet",
+    lead: "Lähellä päiväystä olevat erät edullisemmin. Erät päivittyvät päivittäin, ja määrät ovat rajalliset.",
+    /* Painikkeen ja tyhjän tilan sanasto: SN.UI.delivery. Sivu tarkentaa vain perustelun. */
+    dateValue: "{pvm}",
+    emptyState: "Valitse toimituspäivä, niin näet erät ja hinnat.",
+    calendarHeading: "Valitse toimituspäivä",
+    /* lib calendar -päivät. Estetty päivä kertoo syyn, valittu näyttää tilausajan. */
+    days: [
+      { iso: "2026-09-22", wd: "ma", n: "22.9.", cutoff: "pe 19.9. klo 14" },
+      { iso: "2026-09-23", wd: "ti", n: "23.9.", cutoff: "ma 22.9. klo 14" },
+      { iso: "2026-09-24", wd: "ke", n: "24.9.", selected: true, cutoff: "ti 23.9. klo 14" },
+      { iso: "2026-09-25", wd: "to", n: "25.9.", cutoff: "ke 24.9. klo 14" },
+      { iso: "2026-09-26", wd: "pe", n: "26.9.", disabled: true, reason: "ei Outlet-lähtöä" }
+    ]
+  },
+
+  /* ── O2 ── */
+  legend: {
+    block: "core/columns 2 → gds/card × 2 (staattinen, ei linkkejä)",
+    ariaLabel: "Erätyypit",
+    /* Katselmointi #13 (päätetty 30.9.): lyhyt selite aina näkyvissä, kortit avattavassa.
+       Puhelimella kiinni, jotta tuotteet alkavat lähempänä; leveässä auki. */
+    summary: "Boost noin −30 % ja Outlet noin −50 %: samoja tuotteita lyhyemmällä käyttöajalla.",
+    more: "Mitä Boost- ja Outlet-erät ovat?",
+    openFrom: "(min-width: 48em)",
+    items: [
+      { kind: "boost",  discount: 30, title: "Boost-erät, noin −30 %",
+        text: "Tuote on lähellä parasta ennen -päivää ja myydään siksi alennettuun hintaan. Sama tuote, sama varasto, lyhyempi käyttöaika. Sopii, kun tuote menee käyttöön muutaman päivän sisällä." },
+      { kind: "outlet", discount: 50, title: "Outlet-erät, noin −50 %",
+        text: "Tuotteen päiväys ei enää riitä vähittäiskaupan hyllyyn, mutta tuote on täysin käyttökelpoinen. Erät ovat kertaluonteisia ja loppuvat, kun ne on myyty." }
+    ],
+    fill: "Prosentit ovat briefin esimerkkitasoja (−30 %, −50 %). Snellman voi säätää tasoa tuote- ja päiväkohtaisesti, siksi „noin”. Jos tasot vaihtelevat paljon, sana poistetaan ja kortti kertoo vain periaatteen: „Boost-erät: alennus normaalihinnasta”."
+  },
+
+  /* ── O3 ── */
+  controls: {
+    block: "genero/list-controls (uusi): chipit + järjestysvalinta, ei sivupalkkia",
+    ariaLabel: "Suodatus ja järjestys",
+    typeLabel: "Tyyppi",
+    types: [
+      { v: "all",    label: "Kaikki" },
+      { v: "boost",  label: "Boost" },
+      { v: "outlet", label: "Outlet" }
+    ],
+    familyLabel: "Tuoteperhe",
+    families: [
+      { v: "all",   label: "Kaikki tuotteet" },
+      { v: "meat",  label: "Lihatuotteet" },
+      { v: "ready", label: "Kokkikartanon valmisruoat" }
+    ],
+    sortLabel: "Järjestä",
+    /* Puhelimella valinnat painikkeen takana, aktiiviset suodattimet poistettavina chippeinä */
+    toggle: "Suodata ja järjestä",
+    toggleCount: "{n} valittu",
+    sorts: [
+      { v: "bb",   label: "Käytä viimeistään, aikaisin ensin" },
+      { v: "disc", label: "Suurin alennus ensin" },
+      { v: "name", label: "Tuotenimi A–Ö" }
+    ],
+    countMany: "{n} erää",
+    countOne: "1 erä",
+    fill: "Tuoteperheiden nimet „Lihatuotteet” ja „Kokkikartanon valmisruoat” kuten etusivun B1. Suodatin näytetään vain, jos molemmista lastauspaikoista on eriä."
+  },
+
+  /* ── O4 ── */
+  list: {
+    block: "genero/product-list → genero/product-card (lib tuoterivi, B Kortti; Boost- ja Outlet-variantit, 06-tuoterivi.md)",
+    ariaLabel: "Erät",
+    /* Rivin sanasto (merkintä, tuotenumero, käytä viimeistään, saldo, hinta, määrä,
+       loppuunmyyty, Lisätiedot) on kirjastossa: SN.UI, lib/core.js. */
+    /* Tuotteet Snellmanin tuotedatasta (lib/data/products.js, SN.product(sku)): nimi, paino, arviopaino,
+       kuvaus, kuva ja tuoteperhe (lastauspaikka kategorian mukaan, kuten 01). Erän tiedot ovat DEMOA:
+       bb = käytä viimeistään (ISO), saldo, orig = erän alkuperäinen määrä (vähän jäljellä -logiikka),
+       hinta, normaalihinta, alennus. Datassa ei ole Boost- eikä Outlet-tietoa. */
+    items: [
+      { kind: "boost",  sku: "17516", bb: "2026-09-27", saldo: 18, orig: 60,  hinta: "4,05", normaalihinta: "5,79", alennus: 30 },
+      { kind: "outlet", sku: "22442", bb: "2026-09-26", saldo: 9,  orig: 40,  hinta: "9,90", normaalihinta: "19,80", alennus: 50 },
+      { kind: "boost",  sku: "12996", bb: "2026-09-29", saldo: 24, orig: 30,  hinta: "4,40", normaalihinta: "6,29", alennus: 30 },
+      { kind: "outlet", sku: "13211", bb: "2026-09-28", saldo: 5,  orig: 60,  hinta: "1,95", normaalihinta: "3,90", alennus: 50 },
+      { kind: "outlet", sku: "22159", bb: "2026-09-30", saldo: 32, orig: 40,  hinta: "8,45", normaalihinta: "16,90", alennus: 50 },
+      { kind: "outlet", sku: "22427", bb: "2026-09-25", saldo: 12, orig: 20,  hinta: "9,95", normaalihinta: "19,90", alennus: 50 },
+      { kind: "outlet", sku: "15611", bb: "2026-10-01", saldo: 14, orig: 100, hinta: "5,98", normaalihinta: "11,95", alennus: 50 },
+      { kind: "boost",  sku: "31017", bb: "2026-09-26", saldo: 22, orig: 50,  hinta: "13,65", normaalihinta: "19,50", alennus: 30 },
+      { kind: "boost",  sku: "12346", bb: "2026-10-03", saldo: 40, orig: 40,  hinta: "1,65", normaalihinta: "2,36", alennus: 30 },
+      /* Oletus 3b: loppuunmyyty erä näkyy harmaana 24 h. */
+      { kind: "outlet", sku: "10862", bb: "2026-09-27", saldo: 0,  orig: 80,  hinta: "1,45", normaalihinta: "2,90", alennus: 50, soldOut: true }
+    ],
+    /* Käytä viimeistään ≤ 2 päivää toimituksesta → päiväyksen perään (spec O4). Saldo < 20 % erästä → "Vain … jäljellä". */
+    bbSoonDays: 2,
+    bbNoteOne: "1 päivä toimituksesta",
+    bbNoteMany: "{n} päivää toimituksesta",
+    lowStockShare: 0.2,
+    fill: "Käytä viimeistään -päivä tulee M3:n erätiedosta — vahvistetaan, että se on syötteessä (sama kuin 06). Erän alkuperäinen määrä tarvitaan „vähän jäljellä” -logiikkaan; jos ei saatavilla, käytetään vain kynnystä alle 10 yksikköä. Loppuunmyyty erä näkyy harmaana 24 h (oletus 3b).",
+    fillContrast: "BOOST-merkinnän teksti on tässä #7a5800, ei specin #af7e04: jälkimmäisen kontrasti #ffdc4a-taustalla on 2.68:1 eli alle specin oman AA-vaatimuksen. #7a5800 antaa 4.84:1. Sama poikkeama kuin etusivulla, vahvistetaan brändin kanssa."
+  },
+
+  /* ── O5 ── */
+  empty: {
+    block: "core/group (#f7f7f7) → core/paragraph + core/buttons, O4:n paikalla",
+    /* Ilmoituslause on erillinen osa, jotta se voidaan pudottaa pois (⚠ markkinointi). Piste lisätään aina loppuun. */
+    none:      { text: "Outletissa ei ole eriä juuri nyt. Erät päivittyvät päivittäin", notify: ", ja saat ilmoituksen sähköpostiin, kun uusia eriä tulee", end: ".", cta: { label: "Selaa kategorioita", href: "02-kategoriat.html" } },
+    otherDay:  { text: "Valitulle toimituspäivälle ei ole eriä. Kokeile toista päivää: seuraavat erät ovat saatavilla {seuraava_pvm}.", cta: { label: "Vaihda toimituspäivä" } },
+    filtered:  { text: "Ei eriä näillä valinnoilla.", cta: { label: "Näytä kaikki erät" } },
+    noDate:    { text: "Valitse toimituspäivä, niin näet erät ja hinnat.", cta: { label: "Valitse päivä" } },
+    fill: "Ilmoitus sähköpostiin: Snellmanin oma markkinointityökalu lähettää ilmoitukset, kauppa ei. Lause pidetään vain, jos Snellman vahvistaa, että kaikki Outlet-oikeudelliset saavat ilmoitukset automaattisesti."
+  },
+
+  /* ── O6 ── */
+  how: {
+    block: "core/group → core/heading H2 → gds/accordion (3)",
+    heading: "Näin Outlet toimii",
+    items: [
+      { q: "Miksi erät ovat edullisempia?",
+        a: "Boost-erät ovat lähellä parasta ennen -päivää, ja Outlet-erien päiväys ei enää riitä vähittäiskaupan hyllyyn. Tuotteet ovat samoja kuin normaalivalikoimassa ja täysin käyttökelpoisia. Hinta on alempi, koska haluamme, että tuote menee käyttöön eikä hukkaan." },
+      { q: "Miten näen, ehdinkö käyttää tuotteen?",
+        a: "Jokaisella rivillä näkyy käytä viimeistään -päivä ja toimituspäivä. Erät näytetään vain, jos ne ehtivät perille ennen käyttöpäivää. Vertaa päivää omaan menekkiisi ennen tilausta." },
+      { q: "Voinko palauttaa Outlet-tuotteen?",
+        a: "Outlet- ja Boost-erät myydään loppuun, eikä niitä voi palauttaa muuten kuin laatuvirheen vuoksi. Jos tuotteessa on virhe, ota yhteyttä asiakaspalveluun toimituspäivänä.",
+        fill: "Vahvistetaan tilausehtoihin samalla kun minimitilaus ja toimitusalue päätetään." }
+    ]
+  },
+
+  /* ── O7 ── */
+  support: {
+    block: "core/columns 2 → gds/card × 2, koko kortti linkki (sama kuin 01-etusivu B6)",
+    ariaLabel: "Tuki",
+    items: [
+      { title: "Asiakaspalvelu ja usein kysytyt kysymykset", text: "Toimitukset, tuotteet, tunnukset. Vastaukset yleisimpiin kysymyksiin ja yhteystiedot.", href: "04-asiakaspalvelu.html", cta: "Siirry" },
+      { title: "Tilausehdot", text: "Minimitilaus, toimitusalue, tilauksen muuttaminen ja peruminen.", href: "05-tilausehdot.html", cta: "Siirry" }
+    ]
+  },
+
+  /* ── Ei Outlet-oikeutta: suora URL ── */
+  noAccess: {
+    block: "core/group → core/heading H1 + core/paragraph + core/buttons (O0 header, ei O2–O6)",
+    h1: "Snellman Outlet",
+    text: "Outlet on erillinen osio, jossa myydään lähellä päiväystä olevia eriä alennettuun hintaan. Osio avataan asiakkaille, jotka haluavat ostaa eriä ja pystyvät käyttämään ne nopeasti. Jos haluat Outletin käyttöösi, ota yhteyttä asiakaspalveluun.",
+    cta: { label: "Ota yhteyttä asiakaspalveluun", href: "04-asiakaspalvelu.html#outlet" },
+    back: { label: "Takaisin etusivulle", href: "01-etusivu.html?view=b" },
+    fill: "Avoin: Outlet-oikeuden pyytäminen. Oletus on, että oikeus pyydetään asiakaspalvelusta. Jos Snellman haluaa pyyntönapin kauppaan, painike lähettää pyynnön asiakaspalvelun sähköpostiin ja copy muuttuu „Pyydä Outlet-oikeus”."
+  }
+};
+</script>
+
+<body>
+<a href="#main" class="skip" id="skiplink"></a>
+<div class="proto"><div class="container" id="proto"></div></div>
+<div id="shell-header"></div>
+<div id="crumb"></div>
+<main id="main"></main>
+<div id="shell-footer"></div>
+
+
+<!-- ══════════ RENDER ══════════ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ─── Tila ────────────────────────────────────────────────────── */
+  const KEY = "snellman-wf-03";
+  const S = Object.assign({}, PROTO.defaults, readState());
+  /* Suodattimien tila ei tallennu: sivu aukeaa aina oletuksilla. */
+  /* Erät + tuotedata: nimi, paino, kuvaus ja tuoteperhe SKU:lla (lastauspaikka kategorian mukaan, kuten 01) */
+  const KERAVA = ["Valmisruoka", "Suurkeittiötuotteet", "Paninit", "Kastikkeet"];
+  const ITEMS = PAGE.list.items.map((i) => {
+    const p = SN.product(i.sku) || { name: i.sku, kg: 0, approx: false, desc: "", cat: "" };
+    return Object.assign({ nro: i.sku, name: p.name, kg: p.kg, approx: p.approx, desc: p.desc,
+      family: KERAVA.includes(p.cat) ? "ready" : "meat" }, i);
+  });
+  const F = { type: "all", family: "all", sort: "bb" };
+  let ctrlOpen = false;   /* puhelimen suodatinpaneeli */
+  /* Kori: tuotenumero → määrä. Säilyy suodattimien ja järjestyksen vaihtuessa. */
+  const CART = {};
+  let focusSel = null;
+  /* Sivun päivävalinta auki/kiinni: säilyy uudelleenrenderöinnissä (suodattimet, määrät). */
+  let calOpen = false;
+
+  function readState() {
+    let out = {};
+    try { out = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { out = {}; }
+    const q = new URLSearchParams(location.search);
+    PROTO.controls.forEach((c) => { if (q.has(c.key)) out[c.key] = q.get(c.key); });
+    return out;
+  }
+  function setState(k, v) {
+    S[k] = v;
+    if (k === "date") calOpen = false;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* privaatti-ikkuna */ }
+    render();
+  }
+  const hasAccess = () => S.access === "yes";
+  const hasDate   = () => S.date === "yes";
+
+  /* ─── Apurit ──────────────────────────────────────────────────── */
+  const { esc } = SN;
+  /* Sivun omat ikonit samasta Snellmanin FA Pro -kitistä (Light), jonka lib/core.js lataa */
+  const ico = (n) => '<span class="ico" aria-hidden="true"><i class="fa-light fa-' + n + '"></i></span>';
+
+  /* Korvaa {muuttujat} demoarvoilla ja merkitsee ne dynaamisiksi. */
+  function vars(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, function (m, key) {
+      const v = src[key];
+      if (v == null) return SN.render("fill", { text: key });
+      return '<span class="var">' + esc(v) + '</span>';
+    });
+  }
+  /* Sama ilman markkupia: aria-labelit, URL:t, komponenttien argumentit. */
+  function varsPlain(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, (m, k) => (src[k] == null ? m : src[k]));
+  }
+  const fill = (t) => t ? SN.render("fill", { text: t, block: true }) : "";
+
+  function block(inner, o) {
+    o = o || {};
+    const id  = o.id ? ' id="' + esc(o.id) + '"' : "";
+    const lab = o.labelledby ? ' aria-labelledby="' + esc(o.labelledby) + '"'
+              : o.label ? ' aria-label="' + esc(o.label) + '"' : "";
+    const mod = (o.variant || []).map((v) => " block--" + esc(v)).join("") + (o.cls ? " " + esc(o.cls) : "");
+    const cw  = o.narrow ? " container--text" : "";
+    return '<section class="block' + mod + '"' + id + lab + '><div class="container' + cw + '">' + inner + "</div></section>";
+  }
+
+  /* Päivämäärät: ISO → d.m.vvvv, ja päivien ero toimituspäivään. */
+  const DAY = 86400000;
+  function fmtDate(iso) { const d = new Date(iso + "T00:00:00"); return d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear(); }
+  function daysFromDelivery(iso) { return Math.round((new Date(iso + "T00:00:00") - new Date(PAGE.deliveryISO + "T00:00:00")) / DAY); }
+
+  /* ─── Proto-palkki ────────────────────────────────────────────── */
+  function renderProto() {
+    const meta = PROTO.meta.map((m) => "<span>" + esc(m) + "</span>").join('<span aria-hidden="true">·</span>');
+    const ctrls = PROTO.controls.filter((c) => !c.only || c.only === S.access).map(function (c) {
+      const opts = c.opts.map((o) =>
+        '<button type="button" data-k="' + esc(c.key) + '" data-v="' + esc(o.v) + '" aria-pressed="' +
+        (S[c.key] === o.v) + '">' + esc(o.label) + "</button>").join("");
+      return '<span class="ctrl"><span class="ctrl__label">' + esc(c.label) + '</span><span class="ctrl__opts">' + opts + "</span></span>";
+    }).join("");
+    document.getElementById("proto").innerHTML =
+      '<div class="proto__title">' + PROTO.title + meta + "</div>" +
+      '<div class="proto__ctrls"><span class="ctrl"><span class="ctrl__label">' + esc(PROTO.hint) + "</span></span>" + ctrls + "</div>" +
+      '<div class="proto__legend">' + PROTO.legend.map((l) =>
+        '<span><i class="lg lg--' + esc(l.cls) + '" aria-hidden="true"></i>' + esc(l.label) + "</span>").join("") + "</div>";
+  }
+
+  /* ─── Kehys: kirjastosta. Sivu antaa vain omat linkkinsä SN.SHELLiin. ── */
+  SN.SHELL.home = SHELL.home;
+  SN.SHELL.b.nav = SHELL.nav;
+  SN.SHELL.b.cart.href = SHELL.cart.href;
+  SN.SHELL.footer.links = SHELL.footer.links;
+  SN.UI.delivery.why = PAGE.intro.emptyState;
+
+  const cartCount = () => parseInt(PAGE.vars["rivimäärä"], 10) + Object.keys(CART).length;
+  const headerHtml = () => SN.render("header", { state: "b", current: "outlet", outlet: hasAccess(), search: true, cartCount: cartCount() });
+
+  function renderShell() {
+    document.documentElement.lang = SHELL.lang;
+    document.title = PAGE.meta.title + " — Snellman Retail (wireframe)";
+    document.getElementById("skiplink").textContent = SHELL.skip;
+    document.getElementById("shell-header").innerHTML = headerHtml();
+    document.getElementById("crumb").innerHTML = hasAccess() && PAGE.breadcrumb.length
+      ? '<div class="container crumb">' + SN.render("breadcrumb", { label: SHELL.breadcrumbLabel, items: PAGE.breadcrumb }) + "</div>"
+      : "";
+    document.getElementById("shell-footer").innerHTML = SN.render("footer", { loggedIn: true });
+  }
+
+  /* ═══════════ O1 otsikko ja toimituspäivä ═══════════
+     Painike: lib gds/warehouse. Päivävalinta (kalenteri) on sivun oma
+     tynkä; tuotannossa warehouse avaa oman valintaikkunansa. */
+  function renderIntro() {
+    const c = PAGE.intro; if (!c) return "";
+    /* Valittuna painike avaa lib-kalenterin (controls/expanded); valitsematta proto asettaa päivän suoraan (popup: false). */
+    const cal = SN.render("calendar", { id: "wf-cal", hidden: !calOpen, heading: c.calendarHeading, weekNav: false, days: c.days });
+    const picker = '<div class="odate">' + SN.render("delivery", hasDate()
+        ? { variant: "button", date: varsPlain(c.dateValue), note: "", id: "wf-date", controls: "wf-cal", expanded: calOpen, body: cal }
+        : { variant: "button", date: "", id: "wf-date", popup: false }) + "</div>";
+    return block('<h1 id="page-title">' + esc(c.h1) + '</h1><p class="lead">' + esc(c.lead) + "</p>" + picker,
+      { labelledby: "page-title", variant: ["tight"], cls: "intro" });
+  }
+
+  /* ═══════════ O2 selite ═══════════ */
+  function renderLegend() {
+    const c = PAGE.legend; if (!c || c.show === false) return "";
+    const cards = c.items.map((i) =>
+      '<div class="card legend legend--' + esc(i.kind) + '">' + SN.render("badge", { type: i.kind, discount: i.discount, decorative: true }) +
+        "<h4>" + esc(i.title) + "</h4><p>" + esc(i.text) + "</p></div>").join("");
+    const wide = window.matchMedia && matchMedia(c.openFrom).matches;
+    return block('<p class="legend__summary">' + esc(c.summary) + "</p>" +
+      SN.render("accordion", { id: "erat", single: false, hashOpen: false, open: wide ? 0 : -1,
+        items: [{ q: c.more, a: '<div class="cols cols--2">' + cards + "</div>" }] }) + fill(c.fill),
+      { label: c.ariaLabel, variant: ["tight"] });
+  }
+
+  /* ═══════════ O3 + O4 + O5: suodattimet, lista, tyhjätilat ═══════════ */
+
+  /* Erät, jotka ylipäätään ovat tarjolla proto-tilassa (ennen käyttäjän suodattimia). */
+  function availableItems() {
+    if (S.batches !== "yes") return [];
+    return ITEMS
+      .filter((i) => S.families === "both" || i.family === "meat")
+      /* Erä näkyy vain, jos käytä viimeistään on toimituspäivän jälkeen. */
+      .filter((i) => daysFromDelivery(i.bb) > 0);
+  }
+  function filteredItems(all) {
+    let out = all.filter((i) => F.type === "all" || i.kind === F.type)
+                 .filter((i) => F.family === "all" || i.family === F.family);
+    const live = out.filter((i) => !i.soldOut), gone = out.filter((i) => i.soldOut);
+    if (F.sort === "bb")   live.sort((a, b) => a.bb < b.bb ? -1 : a.bb > b.bb ? 1 : 0);
+    if (F.sort === "disc") live.sort((a, b) => b.alennus - a.alennus);
+    if (F.sort === "name") live.sort((a, b) => a.name.localeCompare(b.name, "fi"));
+    return { live, gone };
+  }
+
+  function renderControls(all, n) {
+    const c = PAGE.controls; if (!c) return "";
+    /* Chip: lib (toggle). Sivun suodatinavain ja id (fokuksen palautus) SN.attrs-argumentteina. */
+    const chips = (label, opts, key) =>
+      '<div class="chips" role="group" aria-label="' + esc(label) + '"><span class="chips__label" aria-hidden="true">' + esc(label) + "</span>" +
+      opts.map((o) => SN.render("chip", { mode: "toggle", label: o.label, pressed: F[key] === o.v,
+        id: "chip-" + key + "-" + o.v, data: { f: key, v: o.v } })).join("") + "</div>";
+
+    const showFamily = all.some((i) => i.family === "meat") && all.some((i) => i.family === "ready");
+    const sort = '<div class="sort"><label for="wf-sort">' + esc(c.sortLabel) + '</label><select id="wf-sort">' +
+      c.sorts.map((o) => '<option value="' + esc(o.v) + '"' + (F.sort === o.v ? " selected" : "") + ">" + esc(o.label) + "</option>").join("") + "</select></div>";
+    const count = '<span class="count" aria-live="polite">' + (n === 1 ? esc(c.countOne) : esc(c.countMany).replace("{n}", n)) + "</span>";
+
+    /* Aktiiviset suodattimet (ei oletus) — puhelimella näkyvissä myös paneelin ollessa kiinni */
+    const active = [["type", c.types], ["family", showFamily ? c.families : []]]
+      .map(([k, opts]) => opts.find((o) => o.v === F[k] && o.v !== "all") && { k, o: opts.find((o) => o.v === F[k]) }).filter(Boolean);
+    const toggle = '<button type="button" class="controls__toggle" id="wf-ctrl-toggle" aria-expanded="' + ctrlOpen + '" aria-controls="wf-ctrl-panel">' +
+      SN.ico("sliders") + SN.cap(c.toggle) + (active.length ? '<span class="controls__n">' + esc(SN.t(c.toggleCount, { n: active.length })) + "</span>" : "") +
+      SN.ico("chevronDownLight") + "</button>";
+    const chipsActive = active.length ? '<div class="controls__active">' +
+      active.map((x) => SN.render("chip", { mode: "remove", label: x.o.label, id: "chip-x-" + x.k, data: { f: x.k, v: "all" } })).join("") + "</div>" : "";
+
+    return '<div class="' + SN.cls("controls", ctrlOpen && "is-open") + '" role="group" aria-label="' + esc(c.ariaLabel) + '">' +
+      '<div class="controls__bar">' + toggle + count + "</div>" + chipsActive +
+      '<div class="controls__panel" id="wf-ctrl-panel">' +
+      chips(c.typeLabel, c.types, "type") + (showFamily ? chips(c.familyLabel, c.families, "family") : "") + sort + "</div>" + count + "</div>";
+  }
+
+  /* ═══════════ Tuoterivi: lib genero/product-card (B Kortti) ═══════════
+     Sivu kääntää oman erädatansa rivin argumenteiksi. Kaikki rivin variantit
+     ja tilat ovat kirjastossa (library/ → Tuoterivi), ei tällä sivulla. */
+  function bbNote(i) {
+    const c = PAGE.list, n = daysFromDelivery(i.bb);
+    return n > 0 && n <= c.bbSoonDays ? (n === 1 ? c.bbNoteOne : SN.t(c.bbNoteMany, { n })) : "";
+  }
+  function rowArgs(i) {
+    const kg = i.approx;
+    return {
+      context: "list", layout: "b", variant: i.kind,
+      /* Pakkauskokoa ei toisteta: Snellmanin tuotenimessä on jo paino (kuten 01) */
+      name: i.name, sku: i.nro, pack: "", previously: false,
+      price: i.hinta, regular: i.normaalihinta,
+      /* Arviopainoinen (nimessä n + paino): hinta €/kg, tilataan pakkauksina, summa arvio. Muut €/pakk. */
+      priceUnit: kg ? "kg" : "pakk", unit: "pakk", kgPerUnit: kg ? i.kg : "", variableWeight: kg ? "" : false,
+      bestBefore: fmtDate(i.bb), bestBeforeNote: bbNote(i), stock: i.saldo,
+      /* Vähissä: alle 20 % erän alkuperäisestä (kirjasto lisää alle 10 yksikön kynnyksen). */
+      lowStock: !!i.orig && i.saldo > 0 && i.saldo < i.orig * PAGE.list.lowStockShare,
+      href: i.href || "",
+      qty: CART[i.nro] || 0, state: i.soldOut ? "soldout" : "ok", date: PAGE.vars.pvm, desc: i.desc
+    };
+  }
+
+  function renderEmpty(kind) {
+    const e = PAGE.empty[kind];
+    let btn;
+    if (kind === "none")     btn = SN.render("button", { label: e.cta.label, href: e.cta.href });
+    if (kind === "otherDay") btn = SN.render("button", { label: e.cta.label, data: { opencal: "" } });
+    if (kind === "filtered") btn = SN.render("button", { label: e.cta.label, variant: "outline", data: { reset: "" } });
+    if (kind === "noDate")   btn = SN.render("button", { label: e.cta.label, data: { setdate: "" } });
+    const text = kind === "none" ? esc(e.text) + (S.notify === "yes" ? esc(e.notify) : "") + esc(e.end) : vars(e.text);
+    return '<div class="empty" role="status"><p>' + text + "</p>" + btn + "</div>" + (kind === "none" ? fill(PAGE.empty.fill) : "");
+  }
+
+  function renderListArea() {
+    const c = PAGE.list;
+    if (!hasDate()) return block(renderEmpty("noDate"), { label: c.ariaLabel, variant: ["list"] });
+    if (S.batches === "none") return block(renderEmpty("none"), { label: c.ariaLabel, variant: ["list"] });
+    if (S.batches === "otherday") return block(renderEmpty("otherDay"), { label: c.ariaLabel, variant: ["list"] });
+
+    const all = availableItems();
+    const { live, gone } = filteredItems(all);
+    const controls = renderControls(all, live.length);
+    const body = live.length
+      ? '<ul class="grid grid--b">' + live.concat(gone).map((i) => '<li class="cell">' + SN.render("productRow", rowArgs(i)) + "</li>").join("") + "</ul>" +
+        fill(c.fill) + fill(c.fillContrast) + fill(PAGE.controls.fill)
+      : renderEmpty("filtered");
+    return block(controls + body, { label: c.ariaLabel, variant: ["list"], id: "erat" });
+  }
+
+  /* ═══════════ O6 haitari ═══════════ */
+  function renderHow() {
+    const c = PAGE.how; if (!c || c.show === false) return "";
+    const items = c.items.map((i) =>
+      '<details class="how-acc"><summary>' + esc(i.q) + ico("chevron-down") + "</summary>" +
+      '<div class="how-acc__body"><p>' + esc(i.a) + "</p>" + fill(i.fill) + "</div></details>").join("");
+    return block('<h2 id="how-title">' + esc(c.heading) + "</h2>" + items,
+      { labelledby: "how-title", narrow: true, variant: ["block-bg"], cls: "how" });
+  }
+
+  /* ═══════════ O7 tuki ═══════════ */
+  function renderSupport() {
+    const c = PAGE.support; if (!c || c.show === false) return "";
+    /* Koko kortti on linkki, joten sisällä oleva "Siirry" on pelkkä ulkoasu (ei sisäkkäistä linkkiä). */
+    const cards = c.items.map((i) => SN.render("card", { title: i.title, text: i.text, href: i.href, cta: i.cta })).join("");
+    return block('<div class="cols cols--2">' + cards + "</div>", { label: c.ariaLabel });
+  }
+
+  /* ═══════════ Ei oikeutta ═══════════ */
+  function renderNoAccess() {
+    const c = PAGE.noAccess;
+    return block('<div class="noaccess"><h1 id="page-title">' + esc(c.h1) + '</h1><p class="lead">' + esc(c.text) + "</p>" +
+      '<div class="noaccess__actions">' + SN.render("button", { label: c.cta.label, href: c.cta.href }) +
+      SN.render("button", { variant: "text", label: c.back.label, href: c.back.href, icon: "arrow" }) + "</div>" + fill(c.fill) + "</div>",
+      { labelledby: "page-title" });
+  }
+
+  /* ─── Kokoaminen ──────────────────────────────────────────────── */
+  function render() {
+    renderProto();
+    renderShell();
+    document.getElementById("main").innerHTML = (hasAccess()
+      ? [renderIntro(), renderLegend(), renderListArea(), renderHow(), renderSupport()]
+      : [renderNoAccess()]).join("");
+    wire();
+    if (focusSel) { const el = document.querySelector(focusSel); if (el) el.focus(); focusSel = null; }
+  }
+
+  /* ─── Vuorovaikutus ───────────────────────────────────────────── */
+  function openCal(open) {
+    const cal = document.getElementById("wf-cal"), btn = document.getElementById("wf-date");
+    if (!cal) return;
+    calOpen = open; cal.hidden = !open;
+    if (btn) btn.setAttribute("aria-expanded", String(open));
+    if (open) cal.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
+
+  function wire() {
+    document.querySelectorAll("#proto button[data-k]").forEach((b) =>
+      b.addEventListener("click", () => setState(b.dataset.k, b.dataset.v)));
+
+    /* Toimituspäivä: valittuna painike avaa sivun päivävalinnan, valitsematta asettaa päivän (proto). */
+    const db = document.getElementById("wf-date");
+    if (db) db.addEventListener("click", () => hasDate() ? openCal(!calOpen) : setState("date", "yes"));
+    document.querySelectorAll("[data-setdate]").forEach((b) => b.addEventListener("click", () => setState("date", "yes")));
+    document.querySelectorAll("[data-opencal]").forEach((b) => b.addEventListener("click", () => openCal(true)));
+
+    /* Suodattimet ja järjestys */
+    document.querySelectorAll("button[data-f]").forEach((b) =>
+      b.addEventListener("click", function () {
+        F[b.dataset.f] = b.dataset.v;
+        /* Poistettu chip katoaa: fokus Suodata-painikkeelle, ei sivun alkuun */
+        focusSel = b.dataset.act === "chip-remove" ? "#wf-ctrl-toggle" : "#" + b.id; render(); }));
+    const ct = document.getElementById("wf-ctrl-toggle");
+    if (ct) ct.addEventListener("click", function () { ctrlOpen = !ctrlOpen; focusSel = "#wf-ctrl-toggle"; render(); });
+    const sort = document.getElementById("wf-sort");
+    if (sort) sort.addEventListener("change", function () { F.sort = sort.value; focusSel = "#wf-sort"; render(); });
+    document.querySelectorAll("[data-reset]").forEach((b) =>
+      b.addEventListener("click", function () { F.type = "all"; F.family = "all"; focusSel = "#chip-type-all"; render(); }));
+  }
+
+  /* Rivin määrä tulee kirjastosta sn:qty-tapahtumana: sivu päivittää vain oman korinsa
+     ja headerin laskurin. Katto (= erän saldo) ja sen ilmoitus ovat kirjastossa. */
+  document.addEventListener("sn:qty", (e) => {
+    const { sku, qty } = e.detail;
+    if (qty > 0) CART[sku] = qty; else delete CART[sku];
+    document.getElementById("shell-header").innerHTML = headerHtml();
+  });
+  document.addEventListener("sn:rowaction", (e) => {
+    if (e.detail.act !== "changedate") return;
+    if (!hasDate()) setState("date", "yes"); else openCal(true);
+  });
+  /* lib calendar: valinta säilyy uudelleenpiirrossa (suodattimet, määrät) */
+  document.addEventListener("sn:date", (e) => {
+    if (e.detail.calendar !== "wf-cal") return;
+    PAGE.intro.days.forEach((d) => { d.selected = d.iso === e.detail.iso; });
+  });
+  SN.mount(document);
+
+  render();
+})();
+</script>
+</body>
+</html>
