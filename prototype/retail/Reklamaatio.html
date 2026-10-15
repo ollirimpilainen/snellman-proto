@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tee reklamaatio · Snellman Retail -prototyyppi</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/bundle.css">
+<link rel="stylesheet" href="assets/tunnukset.css">
+<link rel="stylesheet" href="assets/reklamaatio.css">
+<link rel="stylesheet" href="assets/proto.css?v=20261014">
+
+<style>
+body{margin:0}
+</style>
+
+</head>
+<body>
+<template id="tpl">
+
+<div style="min-height: 100%; background: var(--c-bg); color: var(--c-text); font-family: var(--font-sans);">
+<header class="site-header site-header--b"><div class="container site-header__inner"><a class="brand" href="Main.html"><img src="assets/img/snellman-logo.svg" alt="Snellman, etusivu"></a><nav class="site-nav" id="nav-r" aria-label="Päävalikko"><ul><li><a href="Pikatilaus.html"><span class="cap">Tuotteet</span></a></li><li><a href="#"><span class="cap">Snellman Outlet</span></a></li><li><a href="Tilaukset.html"><span class="cap">Tilaukset</span></a></li><li><a href="Asiakaspalvelu.html"><span class="cap">Asiakaspalvelu</span></a></li></ul></nav><form class="site-search" role="search" action="#"><label class="vh" for="search-r">Hae tuotteita</label><input id="search-r" type="search" name="q" placeholder="Tuote tai tuotenumero" value=""><button type="submit" aria-label="Hae"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20.5 20.5"/></svg></span></button></form><div class="site-utils"><div class="util-menu"><button type="button" class="util util--account" aria-expanded="false" aria-controls="acc-menu" aria-label="Tili: Kyläkauppa Toivola"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.75"/><path d="M4.75 20c1.1-3.5 3.9-5.5 7.25-5.5s6.15 2 7.25 5.5"/></svg></span><span class="cap">Tili</span><span class="ico util__chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></span></button><ul class="site-nav__sub" id="acc-menu" hidden="hidden"><li><a href="#">Osoitteet</a></li><li><a href="#">Tilitiedot</a></li><li class="is-sep"><a href="EtusivuA.html">Kirjaudu ulos</a></li></ul></div><a class="util util--cart" href="Ostoskori.html"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h2.5l2.4 11h10.4L20.5 8H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span><span class="cap">Kori</span><span class="util__count" aria-hidden="true"><span class="cap">7</span></span><span class="vh">, 7 tuotetta</span></a><button type="button" class="menu-toggle" aria-expanded="false" aria-controls="nav-r"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="cap">Valikko</span></button></div></div></header>
+
+<main class="page" id="main-r">
+<div class="container">
+<nav class="breadcrumb" aria-label="Murupolku"><ol><li><a href="Main.html">Etusivu</a></li><li><a href="Tilaukset.html">Tilaukset</a></li><li aria-current="page">Tee reklamaatio</li></ol></nav>
+
+<sc-if value="{{notSent}}" hint-placeholder-val="{{true}}">
+<div class="req">
+<div class="req__intro">
+<h1>Tee reklamaatio</h1>
+<p class="lead">Ilmoita vaurioista ja laatuvioista heti, kun huomaat ne, viimeistään 1–2 arkipäivän kuluessa toimituksesta. Sama koskee toimituksia, joissa kylmäketju on katkennut.</p>
+</div>
+
+<div class="req__choice">
+<fieldset class="choices"><legend class="choices__legend">Mitä tapahtui?</legend>
+<div class="choices__opts" style="--choice-cols: 2;">
+<label class="choice-card"><input type="radio" name="tyyppi" value="toimitus" checked="{{isDel}}" onChange="{{pickDel}}"><span class="choice-card__t">Toimituksessa oli vikaa</span><span class="choice-card__s">Tuote vaurioitui kuljetuksessa, puuttui tai kylmäketju katkesi.</span></label>
+<label class="choice-card"><input type="radio" name="tyyppi" value="laatu" checked="{{isQual}}" onChange="{{pickQual}}"><span class="choice-card__t">Tuotteessa on laatuvika</span><span class="choice-card__s">Maku, ulkonäkö, pakkausvirhe tai vierasesine.</span></label>
+</div>
+</fieldset>
+</div>
+
+<div class="req__form">
+<div class="form">
+<h2>Reklamoitavat tuotteet</h2>
+<div class="field field--select"><label class="field__label" for="r-order">Tilaus</label><select id="r-order" name="order"><option>100482 · toimitettu 24.–25.9.2026</option><option>100417 · toimitettu 10.–11.9.2026</option><option>100361 · toimitettu 27.–28.8.2026</option></select></div>
+<fieldset class="rlines"><legend class="field__label">Valitse tuotteet ja kerro määrä kappaleina</legend>
+<ul><li class="rline"><label class="rline__pick" for="rl-22332"><input type="checkbox" id="rl-22332" name="rows" value="22332"><img src="assets/img/22332.jpg" alt=""><span class="rline__nm"><span class="rline__t">Tomaatti-vuohenjuustopasta 300g</span><span class="rline__m">Tuotenumero 22332 · tilattu 12 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-22332">Reklamoitava määrä kappaleina, Tomaatti-vuohenjuustopasta 300g</label><input id="rq-22332" type="number" inputmode="numeric" min="0" value="" placeholder="kpl" disabled></span></li><li class="rline"><label class="rline__pick" for="rl-22262"><input type="checkbox" id="rl-22262" name="rows" value="22262"><img src="assets/img/22262.jpg" alt=""><span class="rline__nm"><span class="rline__t">Possu-pekonikast. muusilla 300g</span><span class="rline__m">Tuotenumero 22262 · tilattu 12 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-22262">Reklamoitava määrä kappaleina, Possu-pekonikast. muusilla 300g</label><input id="rq-22262" type="number" inputmode="numeric" min="0" value="" placeholder="kpl" disabled></span></li><li class="rline is-on"><label class="rline__pick" for="rl-22268"><input type="checkbox" id="rl-22268" name="rows" value="22268" checked><img src="assets/img/22268.jpg" alt=""><span class="rline__nm"><span class="rline__t">Mango-chilibroileri riisillä 300g</span><span class="rline__m">Tuotenumero 22268 · tilattu 10 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-22268">Reklamoitava määrä kappaleina, Mango-chilibroileri riisillä 300g</label><input id="rq-22268" type="number" inputmode="numeric" min="0" value="4" placeholder="kpl"></span></li><li class="rline"><label class="rline__pick" for="rl-22264"><input type="checkbox" id="rl-22264" name="rows" value="22264"><img src="assets/img/22264.jpg" alt=""><span class="rline__nm"><span class="rline__t">Pippurihärkää riisillä 300g</span><span class="rline__m">Tuotenumero 22264 · tilattu 12 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-22264">Reklamoitava määrä kappaleina, Pippurihärkää riisillä 300g</label><input id="rq-22264" type="number" inputmode="numeric" min="0" value="" placeholder="kpl" disabled></span></li><li class="rline"><label class="rline__pick" for="rl-15611"><input type="checkbox" id="rl-15611" name="rows" value="15611"><img src="assets/img/p15611.png" alt=""><span class="rline__nm"><span class="rline__t">Porsaan ulkofilee n. 1,3 kg</span><span class="rline__m">Tuotenumero 15611 · tilattu 2 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-15611">Reklamoitava määrä kappaleina, Porsaan ulkofilee n. 1,3 kg</label><input id="rq-15611" type="number" inputmode="numeric" min="0" value="" placeholder="kpl" disabled></span></li><li class="rline"><label class="rline__pick" for="rl-13211"><input type="checkbox" id="rl-13211" name="rows" value="13211"><img src="assets/img/13211.png" alt=""><span class="rline__nm"><span class="rline__t">Kunnon grillimakkara 400g</span><span class="rline__m">Tuotenumero 13211 · tilattu 10 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-13211">Reklamoitava määrä kappaleina, Kunnon grillimakkara 400g</label><input id="rq-13211" type="number" inputmode="numeric" min="0" value="" placeholder="kpl" disabled></span></li><li class="rline"><label class="rline__pick" for="rl-12348"><input type="checkbox" id="rl-12348" name="rows" value="12348"><img src="assets/img/12348.png" alt=""><span class="rline__nm"><span class="rline__t">Kotimainen meetvursti 220g</span><span class="rline__m">Tuotenumero 12348 · tilattu 6 pakk.</span></span></label><span class="rline__qty"><label class="vh" for="rq-12348">Reklamoitava määrä kappaleina, Kotimainen meetvursti 220g</label><input id="rq-12348" type="number" inputmode="numeric" min="0" value="" placeholder="kpl" disabled></span></li></ul>
+</fieldset>
+<sc-if value="{{isQual}}" hint-placeholder-val="{{false}}">
+<div class="field field--short"><label class="field__label" for="r-date">Valmistus- tai viimeinen käyttöpäivä</label><span class="field__help" id="r-date-help">Löytyy pakkauksesta.</span><input id="r-date" aria-describedby="r-date-help" type="text" value=""></div>
+</sc-if>
+<div class="field"><label class="field__label" for="r-desc">Mitä tuotteelle tapahtui?</label><textarea id="r-desc" rows="4">Ulkopakkaus oli litistynyt ja neljän pakkauksen kalvo oli revennyt.</textarea></div>
+<div class="field"><span class="field__label" id="r-files-l">Kuvat</span><span class="field__help" id="r-files-help">{{photoHelp}}</span>
+<label class="upload" aria-labelledby="r-files-l" aria-describedby="r-files-help"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v4h16v-4"/></svg></span><span><strong>Lisää kuvia</strong> tai pudota ne tähän</span><span class="upload__s">jpg, png tai pdf, enintään 10 Mt</span><input type="file" class="vh" multiple accept="image/*,.pdf"></label>
+<ul class="upfiles"><li><img src="assets/img/22268.jpg" alt=""><span>pakkaus_rikki.jpg</span><span class="upfiles__s">1,8 Mt</span></li></ul>
+</div>
+<p class="privacy">Vastaus lähetetään osoitteeseen <strong>tilaukset@toivola.fi</strong>.</p>
+<button type="button" class="btn btn--primary" onClick="{{send}}"><span class="cap">Lähetä reklamaatio</span></button>
+</div>
+</div>
+
+<aside class="req__aside" aria-labelledby="r-steps">
+<div class="step-list"><h2 class="step-list__h" id="r-steps">Näin reklamaatio etenee</h2><ol><li><span>Lähetä ilmoitus kuvineen. Saat kuittauksen sähköpostiin heti.</span></li><li><span>Asiakaspalvelu käsittelee ilmoituksen 1–2 arkipäivän kuluessa ja on yhteydessä, jos tarvitaan lisätietoja.</span></li><li><span>Hyväksytty reklamaatio hyvitetään seuraavalla laskulla.</span></li></ol></div>
+<div class="r-urgent"><p><strong>Kylmäketju katkesi tai tuote puuttuu kokonaan?</strong></p><p>Soita toimituspäivänä asiakaspalveluun, niin selvitämme toimituksen saman päivän aikana.</p></div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{sent}}" hint-placeholder-val="{{false}}">
+<div class="sent" role="status" style="margin-top: var(--gap-24);">
+<span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.25"/><path d="M8 12.5l3 3 5-6"/></svg></span>
+<div>
+<h2>Kiitos, reklamaatio on vastaanotettu</h2>
+<p><strong>Reklamaation numero R-2041. Kuittaus lähetettiin osoitteeseen tilaukset@toivola.fi.</strong></p>
+<p>Asiakaspalvelu käsittelee ilmoituksen 1–2 arkipäivän kuluessa. Hyväksytty reklamaatio hyvitetään seuraavalla laskulla.</p>
+<div class="btns"><a class="btn btn--outline" href="Tilaukset.html"><span class="cap">Takaisin tilauksiin</span></a></div>
+</div>
+</div>
+</sc-if>
+</div>
+</main>
+
+<footer class="site-footer"><div class="container"><span>Snellmanin Lihanjalostus Oy</span><ul><li><a href="#">Tietosuoja</a></li><li><a href="#">Yksityisyys ja evästeet</a></li><li><a href="Tilausehdot.html">Tilausehdot</a></li><li><a href="Asiakaspalvelu.html">Asiakaspalvelu</a></li><li><a href="#">Kirjaudu ulos</a></li></ul></div></footer>
+</div>
+</template>
+<div id="app"></div>
+<script src="assets/proto.js?v=20261014f"></script>
+<script>
+class Component extends DCLogic {
+renderVals() {
+var k = (this.state && this.state.k) || "toimitus";
+var sent = !!(this.state && this.state.sent);
+var self = this;
+return {
+  isDel: k === "toimitus",
+  isQual: k === "laatu",
+  sent: sent,
+  notSent: !sent,
+  photoHelp: k === "laatu" ? "Kuvaa tuote, pakkauksen sisältö ja päiväysmerkintä." : "Kuvaa vaurioitunut pakkaus ja kuljetuslaatikko.",
+  pickDel: function () { self.setState({ k: "toimitus" }); },
+  pickQual: function () { self.setState({ k: "laatu" }); },
+  send: function () { self.setState({ sent: true }); }
+};
+}
+}
+
+window.Component = Component;</script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Tilausvahvistus · Snellman Retail -prototyyppi</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/bundle.css">
+<link rel="stylesheet" href="assets/ostoskori.css">
+<link rel="stylesheet" href="assets/kassa.css?v=20261015d">
+<link rel="stylesheet" href="assets/proto.css?v=20261014">
+
+<style>
+body{margin:0}
+</style>
+
+</head>
+<body>
+<template id="tpl">
+
+<div style="min-height: 100%; background: var(--c-bg); color: var(--c-text); font-family: var(--font-sans);">
+<header class="site-header site-header--b"><div class="container site-header__inner"><a class="brand" href="#"><img src="assets/img/snellman-logo.svg" alt="Snellman, etusivu"></a><nav class="site-nav" id="nav-v" aria-label="Päävalikko"><ul><li><a href="Pikatilaus.html"><span class="cap">Tuotteet</span></a></li><li><a href="#"><span class="cap">Snellman Outlet</span></a></li><li><a href="Tilaukset.html"><span class="cap">Tilaukset</span></a></li><li><a href="Asiakaspalvelu.html"><span class="cap">Asiakaspalvelu</span></a></li></ul></nav><form class="site-search" role="search" action="#"><label class="vh" for="search-v">Hae tuotteita</label><input id="search-v" type="search" name="q" placeholder="Tuote tai tuotenumero" value=""><button type="submit" aria-label="Hae"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5L20.5 20.5"/></svg></span></button></form><div class="site-utils"><div class="util-menu"><button type="button" class="util util--account" aria-expanded="false" aria-controls="acc-menu" aria-label="Tili: Kyläkauppa Toivola"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="3.75"/><path d="M4.75 20c1.1-3.5 3.9-5.5 7.25-5.5s6.15 2 7.25 5.5"/></svg></span><span class="cap">Tili</span><span class="ico util__chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9l7 7 7-7"/></svg></span></button><ul class="site-nav__sub" id="acc-menu" hidden="hidden"><li><a href="#">Osoitteet</a></li><li><a href="#">Tilitiedot</a></li><li class="is-sep"><a href="EtusivuA.html">Kirjaudu ulos</a></li></ul></div><a class="util util--cart" href="Ostoskori.html"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4h2.5l2.4 11h10.4L20.5 8H6"/><circle cx="9" cy="19" r="1.5"/><circle cx="17" cy="19" r="1.5"/></svg></span><span class="cap">Kori</span></a><button type="button" class="menu-toggle" aria-expanded="false" aria-controls="nav-v"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="cap">Valikko</span></button></div></div></header>
+
+<main class="page" id="main-v">
+<div class="container">
+<div class="confirm-hero" role="status">
+<span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.25"/><path d="M8 12.5l3 3 5-6"/></svg></span>
+<div>
+<h1>Kiitos, tilaus on vastaanotettu</h1>
+<p><strong>Tilausnumero 100482. Vahvistus on lähetetty osoitteeseen tilaukset@toivola.fi.</strong></p>
+<p>Tilaus toimitetaan kahdessa osassa: Kokkikartanon valmisruoat ke 24.9.2026 ja lihatuotteet to 25.9.2026.</p>
+<p>Muutokset ja peruutukset viimeistään toimitusta edeltävänä arkipäivänä klo 12 asiakaspalvelun kautta. <a href="mailto:asiakaspalvelu@snellman.fi?subject=Muutos%20tilaukseen%20100482&amp;body=Tilausnumero%20100482%0A%0AHaluan%20muuttaa%20tai%20perua%3A%0A">Muuta tai peru tilaus</a></p>
+</div>
+</div>
+
+<div class="cart-layout">
+<div class="cart-main">
+<h2 class="section-h">Tilauksen sisältö</h2>
+<div class="addr addr--row"><div><div class="lbl">Toimitusosoite</div>Kyläkauppa Toivola, Toivolankatu 12, 04200 Kerava</div></div>
+<sc-for list="{{groups}}" as="g" hint-placeholder-count="2">
+<div class="ship">
+<div class="ship__head"><h3>{{g.name}}<span class="group__date">{{g.date}}</span></h3></div>
+<ul class="lines">
+<sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+<li><span class="nm"><sc-if value="{{r.badge}}" hint-placeholder-val="{{false}}"><span class="{{r.badgeCls}}" role="img" aria-label="{{r.badgeAria}}">{{r.badge}}</span></sc-if>{{r.name}}</span><span class="q">{{r.qty}}</span><span class="s">{{r.sum}}</span></li>
+</sc-for>
+</ul>
+</div>
+</sc-for>
+</div>
+
+<aside class="cart-aside" aria-labelledby="summary-v">
+<div class="summary">
+<h2 id="summary-v">Yhteenveto</h2>
+<ul class="summary__rows">
+<li><span>Tuotteet (7)</span><span class="amt">172,14 €</span></li>
+<li class="is-sub"><span>Kokkikartanon valmisruoat</span><span class="amt">104,58 €</span></li>
+<li class="is-sub"><span>Lihatuotteet</span><span class="amt">n. 67,56 €</span></li>
+<li><span>Toimitus</span><span class="amt">sisältyy</span></li>
+<li><span>Alv 13,5 %</span><span class="amt">23,24 €</span></li>
+<li class="is-note">Sisältää arvion painotuotteiden hinnasta. Lopullinen summa laskun mukaan.</li>
+<li class="is-total"><span>Yhteensä</span><span class="amt">n. 195,38 €</span></li>
+</ul>
+</div>
+</aside>
+</div>
+
+<div class="next"><a class="btn btn--primary" href="#"><span class="cap">Takaisin etusivulle</span></a><a class="btn-text" href="Tilaukset.html"><span class="cap">Katso tilaukset</span><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span></a></div>
+</div>
+</main>
+
+<footer class="site-footer"><div class="container"><span>Snellmanin Lihanjalostus Oy</span><ul><li><a href="#">Tietosuoja</a></li><li><a href="#">Yksityisyys ja evästeet</a></li><li><a href="Tilausehdot.html">Tilausehdot</a></li><li><a href="Asiakaspalvelu.html">Asiakaspalvelu</a></li><li><a href="#">Kirjaudu ulos</a></li></ul></div></footer>
+</div>
+</template>
+<div id="app"></div>
+<script src="assets/proto.js?v=20261014f"></script>
+<script>
+class Component extends DCLogic {
+renderVals() {
+function r(name, qty, sum, kind, badge, aria) {
+  return { name: name, qty: qty, sum: sum, badge: badge || "", badgeCls: "badge badge--" + (kind || "normal"), badgeAria: aria || "" };
+}
+return { groups: [
+  { name: "Kokkikartanon valmisruoat", date: "ke 24.9.2026", rows: [
+    r("Tomaatti-vuohenjuustopasta 300g", "12 pakk.", "31,80 €"),
+    r("Possu-pekonikast. muusilla 300g", "12 pakk.", "27,36 €", "campaign", "−15 %", "Kampanjahinta, alennus 15 prosenttia"),
+    r("Mango-chilibroileri riisiä 300g", "10 pakk.", "16,50 €", "boost", "Boost", "Boost-erä, alennus 30 prosenttia"),
+    r("Pippurihärkää riisillä 300g", "12 pakk.", "28,92 €")
+  ] },
+  { name: "Lihatuotteet", date: "to 25.9.2026", rows: [
+    r("Porsaan ulkofilee n1,3kg", "2 pakk.", "n. 21,66 €", "boost", "Boost", "Boost-erä, alennus 30 prosenttia"),
+    r("Kunnon grillimakkara 400g", "10 pakk.", "27,30 €", "boost", "Boost", "Boost-erä, alennus 30 prosenttia"),
+    r("Kotimainen meetvursti 220g", "6 pakk.", "18,60 €")
+  ] }
+] };
+}
+}
+
+window.Component = Component;</script>
+</body>
+</html>

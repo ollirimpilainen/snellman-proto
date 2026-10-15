@@ -1,0 +1,180 @@
+/* Snellman Retail – Hakutulokset. Siirretty wireframesta, tokenit: ds/sn/tokens.css, komponentit: ds/sn/components/bundle.css */
+body { margin: 0; background: var(--c-bg); }
+.site-footer { margin-top: 0; }
+
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Tässä vain sivun omat. */
+  :root { --c-bg-quiet: #f7f7f7; --c-text-muted: var(--c-meta); }
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* Header, murupolku, painikkeet, placeholderit, merkinnät: lib/components.css */
+  .crumb { padding-top: var(--gap-8); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--tight { padding-top: var(--gap-32); padding-bottom: var(--gap-24); }
+  .block--list { padding-top: var(--gap-24); }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block--quiet { background: var(--c-bg-quiet); }
+  .block[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+  .sub { font-size: var(--fs-small); color: var(--c-text-2); }
+
+  /* ── Kortit ────────────────────────────────────────────────────── */
+  .cols { display: grid; gap: var(--gap-32); }
+  .cols--2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── H1/C2: otsikkorivi, toimituspäivä (lib delivery panel + calendar), haku ── */
+  .h1row { display: flex; align-items: baseline; gap: var(--gap-16); flex-wrap: wrap; }
+  .count-h { font-size: var(--fs-h4); color: var(--c-text-2); font-family: var(--font-sans); }
+  .toprow { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-24); align-items: start; margin-top: var(--gap-24); }
+  .toprow--one { grid-template-columns: 1fr; }
+
+  /* genero/product-search (uusi): kenttä + ehdotuslista */
+  .search { position: relative; }
+  .search__row { display: flex; }
+  .search input { flex: 1 1 auto; min-width: 0; font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text);
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-right: 0; border-radius: 0;
+    padding: 11px 16px 9px; min-height: 52px; }
+  .search input::placeholder { color: var(--c-text-muted); }
+  .search__row .btn { width: 52px; min-height: 52px; flex: 0 0 auto; }
+  .search__sugg { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; background: var(--c-surface);
+    border: 1px solid var(--c-border-strong); box-shadow: var(--shadow-card); }
+  .search__sugg-h { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--c-text-2); padding: var(--gap-8) var(--gap-16) 0; }
+  .search__sugg ul { list-style: none; padding: var(--gap-4) 0 var(--gap-8); }
+  .search__sugg li a { display: flex; align-items: center; flex-wrap: wrap; column-gap: 6px; min-height: var(--touch); padding: 6px var(--gap-16); text-decoration: none; font-size: var(--fs-body); line-height: 1.4; }
+  .search__sugg li a:hover, .search__sugg li a:focus { background: var(--c-bg-accent); }
+  .search__sugg .nro { color: var(--c-meta); }
+  .search__empty { padding: var(--gap-12) var(--gap-16); font-size: var(--fs-small); color: var(--c-text-2); }
+
+  /* ── H2 pikapolut: lib startLinks (genero/quick-links, sama kuin 01 B2) ── */
+
+  /* ── H3 kategoriaryhmät (genero/category-grid) ─────────────────── */
+  .group + .group { margin-top: var(--gap-48); }
+  .group__head { margin-bottom: var(--gap-24); }
+  .group__head .sub { margin-top: var(--gap-4); }
+  .catgrid { display: grid; gap: var(--gap-16); grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .catcard { display: flex; flex-direction: column; text-decoration: none; background: var(--c-surface);
+    border-radius: var(--r-card); box-shadow: var(--shadow-card); overflow: hidden; }
+  .catcard:hover { box-shadow: 4px 5px 12px #00000029; }
+  .catcard__img { aspect-ratio: 4 / 3; width: 100%; padding: var(--gap-8); font-size: var(--fs-xs); border-width: 0 0 1px; border-radius: 0; }
+  .catcard__body { padding: var(--gap-16) var(--gap-24) var(--gap-24); display: flex; flex-direction: column; gap: 2px; }
+  .catcard__name { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); color: var(--c-text); line-height: 1.25; }
+  .catcard__n { font-size: var(--fs-small); color: var(--c-text-2); }
+  .catcard--noimg .catcard__body { padding-top: var(--gap-24); min-height: 96px; justify-content: center; }
+  .others { display: grid; gap: var(--gap-16); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .others a { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-12);
+    background: var(--c-surface); box-shadow: var(--shadow-card); border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24);
+    text-decoration: none; font-family: var(--font-sans); font-weight: 500; font-size: 18px; color: var(--c-text); min-height: 80px; }
+  .others a:hover { box-shadow: 4px 5px 12px #00000029; }
+  .others .n { font-size: var(--fs-small); color: var(--c-text-2); font-weight: 400; display: block; }
+
+  /* ── C3 suodatus ja järjestys (genero/list-controls) ───────────── */
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-16) var(--gap-32);
+    padding: var(--gap-16) 0; border-top: 1px solid var(--c-border); border-bottom: 1px solid var(--c-border); }
+  /* Chipit: lib chip (mode toggle, 44 px). Sivulla vain ryhmän asettelu. */
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-8); }
+  .chips__label { display: inline-flex; align-items: center; min-height: var(--touch); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--c-text-2); margin-right: var(--gap-4); }
+  .sort { display: flex; align-items: center; gap: var(--gap-8); }
+  .sort label { display: inline-flex; align-items: center; min-height: var(--touch); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; font-size: var(--fs-xs); color: var(--c-text-2); }
+  /* 16 px: iOS ei zoomaa kenttään */
+  .sort select { font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text);
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 8px 12px 6px; min-height: var(--touch); }
+  .count { margin-left: auto; font-size: var(--fs-small); color: var(--c-text-2); font-weight: 700; }
+
+  /* Tuoterivi: lib (genero/product-card, B Kortti). Sivulla vain listan rytmi. */
+  .grid--b { margin-top: var(--gap-24); }
+  .quick-main .grid--b { margin-top: var(--gap-16); }
+
+  .more-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--gap-12); margin-top: var(--gap-32); }
+  .list-end { font-size: var(--fs-small); color: var(--c-text-2); text-align: center; margin-top: var(--gap-24); }
+
+  /* ── C5 tyhjätilat ─────────────────────────────────────────────── */
+  .empty { background: var(--c-bg-quiet); border: 1px dashed var(--c-border-strong); margin-top: var(--gap-24);
+    padding: var(--gap-40) var(--gap-32); text-align: center; color: var(--c-text-2); }
+  .empty p { max-width: 56ch; margin: 0 auto var(--gap-24); }
+
+  /* ── Pikatilaus: gds/layout 25/75, sivupalkki sticky ─────────────
+     DOM-järjestys H1 → sivupalkki → lista (otsikkojärjestys), leveässä
+     sivupalkki vasemmassa sarakkeessa gridin alueilla. */
+  .layout { display: grid; grid-template-columns: 300px 1fr; grid-template-areas: "side head" "side main";
+    grid-template-rows: auto 1fr; column-gap: var(--gap-40); align-items: start; }
+  .quick-head { grid-area: head; }
+  .quick-main { grid-area: main; }
+  .side { grid-area: side; position: sticky; top: calc(var(--nav-h) + 16px); background: var(--c-bg-accent); border-radius: var(--r-card); padding: var(--gap-24); }
+  .side h2 { font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-body); text-transform: uppercase; letter-spacing: var(--ls-button); margin-bottom: var(--gap-16); }
+  .side__search { position: relative; }
+  /* 16 px ja 44 px: iOS ei zoomaa, kosketusalue riittää */
+  .side__search input { width: 100%; font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text);
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 9px 40px 7px 12px; min-height: var(--touch); }
+  .side__search .ico { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--c-primary); }
+  .side__count { margin: var(--gap-8) 0 0; font-size: var(--fs-small); font-weight: 700; color: var(--c-text-2); }
+  .side__count:empty { display: none; }
+  .side__show { display: none; margin-top: var(--gap-12); }
+  .side__cats { margin-top: var(--gap-24); }
+  .side h3 { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); margin: var(--gap-16) 0 var(--gap-8); font-family: var(--font-sans); }
+  .facet { list-style: none; display: grid; gap: 2px; }
+  .facet button { display: flex; justify-content: space-between; align-items: center; gap: var(--gap-8); width: 100%; min-height: var(--touch); text-align: left; background: none; border: 0;
+    padding: 6px 8px 4px; font: inherit; font-family: var(--font-sans); font-size: var(--fs-small); line-height: 1.3; color: var(--c-text); cursor: pointer; border-radius: 4px; }
+  .facet button:hover { background: rgba(255,255,255,.7); }
+  .facet button[aria-pressed="true"] { background: var(--c-primary); color: #fff; font-weight: 700; }
+  .facet .n { color: inherit; opacity: .75; }
+  .facet__fam { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-primary); padding: var(--gap-12) 8px 4px; }
+  .toggles { display: grid; gap: 0; margin-top: var(--gap-16); }
+  .toggle { display: flex; align-items: center; gap: var(--gap-12); min-height: var(--touch); font-size: var(--fs-small); cursor: pointer; }
+  .toggle input { width: 22px; height: 22px; accent-color: var(--c-primary); margin: 0; flex: 0 0 auto; }
+  .side__reset { margin-top: var(--gap-8); }
+  .side__toggle { display: none; }
+  /* Pikatilauksen kategoriaotsikot ovat listan väliotsikoita: TheSansB tarkoituksella, ei
+     brändin serif-H2:ta, koska niitä on kymmeniä peräkkäin ja serif kilpailisi H1:n kanssa. */
+  .grouplabel { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); margin: var(--gap-48) 0 var(--gap-4); }
+  .grouplabel:first-child { margin-top: var(--gap-24); }
+  .cath { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-16); flex-wrap: wrap; margin-top: var(--gap-24); }
+  .cath h2 { font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-h3); color: var(--c-text); }
+  .quick-main .grid + .grouplabel, .quick-main .grid + .cath { margin-top: var(--gap-40); }
+
+  /* genero/cart-summary-bar (uusi) */
+  .cartbar { position: fixed; right: var(--gap-24); bottom: var(--gap-24); z-index: 40; background: var(--c-surface);
+    box-shadow: 4px 5px 16px #00000033; border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24);
+    display: flex; align-items: center; gap: var(--gap-24); }
+  .cartbar__txt { font-weight: 700; white-space: nowrap; }
+  .cartbar__txt .sub { display: block; font-weight: 400; }
+
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Responsiivisuus ───────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .toprow { grid-template-columns: 1fr; }
+    .count { margin-left: 0; }
+    .layout { grid-template-columns: 1fr; grid-template-areas: "head" "side" "main"; grid-template-rows: auto; row-gap: var(--gap-24); }
+    .side { position: static; }
+    .side__toggle { display: inline-flex; }
+    .side__show { display: flex; }
+    .side__panel.is-closed { display: none; }
+    .side__panel { margin-top: var(--gap-16); }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+    .block--tight { padding-top: var(--gap-24); padding-bottom: var(--gap-16); }
+    .block--list { padding-top: var(--gap-16); }
+    .cols--2 { grid-template-columns: 1fr; gap: var(--gap-16); }
+    .catgrid { grid-template-columns: repeat(2, 1fr); }
+    .cartbar { left: 0; right: 0; bottom: 0; border-radius: 0; justify-content: space-between; padding: var(--gap-12) var(--pad); }
+    body.has-cartbar { padding-bottom: 88px; }
+  }
+  @media (max-width: 480px) { .catgrid { grid-template-columns: 1fr; } }
+

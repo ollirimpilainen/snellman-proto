@@ -1,0 +1,89 @@
+/* Snellman Retail – Asiakaspalvelu. Siirretty wireframesta, tokenit: ds/sn/tokens.css, komponentit: ds/sn/components/bundle.css */
+body { margin: 0; background: var(--c-bg); }
+.site-footer { margin-top: 0; }
+
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Header, murupolku, painikkeet,
+     chip, haitari, TÄYTTÖ ja footer: lib/components.css. Tässä vain sivun omat lohkot. */
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* ── Kehyksen sivukohtaiset ────────────────────────────────────── */
+  .crumb { padding-top: var(--gap-8); }
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block--dark { background: var(--c-primary); color: var(--c-on-dark); }
+  .block--tight { padding-bottom: 0; }
+  .block[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+  .on-dark h2 { color: var(--c-on-dark); }
+  .on-dark .lead { color: rgba(255,255,255,.9); }
+
+  /* ── Ruudukot ja kortit ────────────────────────────────────────── */
+  .cols { display: grid; gap: var(--gap-32); }
+  .cols--3 { grid-template-columns: repeat(3, 1fr); }
+  .cols--2 { grid-template-columns: repeat(2, 1fr); }
+  .cols--6040 { grid-template-columns: 60fr 40fr; align-items: start; }
+
+  /* ── S1 yhteystietokortit — gds/card × 3 ───────────────────────── */
+  .intro h1 { margin-bottom: var(--gap-16); }
+  .contacts { margin-top: var(--gap-40); }
+  .contact { display: flex; flex-direction: column; gap: var(--gap-4); }
+  .contact__ico { width: 44px; height: 44px; border-radius: 50%; background: var(--c-bg-accent);
+    color: var(--c-primary); display: inline-flex; align-items: center; justify-content: center;
+    font-size: 18px; margin-bottom: var(--gap-8); }
+  .contact h3 { font-size: var(--fs-h4); margin-bottom: 0; }
+  .contact__value { font-family: var(--font-sans); font-weight: 700; font-size: 20px; color: var(--c-text);
+    word-break: break-word; }
+  .contact__sub { font-size: var(--fs-small); color: var(--c-text-2); flex: 1; }
+  .contact .btn { align-self: flex-start; margin-top: var(--gap-16); }
+  .contact--urgent { background: var(--c-bg-accent); box-shadow: none; }
+  .contact--urgent .contact__ico { background: var(--c-surface); }
+
+  /* ── S2 pikapolut — kirjaston chip, mode "link" ─────────────────── */
+  .toc { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-8); }
+  .toc__label { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--c-text-2); margin-right: var(--gap-8); }
+
+  /* ── S3 FAQ — kirjaston gds/accordion, ryhmä = otsikko + haitari ─ */
+  .faq { display: grid; gap: var(--gap-48); }
+  .faq__group h2 { margin-bottom: var(--gap-16); }
+  .faq__group[id] { scroll-margin-top: calc(var(--nav-h) + 24px); }
+  .faq__note { margin-bottom: var(--gap-32); }
+  .faq__note .fill--block { margin-top: 0; }
+
+  /* ── S4 ei löytynyt vastausta, S5 uusi asiakas ─────────────────── */
+  .noanswer h2 { margin-bottom: var(--gap-16); }
+  .noanswer .btns { margin-top: var(--gap-24); gap: var(--gap-16); }
+  .become .lead { margin-top: var(--gap-16); }
+  .become__contact { margin-top: var(--gap-16); font-size: var(--fs-small); color: var(--c-text-2); }
+  .editor-note .fill--block { margin-top: 0; }
+
+  /* ── Responsiivisuus ───────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .cols--3 { grid-template-columns: 1fr 1fr; }
+    .cols--6040 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+    .block[id], .faq__group[id] { scroll-margin-top: 16px; }
+    .cols--3, .cols--2 { grid-template-columns: 1fr; }
+    .contacts { margin-top: var(--gap-32); }
+    .contact .btn { align-self: stretch; }
+    .noanswer .btns .btn { flex: 1 1 100%; }
+  }
+

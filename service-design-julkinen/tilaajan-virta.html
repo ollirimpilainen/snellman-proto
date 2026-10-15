@@ -1,0 +1,402 @@
+<!doctype html><html lang="fi"><head><meta charset="utf-8"><meta name="robots" content="noindex,nofollow"><title>Tilaajan virta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: yksi leveä sankey keskellä, havainnot sen alla numeroituina, taulukkonäkymä lopussa. */
+:root {
+  --paper: #fcfcfb; --surface: #ffffff; --linen: #f3f2eb; --ink: #2b2927; --muted: #625e58; --line: #e2dfd6;
+  --green: #00522c;
+  --desk: #0f7a4c; --mob: #c4700a;
+  --exit: #c9c5bb; --node: #2b2927;
+  --ok: #2e7a4d; --ok-bg: #e3f1e8; --none: #6f6a62; --none-bg: #eceae3;
+  --warn: #9a6200; --warn-bg: #fbefd0; --stop: #b0281f; --stop-bg: #f8dfdb;
+  --f-display: "Fraunces", Georgia, serif;
+  --f-body: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1a1a19; --surface: #222220; --linen: #2a2a27; --ink: #ecebe4; --muted: #aaa69d; --line: #3a3934;
+    --green: #7fd1a4; --desk: #3aa872; --mob: #c97a14; --exit: #55534d; --node: #ecebe4;
+    --ok: #8fd9ab; --ok-bg: #1d3528; --none: #b4afa5; --none-bg: #262e2a; --warn: #f0c46a; --warn-bg: #3a2f17; --stop: #f39a90; --stop-bg: #3d1f1c;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1a1a19; --surface: #222220; --linen: #2a2a27; --ink: #ecebe4; --muted: #aaa69d; --line: #3a3934;
+  --green: #7fd1a4; --desk: #3aa872; --mob: #c97a14; --exit: #55534d; --node: #ecebe4;
+  --ok: #8fd9ab; --ok-bg: #1d3528; --none: #b4afa5; --none-bg: #262e2a; --warn: #f0c46a; --warn-bg: #3a2f17; --stop: #f39a90; --stop-bg: #3d1f1c;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 400 15px/1.55 var(--f-body); }
+.wrap { max-width: 1200px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 72px; display: grid; gap: 40px; }
+h1, h2 { font-family: var(--f-display); font-weight: 600; margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.05; color: var(--green); }
+h2 { font-size: 1.45rem; line-height: 1.2; }
+p { margin: 0; }
+.eyebrow { font: 600 0.72rem/1 var(--f-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+.lede { max-width: 66ch; color: var(--muted); font-size: 1.02rem; }
+.src { font-size: 0.8rem; color: var(--muted); max-width: 95ch; }
+header { display: grid; gap: 14px; }
+section { display: grid; gap: 16px; min-width: 0; }
+
+.controls { display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center; }
+.group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.group > span { font-size: 0.78rem; color: var(--muted); margin-right: 4px; }
+button.chip { font: 600 0.82rem/1 var(--f-body); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 8px 13px; cursor: pointer; display: inline-flex; gap: 7px; align-items: center; }
+button.chip[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+button.chip:disabled { opacity: 0.45; cursor: not-allowed; }
+button.chip:focus-visible { outline: 2px solid var(--green); outline-offset: 2px; }
+.dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+.chart + .chart { margin-top: 4px; }
+.chart { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px 14px 10px; position: relative; }
+.chart-scroll { overflow-x: auto; }
+svg#sankey { display: block; width: 100%; min-width: 760px; height: auto; }
+.link { fill-opacity: 0.55; transition: fill-opacity .15s; }
+.link.dim { fill-opacity: 0.08; }
+.link.hi { fill-opacity: 0.8; }
+.link.est { fill-opacity: 0.9; }
+.link.est.dim { fill-opacity: 0.12; }
+.nlabel { font: 600 13px var(--f-body); fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+.nval { font: 500 12px var(--f-mono); fill: var(--muted); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; font-variant-numeric: tabular-nums; }
+.colhead { font: 600 11px var(--f-body); letter-spacing: 0.1em; text-transform: uppercase; fill: var(--muted); }
+.marker circle { stroke: var(--surface); stroke-width: 2px; }
+.marker text { font: 700 11px var(--f-body); fill: #ffffff; text-anchor: middle; }
+.chart-head { display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; padding: 2px 6px 10px; }
+.chart-head h2 { font-size: 1.25rem; display: inline-flex; gap: 10px; align-items: center; }
+.chart-head h2 .dot { width: 14px; height: 14px; }
+.chart-head p { color: var(--muted); font-size: 0.9rem; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.82rem; color: var(--muted); padding: 10px 4px 2px; }
+.legend span { display: inline-flex; gap: 7px; align-items: center; }
+.tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 0.8rem; line-height: 1.4; padding: 8px 10px; border-radius: 6px; max-width: 260px; }
+.tip b { font-variant-numeric: tabular-nums; }
+
+.finds { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.find { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 4px 12px; align-items: start; }
+.find .n { grid-row: span 2; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 0.8rem/1 var(--f-body); color: #ffffff; }
+.find .n.stop { background: var(--stop); } .find .n.warn { background: var(--warn); }
+.find h3 { font: 700 0.98rem/1.3 var(--f-body); margin: 0; }
+.find p { color: var(--muted); font-size: 0.9rem; }
+.find .j { font: 500 0.74rem/1 var(--f-mono); color: var(--muted); grid-column: 2; margin-top: 4px; }
+@media (max-width: 760px) { .finds { grid-template-columns: minmax(0, 1fr); } }
+
+.journeys { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.jcard { border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 6px; background: var(--surface); align-content: start; }
+.jcard.none { background: transparent; border-style: dashed; }
+.jcard b { font-size: 0.95rem; }
+.jcard p { font-size: 0.88rem; color: var(--muted); }
+@media (max-width: 860px) { .journeys { grid-template-columns: minmax(0, 1fr); } }
+
+details { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 18px; }
+summary { cursor: pointer; font-weight: 600; }
+.tbl { overflow-x: auto; margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 0.86rem; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+th { font: 600 0.72rem/1.2 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+td.num { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .link { transition: none; } }
+.mlegend { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 0.82rem; color: var(--muted); }
+.mlegend span { display: inline-flex; align-items: center; gap: 7px; }
+.sw { width: 14px; height: 14px; border-radius: 3px; display: inline-block; border: 1.5px solid; }
+.s-ok { --c: var(--ok); --b: var(--ok-bg); }
+.s-warn { --c: var(--warn); --b: var(--warn-bg); }
+.s-stop { --c: var(--stop); --b: var(--stop-bg); }
+.s-none { --c: var(--none); --b: var(--none-bg); }
+.s-future { --c: var(--none); --b: transparent; }
+.sw { background: var(--b); border-color: var(--c); }
+.sw.s-future { border-style: dashed; }
+
+/* ── Matrix ── */
+.matrix-scroll { overflow-x: auto; min-width: 0; }
+.matrix { display: grid; grid-template-columns: minmax(170px, 1.15fr) repeat(5, minmax(150px, 1fr)); gap: 6px; min-width: 980px; }
+.mh { font: 600 0.74rem/1.2 var(--f-body); text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); padding: 4px 10px 8px; }
+.mh.stage { position: relative; }
+.mh.stage::after { content: "→"; position: absolute; right: -2px; color: var(--line); }
+.mh.stage:last-child::after { content: ""; }
+.jname { padding: 12px 12px 12px 0; display: grid; gap: 4px; align-content: start; border-top: 1px solid var(--line); }
+.jname a { font: 600 1rem/1.25 var(--f-display); color: var(--ink); text-decoration: none; }
+.jname a:hover { text-decoration: underline; }
+.jname small { color: var(--muted); font-size: 0.78rem; }
+.jid { font: 500 0.72rem/1 var(--f-mono); color: var(--green); }
+.cell { background: var(--b); border-radius: 6px; padding: 10px 11px; display: grid; gap: 8px; align-content: space-between; font-size: 0.86rem; line-height: 1.4; }
+.cell.s-future { border: 1.5px dashed var(--c); }
+.row-sep { grid-column: 1 / -1; height: 4px; }
+
+/* Volyymi solun sisällä: luku ylhäällä, kaista pohjalla. Solujen pohjat ovat rivillä samassa tasossa. */
+.cell .txt { align-self: start; }
+.cv { display: grid; gap: 2px; margin: 0 -11px -10px; padding: 0 11px; }
+.cv-n { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+.cv-n b { font: 700 1.05rem/1 var(--f-body); font-variant-numeric: tabular-nums; }
+.cv-n .drop { color: var(--stop); font-weight: 700; font-variant-numeric: tabular-nums; }
+.cv small { color: var(--muted); font-size: 0.78rem; }
+.cv svg { display: block; width: calc(100% + 22px); margin: 6px -11px 0; height: 48px; border-radius: 0 0 6px 6px; }
+.cv.gap b { color: var(--muted); }
+.jname .note { color: var(--muted); font-size: 0.76rem; line-height: 1.4; margin-top: 6px; }
+.vol-key { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 0.82rem; color: var(--muted); }
+.vol-key span { display: inline-flex; gap: 7px; align-items: center; }
+.vol-key i { width: 22px; height: 10px; border-radius: 2px; display: inline-block; }
+</style>
+
+<div class="wrap">
+<header>
+  <p class="eyebrow">Snellman Group · verkkokaupat · service design · 30.9.2026</p>
+  <h1>Tilaajan virta</h1>
+  <p class="lede">Mitä tilaajalle tapahtuu matkalla tarpeesta tilaukseen. Solut kertovat, mitä kussakin vaiheessa tapahtuu ja miksi. Solujen pohjalla oleva kaista näyttää, montako käyntiä on vielä mukana ja missä ne jäävät pois.</p>
+</header>
+
+<section id="matriisi">
+  <div class="mlegend">
+    <span><i class="sw s-ok"></i>Toimii</span>
+    <span><i class="sw s-warn"></i>Kitkaa</span>
+    <span><i class="sw s-stop"></i>Polku katkeaa</span>
+    <span><i class="sw s-none"></i>Ei mitata</span>
+    <span><i class="sw s-future"></i>Ei vielä verkossa</span>
+  </div>
+  <div class="vol-key">
+    <span><i style="background:var(--desk)"></i>Volyymi, tietokone</span>
+    <span><i style="background:var(--mob)"></i>Volyymi, mobiili</span>
+    <span><i style="border:1.5px dashed var(--desk)"></i>Tietokone vertailuna mobiilin rivillä</span>
+    <span><b style="color:var(--stop)">−1 289</b> istuntoa putoaa vaiheiden välissä</span>
+  </div>
+  <div class="matrix-scroll"><div class="matrix" id="matrix"></div></div>
+  <p class="src">P1, P2, P3 ja P6 perustuvat GA4-dataan ja kauppojen läpikäyntiin, P4a, P4b ja P5 läpikäyntiin ja vahvistamattomiin oletuksiin. Volyymi: GA4, snellmanpetfood.com, 2.7.–30.9.2026. Osuus on laitteen kaikista istunnoista. Pääsee sisään = istunto käy tuotelistassa, kokoaa tilauksen = käy korissa, tarkistaa ja lähettää = tilaus vastaanotettu -sivu. Lopputulosta (purchase, toistuvuus) ei mitata. Istunto lasketaan vaiheeseen, jos sivu näytettiin siinä (page_view), ja myöhempien vaiheiden oletetaan sisältyvän aiempiin ⚠. Istunnot ilman yhtään sivunäyttöä, kuten auki jääneet välilehdet, eivät ole mukana. GA näkee noin 70 % kaupan tilauksista (suostumukset ja estot), joten absoluuttiset luvut ovat vajaita ja mobiilin osuus tilauksista on arvio ⚠. Haku ja kirjautuminen: Generon selvitys vk 40, GA4 10/2025–9/2026. Polun nimi avaa sen mittarit ja GA4-ohjeet <a href="https://claude.ai/artifact/18sh88r36vzogTkUunyp3H">Tilaajan polut</a> -sivulla.</p>
+</section>
+
+<section>
+  <h2>Mitä volyymi kertoo</h2>
+  <div class="finds">
+    <div class="find"><span class="n stop">1</span><h3>Puhelimella kirjautumista ei edes aloiteta</h3><p>Yli 40 % puhelinkäynneistä lähtee kirjautumissivulta napauttamatta sähköposti- tai salasanakenttää, tietokoneella joka neljäs. Luvussa ovat mukana myös jo kirjautuneet, jotka näkevät samassa osoitteessa tilisivunsa ⚠. Käynnit ovat lyhyitä ja painottuvat iltoihin ja viikonloppuihin: tilaaja tarkistaa jotain tai aikoo tilata myöhemmin tietokoneella. Osa kompastuu salasanaan, sillä puhelimella lomake lähetetään useammin monta kertaa ja salasanan palautukseen päädytään neljä kertaa useammin. Kun kirjautuminen onnistuu, puhelimella tilataan lähes yhtä usein kuin tietokoneella.</p><span class="j">P1, P2, P3 · Pääsee sisään</span></div>
+    <div class="find"><span class="n warn">2</span><h3>Puhelimella matka on pidempi</h3><p>Tietokoneella tilaaja avaa kirjanmerkin ja on heti kirjautumissivulla. Puhelimella hän aloittaa useimmiten etusivulta ja joutuu ensin etsimään tien sisään.</p><span class="j">P3 · Saapuu</span></div>
+    <div class="find"><span class="n warn">3</span><h3>Kori jää puhelimella useammin kesken</h3><p>Kun tuotteet ovat korissa, puhelimella kolmannes jättää tilauksen lähettämättä, tietokoneella neljännes. Ero on pienempi kuin kirjautumisessa, joten kori on toinen korjattava kohta.</p><span class="j">P3 · Tarkistaa ja lähettää</span></div>
+    <div class="find"><span class="n warn">4</span><h3>Moni tulee tarkistamaan, ei tilaamaan</h3><p>Osa käynneistä ei tähtää tilaukseen lainkaan. Tilaaja katsoo vanhaa tilausta, vaihtaa salasanan tai tekee reklamaation. Nämä käynnit näkyvät pudotuksena, vaikka tilaaja sai asiansa hoidettua.</p><span class="j">P6 · Tilauksen jälkeen</span></div>
+    <div class="find"><span class="n warn">5</span><h3>Tilaaja hakee sanalla, joka erottaa tuotteen</h3><p>Tilaaja ei kirjoita koko tuotenimeä, vaan sanan, joka erottaa tuotteen muista: värin (vihreä, sininen), tuotesarjan (Hepo, Hellä) tai tuotenumeron. Joka viides tuotelistan käyttäjä hakee, ja haku yleistyy. Retailin haun pitää löytää tuote myös tällä sanalla ja tuotenumerolla.</p><span class="j">P2 · Kokoaa tilauksen</span></div>
+  </div>
+</section>
+
+<section>
+  <h2>Miksi osalla poluista ei ole volyymia</h2>
+  <div class="journeys">
+    <div class="jcard"><b>P1 Toistotilaus + P2 Hakee tietyn tuotteen</b><p>Yhteinen virta kirjautumisesta tuotelistan ja korin kautta tilaukseen. Niitä ei voi erottaa ennen kuin toistotilaus ja haku mitataan omina tapahtumina (<code>reorder_start</code>, <code>search</code>).</p></div>
+    <div class="jcard"><b>P3 Tilaa puhelimella</b><p>Sama virta mobiililla. Pudotus näkyy kahdessa kohdassa: kirjautumissivulla ja korissa.</p></div>
+    <div class="jcard"><b>P6 Tilauksen jälkeen</b><p>Haarautuu kirjautumissivulta tilisivuille: tilaushistoria, salasanan palautus, reklamaatio.</p></div>
+    <div class="jcard none"><b>P4 Uusi asiakas</b><p>Ei virtaa. Retail-kauppaa ei ole, ja asiakkuus avataan asiakaspalvelussa.</p></div>
+    <div class="jcard none"><b>P5 Kampanja- ja eräostot</b><p>Ei virtaa. Erät myydään nyt puhelimella ja sähköpostilla, vaihe 2.</p></div>
+    <div class="jcard none"><b>Mittauksen jälkeen</b><p><code>login</code>- ja <code>login_failed</code>-tapahtumat kertovat, epäonnistuuko kirjautuminen vai jätetäänkö se kesken. P1 ja P2 erottuvat omiksi virroikseen, ja samaan kaavioon tulevat Retail, Figen ja Henkilöstökauppa.</p></div>
+  </div>
+</section>
+
+<details>
+  <summary>Taulukkonäkymä: volyymi vaiheittain</summary>
+  <div class="tbl"><table><thead><tr><th>Vaihe</th><th class="num">Tietokone</th><th class="num">Osuus</th><th class="num">Mobiili</th><th class="num">Osuus</th></tr></thead><tbody id="voltbl"></tbody></table></div>
+</details>
+</div>
+
+<script>
+const STAGES = ["Saapuu", "Pääsee sisään", "Kokoaa tilauksen", "Tarkistaa ja lähettää", "Lopputulos"];
+const B = { d: "data", k: "katselmointi", o: "oletus ⚠" };
+
+const J = [
+  {
+    id: "P1", name: "Toistotilaus", who: "Tilaa saman kuin viimeksi, pienin muutoksin", phase: "Vaihe 1",
+    lead: "Suurin ryhmä ja suurin ajansäästö. Tilaaja haluaa saman kuin viimeksi pienin muutoksin, mutta nykyisissä kaupoissa lista kootaan yleensä joka kerta uudelleen, koska Tilaa uudelleen on piilossa yksittäisen tilauksen sivulla.",
+    kpi: [["Tavoitemittari", "toistotilausten osuus purchase-tapahtumista (order_source = reorder)"], ["Lähtötaso", "ei mitata"]],
+    s: [
+      { st: "ok", b: "d", c: "Avaa kirjanmerkistä suoraan kirjautumissivun. Puolet tietokonekäynneistä alkaa näin.",
+        m: ["Laskeutumissivu", "Palaavien käyttäjien osuus"],
+        ga: "<b>Raportit → Sitouttaminen → Laskeutumissivu.</b> Suodatin: uusi / palaava." },
+      { st: "warn", b: "d", c: "Joka neljäs käynti jää kirjautumissivulle. Sisään päässyt päätyy tilisivulle, ei tuotteisiin.",
+        m: ["Onnistuneet ja epäonnistuneet kirjautumiset", "Salasanan palautuspyynnöt / käyttäjät"],
+        ga: "Tapahtumat <code>login</code>, <code>login_failed</code>, <code>password_reset_request</code>. <b>Tutki → Vapaamuotoinen:</b> tapahtuman nimi × laiteluokka." },
+      { st: "warn", b: "d", c: "Kokoaa saman tilauksen käsin. Tilaa uudelleen on piilossa: noin 22 käyttöä kolmessa kuukaudessa.",
+        m: ["Tilaa uudelleen -käynnistykset", "Toistetun korin muutosten määrä", "Aika kirjautumisesta koriin"],
+        ga: "<code>reorder_start</code> + <code>add_to_cart</code> (add_source = reorder). <b>Suppilo:</b> login → reorder_start → view_cart → purchase." },
+      { st: "ok", b: "d", c: "Koottu kori yleensä lähtee: kolme neljästä päätyy tilaukseksi.",
+        m: ["Korista tilaukseen -osuus", "Korin ilmoitukset"],
+        ga: "<code>view_cart</code> → <code>purchase</code>. <b>Raportit → Kaupankäynti → Ostopolku.</b>" },
+      { st: "none", b: "d", c: "Tilaus menee perille, mutta toistotilausta ei erota uudesta.",
+        m: ["Tilaukset, arvo alv 0", "Toistotilausten osuus"],
+        ga: "<code>purchase</code> avaintapahtumaksi. <b>Hallinta → Avaintapahtumat.</b> Ulottuvuus order_source." }
+    ]
+  },
+  {
+    id: "P2", name: "Hakee tietyn tuotteen", who: "Tietää mitä tarvitsee ja hakee nimellä tai tuotenumerolla", phase: "Vaihe 1",
+    lead: "Tilaaja tietää mitä hakee ja hakee nimellä tai numerolla. Nykyinen tuotelista on yksi pitkä sivu (Henkilöstökaupassa 454 tuotetta), ja haun käyttöä ei mitata.",
+    kpi: [["Tavoitemittari", "haku → koriin -osuus, nollatulosten osuus"], ["Lähtötaso", "ei mitata"]],
+    s: [
+      { st: "ok", b: "d", c: "Tulee samaa reittiä kuin toistotilaaja.",
+        m: ["Laskeutumissivu"], ga: "Kuten P1." },
+      { st: "warn", b: "d", c: "Sama kirjautuminen kuin toistotilaajalla.",
+        m: ["Kuten P1"], ga: "Kuten P1." },
+      { st: "warn", b: "d", c: "Hakee sanalla, joka erottaa tuotteen: värillä, tuotesarjalla tai tuotenumerolla. Joka viides listan käyttäjä hakee.",
+        m: ["Hakujen määrä ja hakusanat", "Nollatulosten osuus", "Haku → koriin -osuus"],
+        ga: "<code>search</code> (search_term, results_count). <b>Tutki → Vapaamuotoinen:</b> search_term, suodatin results_count = 0." },
+      { st: "ok", b: "d", c: "Kori toimii. Vain joka kahdestoista hakukäynti on puhelimella.",
+        m: ["Korista tilaukseen"], ga: "Kuten P1." },
+      { st: "none", b: "d", c: "Ei tiedetä, jääkö haku tyhjäksi tai päätyykö tuote tilaukseen.",
+        m: ["Tilaukset, joissa on haettu tuote"], ga: "<code>purchase</code>, order_source = search." }
+    ]
+  },
+  {
+    id: "P3", name: "Tilaa puhelimella kesken työn", who: "Kioski, ravintola, eläinkauppa", phase: "Vaihe 1", funnel: true,
+    lead: "Kolmannes käyttäjistä tulee puhelimella, mutta vain 5 % tilauksista tehdään sillä. Mobiilikäyttäjä käy myös harvemmin: 1,7 istuntoa per käyttäjä, tietokoneella 5,2. Suurin pudotus tapahtuu kirjautumisessa.",
+    kpi: [["Tavoitemittari", "mobiili-istunnoista tilaukseen, nyt 11 %"], ["Lähtötaso", "data, Petfood"]],
+    s: [
+      { st: "warn", b: "d", c: "Kaksi kolmesta käynnistä alkaa etusivulta: ylimääräinen askel ennen tuotteita.",
+        m: ["Käyttäjät ja istunnot laiteluokittain"],
+        ga: "<b>Raportit → Tekniikka → Yleiskatsaus.</b> Laiteluokka on vakio." },
+      { st: "stop", b: "d", c: "Yli 40 % lähtee kirjautumissivulta napauttamatta kenttää. Sisään päässyt tilaa lähes yhtä usein kuin tietokoneella.",
+        m: ["login_failed mobiilissa", "Kirjautumisesta listaan -osuus laitteittain"],
+        ga: "<b>Suppilo:</b> session_start → login → view_item_list, jaottelu laiteluokka." },
+      { st: "warn", b: "k", c: "Pitkä lista ja pienet määräkentät ovat raskaita, mutta listaan päässeet lisäävät koriin yhtä usein kuin tietokoneella.",
+        m: ["add_to_cart per istunto laitteittain", "Aika ensimmäiseen add_to_cart-tapahtumaan"],
+        ga: "<code>add_to_cart</code> × laiteluokka. <b>Tutki → Polku</b> view_item_list-tapahtumasta eteenpäin." },
+      { st: "warn", b: "d", c: "Kolmannes koreista jää lähettämättä, tietokoneella neljännes.",
+        m: ["Korista tilaukseen laitteittain", "Keskeytetyt korit, joihin palataan"],
+        ga: "<b>Avoin suppilo:</b> view_cart → begin_checkout → purchase, jaottelu laiteluokka." },
+      { st: "stop", b: "d", c: "Vain joka kahdeskymmenes tilaus tulee puhelimesta, vaikka joka kolmas tilaaja käy puhelimella.",
+        m: ["Tilausten laitejakauma", "Laitteen vaihto kesken tilauksen (user_id)"],
+        ga: "<code>purchase</code> × laiteluokka. Laitteen vaihto näkyy vasta <code>user_id</code>:n kanssa." }
+    ]
+  },
+  {
+    id: "P4a", name: "Käyttöönotto: kutsu ja ensimmäinen kirjautuminen", who: "Tilaa nyt puhelimella tai sähköpostilla", phase: "Vaihe 1",
+    lead: "Julkaisun suurin virta ⚠. Asiakas on jo M3:ssa ja tuntee tuotteensa, vain tunnus puuttuu. Paras polku ei vaadi pyyntöä: Snellman kutsuu, ja viestin linkki vie suoraan salasanan asettamiseen. Lomake on varapolku.",
+    kpi: [["Tavoitemittari", "aktivoidut tunnukset / kutsutut asiakkaat ja ensimmäinen verkkotilaus 30 päivässä ⚠"], ["Lähtötaso", "ei ole"]],
+    s: [
+      { st: "future", b: "o", c: "Tilaa nyt puhelimella. Kuulee kaupasta vain, jos Snellman kutsuu tai myyjä kertoo.",
+        m: ["Kutsusta tulevat istunnot", "Kutsuttujen määrä (M3)"],
+        ga: "UTM kutsun linkkiin: <code>utm_source=snellman</code>, <code>utm_medium=email</code>, <code>utm_campaign=julkaisukutsu</code>." },
+      { st: "warn", b: "k", c: "Kutsun linkistä asetetaan salasana. Linkki vanhenee vuorokaudessa, ja ilman sähköpostia M3:ssa tunnusta ei synny.",
+        m: ["Salasanan asetukset kutsusta", "Vanhentuneista linkeistä tulleet palautuspyynnöt", "Tunnuspyynnöt nykyisiltä asiakkailta"],
+        ga: "<code>password_reset_request</code>, <code>generate_lead</code> (lead_type = existing, method = form), käyttäjäominaisuus first_login_date." },
+      { st: "warn", b: "k", c: "Tilaa uudelleen on tyhjä, koska puhelintilaukset eivät näy verkossa.",
+        m: ["Ensimmäisen istunnon add_to_cart", "Haku vai selaus ensimmäisellä kerralla"],
+        ga: "<code>add_to_cart</code> (add_source), <code>search</code>. Segmentti: ensimmäinen istunto aktivoinnin jälkeen." },
+      { st: "warn", b: "o", c: "Minimitilaus, alv ja kaksi toimitusta toimivat toisin kuin puhelimessa.",
+        m: ["Korin ilmoitukset tyypeittäin"],
+        ga: "<code>cart_notice</code> (notice_type)." },
+      { st: "future", b: "o", c: "Ensimmäinen verkkotilaus ratkaisee, jääkö hän verkkoon.",
+        m: ["Aika aktivoinnista ensimmäiseen tilaukseen", "Toinen verkkotilaus 30 päivässä", "Puhelintilausten osuus (M3)"],
+        ga: "<code>purchase</code> + käyttäjäominaisuus first_order_date. Puhelintilaukset M3:sta vertailuun." }
+    ]
+  },
+  {
+    id: "P4b", name: "Uusi asiakas pääsee tilaamaan", who: "Uusi ravintola tai kioski", phase: "Vaihe 1",
+    lead: "Pieni mutta arvokas ryhmä. Asiakkuus avataan M3:ssa asiakaspalvelun kautta. Kaupassa on tunnuspyyntölomake, josta lähtee rakenteinen ilmoitus asiakaspalveluun. Automaattista käsittelyä ei ole.",
+    kpi: [["Tavoitemittari", "uusien asiakkaiden tunnuspyynnöt / anonyymit etusivun käyttäjät ≥ 3 % ⚠"], ["Lähtötaso", "ei ole"]],
+    s: [
+      { st: "future", b: "o", c: "Löytää kaupan, mutta näkee vain kirjautumissivun.",
+        m: ["Anonyymit etusivun käyttäjät", "Hankintakanava"],
+        ga: "<b>Raportit → Hankinta → Liikenteen hankinta,</b> laskeutumissivu = /." },
+      { st: "warn", b: "o", c: "Asiakkuus avataan asiakaspalvelussa. Odotusaikaa ei kerrota.",
+        m: ["Pyynnön aloitukset ja lähetykset", "Validointivirheet kentittäin", "Puhelin- ja sähköpostiklikkaukset", "Aika pyynnöstä aktivointiin"],
+        ga: "<code>access_request_start</code> → <code>generate_lead</code> (lead_type = new, method = form), <code>form_error</code> (field). Puhelin ja sähköposti: <code>generate_lead</code> (method = phone, email). Avaintapahtumaksi." },
+      { st: "future", b: "o", c: "Ei tunne valikoimaa, joten selaa kategorioita.",
+        m: ["Kategoriahubin käyttö", "Ensimmäinen add_to_cart"],
+        ga: "<code>view_item_list</code> (item_list_id = kategoria). Segmentti: ensimmäinen istunto login-tapahtuman jälkeen." },
+      { st: "warn", b: "o", c: "Minimitilaus, toimitusmaksu ja kaksi toimitusta voivat yllättää.",
+        m: ["Korin ilmoitukset tyypeittäin", "Toimituspäivän vaihdot"],
+        ga: "<code>cart_notice</code> (notice_type), <code>select_delivery_date</code>." },
+      { st: "future", b: "o", c: "Ensimmäinen tilaus aloittaa asiakassuhteen verkossa.",
+        m: ["Aika asiakkuudesta ensimmäiseen tilaukseen"],
+        ga: "<code>purchase</code> + käyttäjäominaisuus first_order_date." }
+    ]
+  },
+  {
+    id: "P5", name: "Kampanja- ja eräostot", who: "Boost- ja Outlet-erät", phase: "Vaihe 2",
+    lead: "Boost-erät (noin −30 %) ja Outlet-erät (noin −50 %). Nyt erät myydään käsin soittamalla. Markkinointiautomaation linkin pitää viedä kirjautumisen jälkeen suoraan oikeaan kohtaan.",
+    kpi: [["Tavoitemittari", "erien myynti verkossa / kaikki erät, loppuunmyyntiaika"], ["Lähtötaso", "M3, ei GA"]],
+    s: [
+      { st: "future", b: "o", c: "Myyjä soittaa tai lähettää sähköpostin, kun erä on myynnissä.",
+        m: ["Ilmoituksista tulevat istunnot"],
+        ga: "UTM-parametrit jokaiseen ilmoituslinkkiin: <code>utm_source=snellman</code>, <code>utm_medium=email</code> tai sms, <code>utm_campaign=outlet-vk</code>." },
+      { st: "warn", b: "o", c: "Erät näkyvät vain oikeutetuille. Oikeuden pyytäminen on päättämättä.",
+        m: ["Ilman oikeutta avatut Outlet-linkit"],
+        ga: "Oma <code>access_denied</code> (area = outlet)." },
+      { st: "future", b: "o", c: "Haluaa nähdä, paljonko erää on jäljellä ja kauanko tuote säilyy.",
+        m: ["Outlet-listan näytöt", "Erärivien add_to_cart"],
+        ga: "<code>view_item_list</code> (item_list_id = outlet), items[].order_type." },
+      { st: "future", b: "o", c: "Erä voi loppua kesken tilauksen.",
+        m: ["Loppuunmyyty-ilmoitukset korissa"],
+        ga: "<code>cart_notice</code> (notice_type = soldout)." },
+      { st: "future", b: "o", c: "Erämyynti seurataan omana tilaustyyppinään.",
+        m: ["Erämyynti arvona ja riveinä"],
+        ga: "<code>purchase</code>, <b>Raportit → Kaupankäynti → Tuotteet,</b> ulottuvuus order_type." }
+    ]
+  },
+  {
+    id: "P6", name: "Tilauksen jälkeen", who: "Vahvistus, muutos, reklamaatio", phase: "Vaihe 1",
+    lead: "Menikö perille, milloin tulee, voiko muuttaa. Vahvistus ja tilaushistoria toimivat, mutta muutoksista ja reklamaatioista ei ole itsepalvelua.",
+    kpi: [["Tavoitemittari", "muutos- ja reklamaatiopyynnöt / tilaukset"], ["Lähtötaso", "osittain, lomakkeiden lähetykset"]],
+    s: [
+      { st: "ok", b: "k", c: "Vahvistus tulee sähköpostiin heti.",
+        m: ["Vahvistussähköpostin linkkien klikkaukset"],
+        ga: "UTM-parametrit vahvistussähköpostin linkkeihin: <code>utm_medium=transactional</code>." },
+      { st: "ok", b: "d", c: "Palaa tarkistamaan: 221 käyttäjää avasi tilaushistorian kolmessa kuukaudessa.",
+        m: ["Tilaushistorian näytöt"],
+        ga: "Sivupolku /my-account/orders/. <b>Raportit → Sivut ja näytöt.</b>" },
+      { st: "warn", b: "o", c: "Muutoksesta soitetaan. Itsepalvelua tai aikarajaa ei ole.",
+        m: ["Muutospyynnöt", "Muutos-UKK:n näytöt"],
+        ga: "<code>order_change_request</code> (request_type = change, cancel)." },
+      { st: "ok", b: "d", c: "Reklamaatiolomakkeen aloittaneista lähes yhdeksän kymmenestä lähettää sen.",
+        m: ["Lomakkeen aloitukset ja lähetykset"],
+        ga: "Vakio <code>form_start</code> / <code>form_submit</code>, sivupolun suodatin. Myöhemmin <code>order_change_request</code> (complaint)." },
+      { st: "none", b: "o", c: "Ei tiedetä, palaako tilaaja ja kuinka usein.",
+        m: ["Tilausväli", "Käyttäjät, jotka tilaavat uudelleen 30 päivän sisällä"],
+        ga: "<b>Tutki → Kohorttianalyysi:</b> kohortti purchase, paluuehto purchase, viikoittain. Vaatii <code>user_id</code>:n." }
+    ]
+  }
+];
+
+const STLABEL = { ok: "Toimii", warn: "Kitkaa", stop: "Katkeaa", none: "Ei mitata", future: "Ei vielä verkossa" };
+const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+
+
+const VOL = { desk: [3584, 2295, 1453, 1111, null], mob: [525, 147, 91, 60, null] };
+const VSTEP = ["istuntoa", "tuotelistassa", "korissa", "tilausta lähetetty", "ei mitata"];
+const ROWVOL = {
+  P1: { dev: "desk" },
+  P2: { empty: "Sama virta kuin P1. Hakua käytti vuoden aikana 206 käyttäjää 570 käynnillä. P1 ja P2 erottuvat toisistaan, kun haku ja toistotilaus mitataan omina tapahtumina." },
+  P3: { dev: "mob", ref: "desk" },
+  P4a: { empty: "Ei volyymia. Retail-kauppaa ei vielä ole, ja tilaukset tulevat puhelimella ja sähköpostilla." },
+  P4b: { empty: "Ei volyymia. Asiakkuus avataan asiakaspalvelussa, eikä kauppaa vielä ole." },
+  P5: { empty: "Ei volyymia. Erät myydään nyt puhelimella ja sähköpostilla, vaihe 2." },
+  P6: { empty: "Ei polkukohtaista mittausta. 569 istunnossa näytettiin tilaushistoria, salasanan palautus tai reklamaatiolomake." }
+};
+const fmt = v => v.toLocaleString("fi-FI");
+const H = 48;
+const lvl = (v, total) => H - Math.max(2, (v / total) * (H - 4));
+function cellVol(j, i) {
+  const r = ROWVOL[j.id];
+  if (!r || r.empty) return "";
+  const v = VOL[r.dev], total = v[0], x = v[i];
+  if (x == null) return `<div class="cv gap"><div class="cv-n"><b>–</b><small>${VSTEP[i]}</small></div></div>`;
+  const prev = i > 0 && v[i - 1] != null ? v[i - 1] : x;
+  const band = (vals, t) => { const y0 = lvl(i > 0 ? vals[i - 1] : vals[i], t), y1 = lvl(vals[i], t);
+    return `M0,${H} L0,${y0.toFixed(1)} L22,${y1.toFixed(1)} L100,${y1.toFixed(1)} L100,${H} Z`; };
+  const refLine = r.ref ? (() => { const rv = VOL[r.ref], y0 = lvl(i > 0 ? rv[i - 1] : rv[i], rv[0]), y1 = lvl(rv[i], rv[0]);
+    return `<path d="M0,${y0.toFixed(1)} L22,${y1.toFixed(1)} L100,${y1.toFixed(1)}" fill="none" stroke="var(--${r.ref})" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>`; })() : "";
+  const drop = i > 0 ? `<span class="drop">−${fmt(prev - x)}</span>` : "";
+  return `<div class="cv"><div class="cv-n">${drop}<b>${Math.round(x / total * 100)} %</b></div><small>${fmt(x)} ${VSTEP[i]}</small>` +
+    `<svg viewBox="0 0 100 ${H}" preserveAspectRatio="none" role="img" aria-label="${r.dev === "mob" ? "Mobiili" : "Tietokone"} ${Math.round(x / total * 100)} %"><path d="${band(v, total)}" fill="var(--${r.dev})" fill-opacity="0.8"/>${refLine}</svg></div>`;
+}
+const mx = document.getElementById("matrix");
+let h = '<div class="mh">Polku</div>' + STAGES.map(s => `<div class="mh stage">${s}</div>`).join("");
+J.forEach(j => {
+  const note = ROWVOL[j.id] && ROWVOL[j.id].empty ? `<p class="note">${esc(ROWVOL[j.id].empty)}</p>` : "";
+  h += `<div class="jname"><span class="jid">${j.id} · ${j.phase}</span><a href="https://claude.ai/artifact/18sh88r36vzogTkUunyp3H#${j.id}">${j.name}</a><small>${j.who}</small>${note}</div>`;
+  j.s.forEach((c, i) => {
+    h += `<div class="cell s-${c.st}" title="${STAGES[i]}: ${STLABEL[c.st]}"><span class="txt">${esc(c.c)}</span>${cellVol(j, i)}</div>`;
+  });
+});
+mx.innerHTML = h;
+document.getElementById("voltbl").innerHTML = VSTEP.map((s, i) => {
+  const d = VOL.desk[i], m = VOL.mob[i];
+  return `<tr><td>${STAGES[i]}: ${s}</td><td class="num">${d == null ? "–" : fmt(d)}</td><td class="num">${d == null ? "–" : Math.round(d / VOL.desk[0] * 100) + " %"}</td><td class="num">${m == null ? "–" : fmt(m)}</td><td class="num">${m == null ? "–" : Math.round(m / VOL.mob[0] * 100) + " %"}</td></tr>`;
+}).join("");
+</script>
+
+</body></html>

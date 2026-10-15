@@ -1,0 +1,204 @@
+/*
+ * Snellman.fi — design tokens (scrapettu 2026-05-11)
+ * Lähde: https://www.snellman.fi/  → app-styles.css?ver=27d3c0241c46fb4f534e
+ *
+ * Tämä on käyttöön valmis :root-tokenisetti, joka kokoaa GDS-perustason +
+ * Snellman recipes -teeman brand-overriden yhteen kerrokseen.
+ * Mobile-arvot ovat oletuksia; desktop-arvot löytyvät media-queryn alta.
+ */
+
+:root {
+  /* ─── COLOR — BASE ─────────────────────────────────────────── */
+  --color-white:                #ffffff;
+  --color-black:                #333031;          /* ei puhdas #000 */
+
+  /* ─── COLOR — BRAND (vihreät + cream + keltainen) ──────────── */
+  --color-green-dark:           #00522c;          /* pääväri */
+  --color-green-darkest:        #00422c;          /* tekstivihreä */
+  --color-green-bright:         #005a30;
+  --color-green-hover:          #7d968a;
+  --color-green-button-hover:   #1e5f41;
+  --color-green-active:         #6cdd66;
+  --color-green-tint:            #00522c0f;       /* ~6% alpha */
+  --color-cream:                #f3f2eb;
+  --color-off-white:            #faf9f5;
+  --color-yellow:               #f2cd5b;
+
+  /* ─── COLOR — SEMANTIC (yhdistelmäkäyttö) ──────────────────── */
+  --color-bg:                   var(--color-green-dark);
+  --color-text:                 var(--color-green-darkest);
+  --color-text-on-dark:         var(--color-white);
+  --color-surface-card:         var(--color-white);
+  --color-surface-muted:        var(--color-cream);
+  --color-border-muted:         #dddddd;
+  --color-success:              #0d9600;
+  --color-error:                #cc3721;
+
+  /* ─── TYPOGRAPHY — FONT FAMILIES ───────────────────────────── */
+  --font-display:   tabernaserif, serif;                                 /* Taberna Serif */
+  --font-sans:      thesansb, Arial, Helvetica, sans-serif;              /* TheSansB W5/W7 */
+
+  /* ─── TYPOGRAPHY — BODY ────────────────────────────────────── */
+  --body-font-family: var(--font-sans);
+  --body-font-size:   17px;
+  --body-line-height: 27px;
+  --body-font-weight: 400;
+  --body-color:       var(--color-text);
+
+  /* ─── TYPOGRAPHY — HEADINGS (mobile defaults) ──────────────── */
+  /* H6 / smallest */
+  --heading-xs-font-family:    var(--font-sans);
+  --heading-xs-font-weight:    700;
+  --heading-xs-font-size:      16px;
+  --heading-xs-line-height:    1.5;
+  --heading-xs-text-transform: none;
+  --heading-xs-letter-spacing: 0;
+
+  /* H5 */
+  --heading-s-font-family:     var(--font-sans);
+  --heading-s-font-weight:     700;
+  --heading-s-font-size:       20px;
+  --heading-s-line-height:     1.25;
+  --heading-s-text-transform:  none;
+  --heading-s-letter-spacing:  0;
+
+  /* H4 — siirrytään display-serifiin + lowercaseen */
+  --heading-m-font-family:     var(--font-display);
+  --heading-m-font-weight:     400;
+  --heading-m-font-size:       24px;
+  --heading-m-line-height:     1.125;
+  --heading-m-text-transform:  lowercase;
+  --heading-m-letter-spacing:  0.05em;
+
+  /* H3 */
+  --heading-l-font-family:     var(--font-display);
+  --heading-l-font-weight:     400;
+  --heading-l-font-size:       29px;
+  --heading-l-line-height:     1.12;
+  --heading-l-text-transform:  lowercase;
+  --heading-l-letter-spacing:  0.05em;
+
+  /* H2 */
+  --heading-xl-font-family:    var(--font-display);
+  --heading-xl-font-weight:    400;
+  --heading-xl-font-size:      36px;
+  --heading-xl-line-height:    1.125;
+  --heading-xl-text-transform: lowercase;
+  --heading-xl-letter-spacing: 0.05em;
+
+  /* H1 / hero */
+  --heading-2xl-font-family:   var(--font-display);
+  --heading-2xl-font-weight:   400;
+  --heading-2xl-font-size:     36px;
+  --heading-2xl-line-height:   1.12;
+  --heading-2xl-text-transform:lowercase;
+  --heading-2xl-letter-spacing:0.05em;
+
+  /* ─── TYPOGRAPHY — PARAGRAPH ───────────────────────────────── */
+  --paragraph-xs-font-size:   13px;
+  --paragraph-xs-line-height: 17px;
+  --paragraph-s-font-size:    14px;
+  --paragraph-s-line-height:  21px;
+  --paragraph-m-font-size:    17px;
+  --paragraph-m-line-height:  27px;
+  --paragraph-l-font-size:    19px;
+  --paragraph-l-line-height:  29px;
+  --paragraph-gutter:         32px;
+
+  /* ─── TYPOGRAPHY — LABEL ───────────────────────────────────── */
+  --label-font-family:    var(--font-sans);
+  --label-text-transform: none;
+  --label-s-font-size:    14px;  --label-s-font-weight: 400;  --label-s-line-height: 14px;  --label-s-letter-spacing: 0.5px;
+  --label-m-font-size:    12px;  --label-m-font-weight: 500;  --label-m-line-height: 16px;  --label-m-letter-spacing: 1px;
+  --label-l-font-size:    16px;  --label-l-font-weight: 400;  --label-l-line-height: 19px;  --label-l-letter-spacing: 1.28px;
+  --label-xl-font-size:   16px;  --label-xl-font-weight:600;  --label-xl-line-height:19px;  --label-xl-letter-spacing:1.28px;
+
+  /* ─── SPACING (4–80px) ─────────────────────────────────────── */
+  --space-3xs: 4px;
+  --space-2xs: 8px;
+  --space-xs:  12px;
+  --space-s:   16px;
+  --space-m:   24px;
+  --space-l:   32px;
+  --space-xl:  40px;
+  --space-2xl: 48px;
+  --space-3xl: 80px;
+
+  /* ─── LAYOUT — GRID & GUTTERS ──────────────────────────────── */
+  --grid-columns:      12;
+  --grid-column:       78px;
+  --grid-gutter:       12px;     /* mobile */
+  --viewport-gutter:   24px;
+  --block-gutter-s:    24px;
+  --block-gutter:      40px;
+  --block-gutter-l:    40px;     /* mobile; desktop 80px */
+  --footer-gutter:     95px;
+
+  --nav-desktop-height: 100px;
+  --nav-mobile-height:  70px;
+  --search-field-height: 70px;
+  --top-alert-height:   37px;
+  --top-menu-height:    40px;
+
+  /* ─── RADIUS — terävät kulmat ovat brändin tunnusmerkki ────── */
+  --radius-none:      0;
+  --radius-tag:       5px;
+  --radius-input:     0;
+  --radius-button:    0;
+  --radius-card:      0;
+  --radius-accordion: 8px;
+  --radius-hint:      4px 4px 4px 0;
+  --radius-consent:   20px;
+
+  /* ─── SHADOW — pääsääntö: ei varjoja ───────────────────────── */
+  --shadow-none:      none;
+  --shadow-accordion: 0 0 8px rgba(0, 0, 0, 0.12);
+
+  /* ─── TRANSITION ──────────────────────────────────────────── */
+  --transition-button:      background-color 0.1s ease-out;
+  --transition-text-button: transform 0.1s ease-out;
+
+  /* ─── FOCUS ───────────────────────────────────────────────── */
+  --focus-outline: auto var(--color-off-white);
+}
+
+/* ─── TABLET / DESKTOP UPSCALE ────────────────────────────────
+ * GDS yliajaa heading-skaalan + grid-gutterin tabletista ylöspäin.
+ * Breakpointit eivät näy alkuperäisessä CSS:ssä media-queryjen sisällä,
+ * tässä on poimittu tavallisin asetus (≥768px).
+ */
+@media (min-width: 768px) {
+  :root {
+    --grid-gutter:      24px;
+    --block-gutter-l:   80px;
+
+    --heading-xs-font-size: 18px;
+    --heading-s-font-size:  24px;
+    --heading-m-font-size:  32px;
+    --heading-l-font-size:  42px;
+    --heading-xl-font-size: 56px;
+    --heading-2xl-font-size:75px;
+  }
+}
+
+/* ─── FONT-FACE ──────────────────────────────────────────────── */
+@font-face {
+  font-family: tabernaserif;
+  font-style:  normal;
+  font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TabernaSerif-Regular.307208f4.otf") format("opentype");
+}
+@font-face {
+  font-family: thesansb;
+  font-style:  normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W5Plain.9a8ed524.otf") format("opentype");
+}
+@font-face {
+  font-family: thesansb;
+  font-style:  normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W7Bold.f9113732.otf") format("opentype");
+}

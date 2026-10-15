@@ -1,0 +1,30 @@
+/* Snellman Retail – reklamaatio. Pohja: tunnukset.css (req-asettelu, lomakekortti, lähetetty-tila) */
+.rlines { border: 0; margin: 0 0 var(--gap-24); padding: 0; min-width: 0; }
+.rlines legend { margin-bottom: var(--gap-8); }
+.rlines ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--c-hairline); }
+.rline { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: var(--gap-16); align-items: center; padding: var(--gap-8) 0; border-bottom: 1px solid var(--c-hairline); }
+.rline.is-on { background: var(--c-bg-accent); margin: 0 calc(-1 * var(--gap-12)); padding-left: var(--gap-12); padding-right: var(--gap-12); }
+.rline__pick { display: grid; grid-template-columns: 22px 44px minmax(0, 1fr); gap: var(--gap-12); align-items: center; min-height: var(--touch); cursor: pointer; }
+.rline__pick input { width: 22px; height: 22px; margin: 0; accent-color: var(--c-primary); }
+.rline__pick img { width: 44px; height: 44px; object-fit: contain; }
+.rline__nm { display: flex; flex-direction: column; min-width: 0; }
+.rline__t { font-weight: 700; font-size: var(--fs-small); line-height: 1.35; }
+.rline__m { font-size: var(--fs-xs); color: var(--c-meta); }
+.rline__qty input { width: 100%; min-height: var(--touch); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 0 var(--gap-12); font: inherit; text-align: right; background: var(--c-surface); }
+.rline__qty input:disabled { background: transparent; border-color: var(--c-hairline); }
+.upload { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: var(--gap-24); border: 1px dashed var(--c-border-strong); background: var(--c-bg); text-align: center; cursor: pointer; color: var(--c-text-2); }
+.upload .ico { font-size: 28px; color: var(--c-primary); }
+.upload strong { color: var(--c-primary); }
+.upload__s { font-size: var(--fs-xs); color: var(--c-meta); }
+.upfiles { list-style: none; margin: var(--gap-8) 0 0; padding: 0; }
+.upfiles li { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto; gap: var(--gap-12); align-items: center; padding: 6px 0; font-size: var(--fs-small); }
+.upfiles img { width: 40px; height: 40px; object-fit: cover; }
+.upfiles__s { color: var(--c-meta); font-size: var(--fs-xs); }
+.r-urgent { margin-top: var(--gap-16); padding: var(--gap-16) var(--gap-24); border: 1px solid var(--c-border); background: var(--c-surface); font-size: var(--fs-small); }
+.r-urgent p { margin: 0 0 4px; color: var(--c-text-2); }
+.r-urgent strong { color: var(--c-text); }
+@media (max-width: 37.49em) {
+  .rline { grid-template-columns: minmax(0, 1fr) 72px; gap: var(--gap-8); }
+  .r-urgent { padding: var(--gap-16); }
+}
+.req__intro .lead { margin-bottom: var(--gap-32); }

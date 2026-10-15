@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Snellman Komponentit</title>
+<link rel="icon" href="../snellman-logo.svg">
+<script>window.SNL_V = Date.now(); document.write('<link rel="stylesheet" href="manager.css?v=' + SNL_V + '">');</script>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side" aria-label="Komponentit">
+    <div class="side__brand">
+      <img src="../snellman-logo.svg" alt="" width="28" height="28">
+      <div><b>Snellman Retail</b><span>Komponenttikirjasto</span></div>
+    </div>
+    <div class="side__search">
+      <input type="search" id="q" placeholder="Etsi komponenttia  /" aria-label="Etsi komponenttia tai tarinaa" autocomplete="off">
+    </div>
+    <nav class="tree" id="tree"></nav>
+    <dl class="side__legend" aria-label="Tilamerkit">
+      <div><dt class="status status--on">O</dt><dd>olemassa</dd></div>
+      <div><dt class="status status--laajennus">L</dt><dd>laajennus</dd></div>
+      <div><dt class="status status--uusi">U</dt><dd>uusi lohko</dd></div>
+      <div><dt class="status status--wireframe">W</dt><dd>vain wireframe</dd></div>
+    </dl>
+    <div class="side__foot">
+      <a href="../README.md" target="_blank">Wireframet</a>
+      <a href="../lib/README.md" target="_blank">Käyttöohje</a>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="bar" id="bar">
+      <div class="bar__left">
+        <button type="button" class="icon-btn" id="toggle-side" aria-label="Näytä tai piilota sivupalkki" title="Sivupalkki">☰</button>
+        <div class="tabs" role="tablist" id="modes">
+          <button type="button" role="tab" data-mode="canvas">Canvas</button>
+          <button type="button" role="tab" data-mode="docs">Docs</button>
+        </div>
+      </div>
+      <div class="bar__right" id="canvas-tools">
+        <div class="seg" id="viewports" role="group" aria-label="Näkymän leveys"></div>
+        <select id="bg" aria-label="Tausta" title="Tausta">
+          <option value="">Tausta: tarinan oma</option>
+          <option value="page">Sivun pohja #fcfcfc</option>
+          <option value="block">Pellava #f3f2eb</option>
+          <option value="accent">Minttu #e2f1ec</option>
+          <option value="white">Valkoinen</option>
+          <option value="green">Vihreä #00522c</option>
+        </select>
+        <button type="button" class="icon-btn icon-btn--labelled" id="outline" aria-pressed="false">Ääriviivat</button>
+        <button type="button" class="icon-btn icon-btn--labelled" id="copy-link">Kopioi linkki</button>
+        <a class="icon-btn icon-btn--labelled" id="open-new" target="_blank">Avaa erikseen</a>
+      </div>
+    </div>
+
+    <section class="stage" id="stage">
+      <div class="stage__frame" id="frame-wrap">
+        <div class="stage__size" id="size-label"></div>
+        <iframe id="canvas" title="Komponentin esikatselu"></iframe>
+        <div class="stage__handle" id="handle" title="Vedä leveyttä" aria-hidden="true"></div>
+      </div>
+    </section>
+
+    <section class="docs" id="docs" hidden></section>
+
+    <section class="panel" id="panel">
+      <div class="panel__resize" id="panel-resize" aria-hidden="true"></div>
+      <div class="panel__head">
+        <div class="tabs tabs--panel" role="tablist" id="panel-tabs">
+          <button type="button" role="tab" id="tab-controls" aria-controls="panel-body" data-tab="controls">Kontrollit</button>
+          <button type="button" role="tab" id="tab-actions" aria-controls="panel-body" data-tab="actions">Toiminnot <span class="count" id="actions-count"></span></button>
+          <button type="button" role="tab" id="tab-code" aria-controls="panel-body" data-tab="code">Koodi</button>
+          <button type="button" role="tab" id="tab-info" aria-controls="panel-body" data-tab="info">Tiedot</button>
+        </div>
+        <div class="panel__tools">
+          <button type="button" class="text-btn" id="reset">Nollaa</button>
+          <button type="button" class="icon-btn" id="collapse" aria-expanded="true" aria-label="Pienennä paneeli">▾</button>
+        </div>
+      </div>
+      <div class="panel__body" id="panel-body" role="tabpanel" tabindex="0"></div>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script>document.write('<script src="manifest.js?v=' + SNL_V + '"><\/script>');</script>
+<script>SNL_load(SNL_MANIFEST.stories.concat(["manager.js"])).catch((e) => { document.body.insertAdjacentHTML("afterbegin", '<p style="color:#bd0a0a;padding:16px">' + e.message + ' — käynnistä palvelin: python3 -m http.server 8765 wireframes-kansiossa.</p>'); });</script>
+</body>
+</html>

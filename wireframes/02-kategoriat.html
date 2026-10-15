@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title></title>
+<!-- Kirjasto välimuistin ohi: lib/load.js (tokens, components, core, basics, product, shell, home, tuotedata) -->
+<script src="lib/load.js" data-with="home data/products"></script>
+<!--
+  SNELLMAN RETAIL — KAIKKI KATEGORIAT, KATEGORIASIVU, PIKATILAUS (wireframe)
+  ==================================================================
+  Spec:  02-kategoriat.md v1.0, 15.9.2026
+  Rivi:  06-tuoterivi.md (normaali- ja Boost-variantit)
+  Pohja: lib/ (komponenttikirjasto): tokenit, header, footer, murupolku, painikkeet,
+         tuoterivi (B Kortti). Variantit ja tilat: library/ → Tuoterivi.
+
+  Kolme näkymää samaan valikoimaan (+ hakutulossivu, joka käyttää
+  kategoriasivun rakennetta) → yksi tiedosto, näkymänvaihto proto-palkista:
+    /kategoriat/          H0–H5  Kaikki kategoriat (hub)
+    /kategoriat/{slug}/   C0–C6  Kategoriasivu
+    /kategoriat/?haku=    C1–C5  Hakutulokset
+    /pikatilaus/          P0–P5  Pikatilaus
+  Suodattimet, järjestys, haku, määräkentät ja korin yhteenveto toimivat
+  oikeasti demodatalla. Kori säilyy näkymien välillä (spec: "Asiakas voi
+  siirtyä näkymien välillä menettämättä koria tai päivävalintaa").
+
+  Kaikki näkyvä teksti on PROTO/SHELL/UI/PAGE-objekteissa.
+  Markkupissa ei ole sanoja — ruotsin lisääminen olisi sisältötyötä.
+  ==================================================================
+-->
+<style>
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Tässä vain sivun omat. */
+  :root { --c-bg-quiet: #f7f7f7; --c-text-muted: var(--c-meta); }
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto { background: #2b2b28; color: #e9e8e1; font-size: var(--fs-xs); line-height: 1.5; }
+  .proto .container { padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl { display: flex; align-items: center; gap: var(--gap-8); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .lg { width: 18px; height: 10px; display: inline-block; }
+  .lg--var { border-bottom: 1px dotted #e9e8e1; }
+  .lg--fill { background: #fff6d6; border: 1px solid #e0c86a; }
+
+  /* Header, murupolku, painikkeet, placeholderit, merkinnät: lib/components.css */
+  .crumb { padding-top: var(--gap-8); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--tight { padding-top: var(--gap-32); padding-bottom: var(--gap-24); }
+  .block--list { padding-top: var(--gap-24); }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block--quiet { background: var(--c-bg-quiet); }
+  .block[id] { scroll-margin-top: calc(var(--nav-h) + 16px); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+  .sub { font-size: var(--fs-small); color: var(--c-text-2); }
+
+  /* ── Kortit ────────────────────────────────────────────────────── */
+  .cols { display: grid; gap: var(--gap-32); }
+  .cols--2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── H1/C2: otsikkorivi, toimituspäivä (lib delivery panel + calendar), haku ── */
+  .h1row { display: flex; align-items: baseline; gap: var(--gap-16); flex-wrap: wrap; }
+  .count-h { font-size: var(--fs-h4); color: var(--c-text-2); font-family: var(--font-sans); }
+  .toprow { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-24); align-items: start; margin-top: var(--gap-24); }
+  .toprow--one { grid-template-columns: 1fr; }
+
+  /* genero/product-search (uusi): kenttä + ehdotuslista */
+  .search { position: relative; }
+  .search__row { display: flex; }
+  .search input { flex: 1 1 auto; min-width: 0; font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text);
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-right: 0; border-radius: 0;
+    padding: 11px 16px 9px; min-height: 52px; }
+  .search input::placeholder { color: var(--c-text-muted); }
+  .search__row .btn { width: 52px; min-height: 52px; flex: 0 0 auto; }
+  .search__sugg { position: absolute; left: 0; right: 0; top: 100%; z-index: 20; background: var(--c-surface);
+    border: 1px solid var(--c-border-strong); box-shadow: var(--shadow-card); }
+  .search__sugg-h { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px;
+    color: var(--c-text-2); padding: var(--gap-8) var(--gap-16) 0; }
+  .search__sugg ul { list-style: none; padding: var(--gap-4) 0 var(--gap-8); }
+  .search__sugg li a { display: flex; align-items: center; flex-wrap: wrap; column-gap: 6px; min-height: var(--touch); padding: 6px var(--gap-16); text-decoration: none; font-size: var(--fs-body); line-height: 1.4; }
+  .search__sugg li a:hover, .search__sugg li a:focus { background: var(--c-bg-accent); }
+  .search__sugg .nro { color: var(--c-meta); }
+  .search__empty { padding: var(--gap-12) var(--gap-16); font-size: var(--fs-small); color: var(--c-text-2); }
+
+  /* ── H2 pikapolut: lib startLinks (genero/quick-links, sama kuin 01 B2) ── */
+
+  /* ── H3 kategoriaryhmät (genero/category-grid) ─────────────────── */
+  .group + .group { margin-top: var(--gap-48); }
+  .group__head { margin-bottom: var(--gap-24); }
+  .group__head .sub { margin-top: var(--gap-4); }
+  .catgrid { display: grid; gap: var(--gap-16); grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); }
+  .catcard { display: flex; flex-direction: column; text-decoration: none; background: var(--c-surface);
+    border-radius: var(--r-card); box-shadow: var(--shadow-card); overflow: hidden; }
+  .catcard:hover { box-shadow: 4px 5px 12px #00000029; }
+  .catcard__img { aspect-ratio: 4 / 3; width: 100%; padding: var(--gap-8); font-size: var(--fs-xs); border-width: 0 0 1px; border-radius: 0; }
+  .catcard__body { padding: var(--gap-16) var(--gap-24) var(--gap-24); display: flex; flex-direction: column; gap: 2px; }
+  .catcard__name { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); color: var(--c-text); line-height: 1.25; }
+  .catcard__n { font-size: var(--fs-small); color: var(--c-text-2); }
+  .catcard--noimg .catcard__body { padding-top: var(--gap-24); min-height: 96px; justify-content: center; }
+  .others { display: grid; gap: var(--gap-16); grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .others a { display: flex; align-items: center; justify-content: space-between; gap: var(--gap-12);
+    background: var(--c-surface); box-shadow: var(--shadow-card); border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24);
+    text-decoration: none; font-family: var(--font-sans); font-weight: 500; font-size: 18px; color: var(--c-text); min-height: 80px; }
+  .others a:hover { box-shadow: 4px 5px 12px #00000029; }
+  .others .n { font-size: var(--fs-small); color: var(--c-text-2); font-weight: 400; display: block; }
+
+  /* ── C3 suodatus ja järjestys (genero/list-controls) ───────────── */
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-16) var(--gap-32);
+    padding: var(--gap-16) 0; border-top: 1px solid var(--c-border); border-bottom: 1px solid var(--c-border); }
+  /* Chipit: lib chip (mode toggle, 44 px). Sivulla vain ryhmän asettelu. */
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-8); }
+  .chips__label { display: inline-flex; align-items: center; min-height: var(--touch); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--c-text-2); margin-right: var(--gap-4); }
+  .sort { display: flex; align-items: center; gap: var(--gap-8); }
+  .sort label { display: inline-flex; align-items: center; min-height: var(--touch); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; font-size: var(--fs-xs); color: var(--c-text-2); }
+  /* 16 px: iOS ei zoomaa kenttään */
+  .sort select { font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text);
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 8px 12px 6px; min-height: var(--touch); }
+  .count { margin-left: auto; font-size: var(--fs-small); color: var(--c-text-2); font-weight: 700; }
+
+  /* Tuoterivi: lib (genero/product-card, B Kortti). Sivulla vain listan rytmi. */
+  .grid--b { margin-top: var(--gap-24); }
+  .quick-main .grid--b { margin-top: var(--gap-16); }
+
+  .more-wrap { display: flex; flex-direction: column; align-items: center; gap: var(--gap-12); margin-top: var(--gap-32); }
+  .list-end { font-size: var(--fs-small); color: var(--c-text-2); text-align: center; margin-top: var(--gap-24); }
+
+  /* ── C5 tyhjätilat ─────────────────────────────────────────────── */
+  .empty { background: var(--c-bg-quiet); border: 1px dashed var(--c-border-strong); margin-top: var(--gap-24);
+    padding: var(--gap-40) var(--gap-32); text-align: center; color: var(--c-text-2); }
+  .empty p { max-width: 56ch; margin: 0 auto var(--gap-24); }
+
+  /* ── Pikatilaus: gds/layout 25/75, sivupalkki sticky ─────────────
+     DOM-järjestys H1 → sivupalkki → lista (otsikkojärjestys), leveässä
+     sivupalkki vasemmassa sarakkeessa gridin alueilla. */
+  .layout { display: grid; grid-template-columns: 300px 1fr; grid-template-areas: "side head" "side main";
+    grid-template-rows: auto 1fr; column-gap: var(--gap-40); align-items: start; }
+  .quick-head { grid-area: head; }
+  .quick-main { grid-area: main; }
+  .side { grid-area: side; position: sticky; top: calc(var(--nav-h) + 16px); background: var(--c-bg-accent); border-radius: var(--r-card); padding: var(--gap-24); }
+  .side h2 { font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-body); text-transform: uppercase; letter-spacing: var(--ls-button); margin-bottom: var(--gap-16); }
+  .side__search { position: relative; }
+  /* 16 px ja 44 px: iOS ei zoomaa, kosketusalue riittää */
+  .side__search input { width: 100%; font: inherit; font-family: var(--font-sans); font-size: var(--fs-body); color: var(--c-text);
+    background: var(--c-surface); border: 1px solid var(--c-border-strong); border-radius: 0; padding: 9px 40px 7px 12px; min-height: var(--touch); }
+  .side__search .ico { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--c-primary); }
+  .side__count { margin: var(--gap-8) 0 0; font-size: var(--fs-small); font-weight: 700; color: var(--c-text-2); }
+  .side__count:empty { display: none; }
+  .side__show { display: none; margin-top: var(--gap-12); }
+  .side__cats { margin-top: var(--gap-24); }
+  .side h3 { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); margin: var(--gap-16) 0 var(--gap-8); font-family: var(--font-sans); }
+  .facet { list-style: none; display: grid; gap: 2px; }
+  .facet button { display: flex; justify-content: space-between; align-items: center; gap: var(--gap-8); width: 100%; min-height: var(--touch); text-align: left; background: none; border: 0;
+    padding: 6px 8px 4px; font: inherit; font-family: var(--font-sans); font-size: var(--fs-small); line-height: 1.3; color: var(--c-text); cursor: pointer; border-radius: 4px; }
+  .facet button:hover { background: rgba(255,255,255,.7); }
+  .facet button[aria-pressed="true"] { background: var(--c-primary); color: #fff; font-weight: 700; }
+  .facet .n { color: inherit; opacity: .75; }
+  .facet__fam { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-primary); padding: var(--gap-12) 8px 4px; }
+  .toggles { display: grid; gap: 0; margin-top: var(--gap-16); }
+  .toggle { display: flex; align-items: center; gap: var(--gap-12); min-height: var(--touch); font-size: var(--fs-small); cursor: pointer; }
+  .toggle input { width: 22px; height: 22px; accent-color: var(--c-primary); margin: 0; flex: 0 0 auto; }
+  .side__reset { margin-top: var(--gap-8); }
+  .side__toggle { display: none; }
+  /* Pikatilauksen kategoriaotsikot ovat listan väliotsikoita: TheSansB tarkoituksella, ei
+     brändin serif-H2:ta, koska niitä on kymmeniä peräkkäin ja serif kilpailisi H1:n kanssa. */
+  .grouplabel { font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); margin: var(--gap-48) 0 var(--gap-4); }
+  .grouplabel:first-child { margin-top: var(--gap-24); }
+  .cath { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-16); flex-wrap: wrap; margin-top: var(--gap-24); }
+  .cath h2 { font-family: var(--font-sans); font-weight: 700; font-size: var(--fs-h3); color: var(--c-text); }
+  .quick-main .grid + .grouplabel, .quick-main .grid + .cath { margin-top: var(--gap-40); }
+
+  /* genero/cart-summary-bar (uusi) */
+  .cartbar { position: fixed; right: var(--gap-24); bottom: var(--gap-24); z-index: 40; background: var(--c-surface);
+    box-shadow: 4px 5px 16px #00000033; border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24);
+    display: flex; align-items: center; gap: var(--gap-24); }
+  .cartbar__txt { font-weight: 700; white-space: nowrap; }
+  .cartbar__txt .sub { display: block; font-weight: 400; }
+
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Responsiivisuus ───────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    .toprow { grid-template-columns: 1fr; }
+    .count { margin-left: 0; }
+    .layout { grid-template-columns: 1fr; grid-template-areas: "head" "side" "main"; grid-template-rows: auto; row-gap: var(--gap-24); }
+    .side { position: static; }
+    .side__toggle { display: inline-flex; }
+    .side__show { display: flex; }
+    .side__panel.is-closed { display: none; }
+    .side__panel { margin-top: var(--gap-16); }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+    .block--tight { padding-top: var(--gap-24); padding-bottom: var(--gap-16); }
+    .block--list { padding-top: var(--gap-16); }
+    .cols--2 { grid-template-columns: 1fr; gap: var(--gap-16); }
+    .catgrid { grid-template-columns: repeat(2, 1fr); }
+    .cartbar { left: 0; right: 0; bottom: 0; border-radius: 0; justify-content: space-between; padding: var(--gap-12) var(--pad); }
+    body.has-cartbar { padding-bottom: 88px; }
+  }
+  @media (max-width: 480px) { .catgrid { grid-template-columns: 1fr; } }
+</style>
+</head>
+
+<!-- ══════════ PROTO: kokeiltavat ehdot (ei osa designia) ══════════ -->
+<script>
+const PROTO = {
+  title: "<b>Wireframe</b>",
+  meta: ["Snellman Retail", "02 Kategoriat, kategoriasivu, pikatilaus", "spec v1.0 / 15.9.2026"],
+  hint: "Kokeile specin ehdollista näkyvyyttä:",
+  legend: [
+    { cls: "var",  label: "pisteviiva = dynaaminen arvo" },
+    { cls: "fill", label: "keltainen = avoin kysymys Snellmanille" }
+  ],
+  /* only: näytetään vain näissä näkymissä */
+  controls: [
+    { key: "view",    label: "Näkymä", opts: [
+        { v: "hub",    label: "Kaikki kategoriat" },
+        { v: "cat",    label: "Kategoriasivu" },
+        { v: "search", label: "Hakutulokset" },
+        { v: "quick",  label: "Pikatilaus" } ] },
+    { key: "date",    label: "Toimituspäivä",     opts: [ { v: "yes", label: "Valittu" }, { v: "no", label: "Ei valittu" } ] },
+    { key: "days",    label: "Ryhmien päivät",    opts: [ { v: "differ", label: "Eroavat" }, { v: "same", label: "Samat" } ] },
+    { key: "outlet",  label: "Outlet-oikeus",     opts: [ { v: "yes", label: "On" }, { v: "no", label: "Ei" } ], only: ["hub"] },
+    { key: "boost",   label: "Boost-rivejä",      opts: [ { v: "yes", label: "On" }, { v: "no", label: "Ei" } ] },
+    { key: "orders",  label: "Aiempia tilauksia", opts: [ { v: "yes", label: "On" }, { v: "no", label: "Ei" } ], only: ["cat", "quick", "search"] },
+    { key: "stock",   label: "Kategoria päivälle", opts: [ { v: "yes", label: "Tuotteita" }, { v: "empty", label: "Tyhjä" } ], only: ["cat"] },
+    { key: "hits",    label: "Haku",              opts: [ { v: "yes", label: "Tuloksia" }, { v: "no", label: "Ei tuloksia" } ], only: ["search"] }
+  ],
+  defaults: { view: "hub", date: "yes", days: "differ", outlet: "yes", boost: "yes", orders: "yes", stock: "yes", hits: "yes" },
+  /* Näkymä-painike Hakutulokset ilman hakusanaa: demohaku (oikea haku tulee URL:sta ?q=) */
+  searchDemo: "jauhe"
+};
+
+/* ══════════ SHELL: kehys kirjastosta (SN.SHELL: wireframe-linkit, 01-etusivu.md B0) ══════════
+   Sivu ei ylikirjoita linkkejä; vain kirjautuneen etusivu (tila B). */
+const SHELL = {
+  lang: "fi",
+  home: "01-etusivu.html?view=b",
+  skip: "Siirry sisältöön",
+  breadcrumbLabel: "Murupolku"
+};
+
+/* ══════════ UI: tuoterivin sanasto on kirjastossa (SN.UI, lib/core.js) ══════════ */
+
+/* ══════════ PAGE: sivun koko sisältö ══════════ */
+const PAGE = {
+  meta: { robots: "noindex, nofollow", titleSuffix: " — Snellman Retail (wireframe)" },
+
+  /* Muuttujien demoarvot. Sivulla ne näkyvät pisteviivalla alleviivattuina. */
+  /* Päivämuuttujat (pvm, pvm_pietarsaari, pvm_kerava, pvm_seuraava, viikonpäivä, pv.kk.)
+     lasketaan valitusta toimituspäivästä, ks. applyDate(). */
+  vars: {
+    "eriä": "12"
+  },
+  weekdays: ["su", "ma", "ti", "ke", "to", "pe", "la"],
+
+  /* Toimituspäivä: lib delivery (panel) + lib calendar body-paikassa, sama kuin 01 ja 07 */
+  delivery: {
+    calendarHeading: "Valitse toimituspäivä",
+    changed: "Toimituspäivä vaihdettu: {päivä}. Hinnat ja saatavuus päivitetty.",
+    /* Sama päivälista kuin 07-ostoskori (lib calendar: iso, wd, n, selected, disabled, reason, cutoff) */
+    days: [
+      { iso: "2026-09-23", wd: "ti", n: "23.9.", cutoff: "ma 22.9. klo 12" },
+      { iso: "2026-09-24", wd: "ke", n: "24.9.", selected: true, cutoff: "ti 23.9. klo 12" },
+      { iso: "2026-09-25", wd: "to", n: "25.9.", cutoff: "ke 24.9. klo 12" },
+      { iso: "2026-09-26", wd: "pe", n: "26.9.", cutoff: "to 25.9. klo 12" },
+      { iso: "2026-09-29", wd: "ma", n: "29.9.", cutoff: "pe 26.9. klo 12" },
+      { iso: "2026-09-30", wd: "ti", n: "30.9.", disabled: true, reason: "ei toimitusta" }
+    ]
+  },
+
+  /* Tuoteperheet = hubin ryhmät, ei taksonomiataso */
+  families: [
+    { key: "meat",  name: "Lihatuotteet",             dateVar: "pvm_pietarsaari" },
+    { key: "ready", name: "Kokkikartanon valmisruoat", dateVar: "pvm_kerava" }
+  ],
+  familyDate: "Toimitus {pvm}",
+  familyFill: "Avoin (Oskar 30.9.): kehittäjä suosittaa, ettei kategorioita ryhmitellä lähtöpaikan mukaan, vaan toimituspäivä näytetään tuotekortissa (gds/product-card/meta). Sekakategoria (Suurkeittiötuotteet) pysyy yhtenä, ja jokaisen tuotteen päivä näkyy kortissa. Päätettävä: säilytetäänkö tuoteperheryhmittely hubissa.",
+
+  /* ═══ Kaikki kategoriat (hub) ═══ */
+  hub: {
+    title: "Kaikki kategoriat",
+    breadcrumb: [ { label: "Etusivu", href: "01-etusivu.html?view=b" }, { label: "Kaikki kategoriat" } ],
+    intro: {
+      block: "core/heading H1 + genero/delivery-date (kompakti) + genero/product-search (uusi)",
+      h1: "Kaikki kategoriat"
+    },
+    search: {
+      block: "genero/product-search (uusi): ehdottaa tuotteita nimellä ja tuotenumerolla",
+      label: "Hae tuotetta",
+      placeholder: "Hae tuotetta nimellä tai tuotenumerolla",
+      button: "Hae",
+      suggHeading: "Tuotteet",
+      suggRow: "Tuotenro {nro}",
+      suggEmpty: "Ei tuotteita haulla \"{haku}\". Kokeile toista sanaa tai tuotenumeroa.",
+      suggCountMany: "{n} ehdotusta",
+      suggCountOne: "1 ehdotus",
+      suggCountNone: "Ei ehdotuksia",
+      /* Ehdotus vie hakutulossivulle tuotenumerolla (tuotesivua ei ole wireframessä) */
+      resultsHref: "02-kategoriat.html?view=search&q={q}",
+      fill: "Haku vie hakutulossivulle (tuotannossa /kategoriat/?haku=…). Siellä on kategoriasivun suodattimet, järjestys ja tyhjätilat, mutta ei kategoriakuvausta. Hub käyttää tätä isoa hakukenttää ehdotuksineen, joten headerin haku on tässä näkymässä piilossa: yksi haku sivulla. Kokeile: „jauhe” tai „17516”."
+    },
+    quick: {
+      block: "genero/quick-links (lib startLinks, sama kuin etusivu B2, kaksi korttia)",
+      ariaLabel: "Pikapolut",
+      items: [
+        { key: "quick",  title: "Pikatilaus",      sub: "Koko valikoima yhdellä sivulla", href: "02-kategoriat.html?view=quick", cta: "Avaa", tone: "primary" },
+        { key: "outlet", title: "Snellman Outlet", sub: "{eriä} erää tarjolla nyt",        href: "03-snellman-outlet.html", cta: "Avaa", tone: "outlet", requires: "outlet" }
+      ]
+    },
+    groups: {
+      block: "per tuoteperhe core/group → core/heading H2 + core/paragraph → genero/category-grid (kuva 4:3, nimi, tuotemäärä)",
+      ariaLabel: "Kategoriat",
+      countMany: "{n} tuotetta",
+      countOne: "1 tuote",
+      imgAlt: "kategoriakuva 4:3",
+      fill: "Kategoriat ja tuotteet ovat b2bshopin tuotedatasta (15 pääkategoriaa; 2-laadun tuotteet eivät näy, asiakkaalle ne ovat Outlet-eriä). 32 tuotetta ilman kategoriaa puuttuu. Järjestys tuotemäärän mukaan, kunnes Snellman vahvistaa menu_orderin. Hinnat, Boost-erät ja saatavuus ovat demoarvoja. Kategoriakuvat Snellmanilta; fallback on kortti pelkällä nimellä (Suurkeittiötuotteet tässä). Kategoria, joka on tyhjä valitulle päivälle, ei näy (Paninit tässä)."
+    },
+    boost: {
+      block: "core/group → core/heading H2 + linkki → genero/product-list (max 4 Boost-riviä). Näytetään vain, jos Boost-rivejä on.",
+      heading: "Boost-erät nyt",
+      sub: "Lähellä päiväystä, alennettuun hintaan. Näkyvät myös omissa kategorioissaan.",
+      link: { label: "Kaikki Boost-erät", href: "02-kategoriat.html?view=search&suodatin=boost" }
+    }
+  },
+
+  /* ═══ Kategoriasivu ═══ */
+  cat: {
+    slug: "tuore-liha",
+    breadcrumbRoot: [ { label: "Etusivu", href: "01-etusivu.html?view=b" }, { label: "Kaikki kategoriat", href: "02-kategoriat.html" } ],
+    intro: {
+      block: "core/breadcrumbs → core/heading H1 + core/paragraph (kategoriakuvaus) + genero/delivery-date (kompakti) + toimitusryhmän tieto",
+      countMany: "{n} tuotetta",
+      countOne: "1 tuote",
+      groupDate: "Tämän kategorian tuotteet toimitetaan {viikonpäivä} {pv.kk.}",
+      fillDesc: "Kategoriakuvaus: Snellman kirjoittaa 1–2 lausetta per kategoria. Ohje: mihin käyttöön tuotteet sopivat, ei markkinointipuhetta."
+    },
+    controls: {
+      block: "genero/list-controls (sama kuin Outlet O3): chipit, ei sivupalkkia",
+      ariaLabel: "Suodatus ja järjestys",
+      subLabel: "Alikategoria",
+      subAll: "Kaikki",
+      boostToggle: "Vain Boost-erät",
+      /* Päivä = kategorian toimitusryhmän päivä (Tuore liha → lihatuotteiden päivä), ei tavoitepäivä */
+      availToggle: "Vain saatavilla {pvm}",
+      availToggleMixed: "Vain saatavilla valitulle päivälle",
+      sortLabel: "Järjestä",
+      sorts: [
+        { v: "pop",   label: "Suosituimmat ensin" },
+        { v: "name",  label: "Tuotenimi A–Ö" },
+        { v: "asc",   label: "Hinta, edullisin ensin" },
+        { v: "desc",  label: "Hinta, kallein ensin" }
+      ],
+      countMany: "{n} tuotetta",
+      countOne: "1 tuote",
+      fillAvail: "Saatavuussuodatin on oletuksena päällä. Vaihtoehto: näytä kaikki ja merkitse rivit, joita ei voi toimittaa (rivillä „Ei saatavilla {pvm}. Kokeile toista toimituspäivää.”). Kokeile: ota chip pois.",
+      fillPop: "„Suosituimmat” = asiakkaan omat aiemmat tilaukset ensin (merkitty rivillä), sen jälkeen kaupan myydyimmät. Ilman tilaushistoriaa pelkkä myydyimmät. Proto-palkista: Aiempia tilauksia."
+    },
+    list: {
+      block: "genero/product-list → genero/product-row. Ei sivutusta; yli 60 tuotetta → Näytä lisää 40 rivin erissä.",
+      ariaLabel: "Tuotteet",
+      pageSize: 60,
+      step: 40,
+      more: "Näytä lisää ({n} tuotetta)",
+      end: "Kaikki {n} tuotetta näytetty."
+    },
+    empty: {
+      block: "core/group (#f7f7f7) → core/paragraph + core/buttons, tuotelistan paikalla",
+      emptyDay:  { text: "Tämän kategorian tuotteita ei ole saatavilla {pvm}. Seuraava mahdollinen toimituspäivä on {pvm_seuraava}.", cta: "Vaihda toimituspäivä" },
+      filtered:  { text: "Ei tuotteita näillä valinnoilla.", cta: "Näytä kaikki" },
+      noDate:    { text: "Valitse toimituspäivä, niin näet tuotteet ja hinnat.", cta: "Valitse päivä" },
+      noHits:    { text: "Ei tuotteita haulla \"{haku}\". Kokeile toista sanaa, tuotenumeroa tai selaa kategorioita.", cta: "Kaikki kategoriat", href: "02-kategoriat.html" }
+    },
+    others: {
+      block: "core/group → core/heading H2 → genero/category-grid (saman tuoteperheen muut kategoriat, ilman kuvia)",
+      heading: "Muut {tuoteperhe}-kategoriat",
+      link: { label: "Kaikki kategoriat", href: "02-kategoriat.html" }
+    }
+  },
+
+  /* ═══ Hakutulossivu: kategoriasivun rakenne ilman kuvausta ═══ */
+  search: {
+    title: "Hakutulokset: {haku}",
+    h1: "Hakutulokset: {haku}",
+    /* Ilman hakusanaa (esim. Kaikki Boost-erät): koko valikoima suodattimilla */
+    titleAll: "Kaikki tuotteet",
+    h1All: "Kaikki tuotteet",
+    crumb: "Hakutulokset",
+    countMany: "{n} tuotetta",
+    countOne: "1 tuote",
+    fill: "Haku osuu tuotenimeen ja tuotenumeroon, isot ja pienet kirjaimet samoin. Hakutulossivulla ei ole alikategoriasuodatinta; Boost- ja saatavuuschipit ja järjestys ovat samat kuin kategoriasivulla. Kokeile headerin haussa „jauhe” tai „17516”."
+  },
+
+  /* ═══ Pikatilaus ═══ */
+  quick: {
+    title: "Pikatilaus",
+    breadcrumb: [ { label: "Etusivu", href: "01-etusivu.html?view=b" }, { label: "Pikatilaus" } ],
+    intro: {
+      block: "Henkilöstökaupan /shop/-näkymä: rakenne säilyy, copy ja suodatin päivitetään",
+      h1: "Pikatilaus",
+      lead: "Koko valikoima yhdellä sivulla. Lisää määrät suoraan riveille.",
+      resultDiffer: "Lihatuotteet toimitetaan {pvm_pietarsaari}, Kokkikartanon valmisruoat {pvm_kerava}."
+    },
+    side: {
+      block: "nykyinen suodatinsivupalkki (gds/facet). Desktopilla vasemmalla, sticky. Mobiilissa avattava paneeli.",
+      heading: "Rajaa tuotteita",
+      searchPlaceholder: "Hae nimellä tai tuotenumerolla",
+      searchLabel: "Hae tuotetta",
+      catsHeading: "Kategoriat",
+      brandsHeading: "Brändi",
+      allBrands: "Kaikki brändit",
+      brandFill: "Brändi on oma suodattimensa, kun se ei ole kategoria. Brändit ovat demodataa: Kokkikartanon valmisruoat ja Snellmanin lihatuotteet. Oikeat brändit tulevat tuotetiedoista. Vahvistetaan Oskarilta, missä brändi on tallennettu (tuoteominaisuus vai taksonomia) ja saako FacetWP siitä suodattimen.",
+      catRow: "{kategorian_nimi} ({n})",
+      allCats: "Kaikki kategoriat",
+      boostToggle: "Vain Boost-erät",
+      mineToggle: "Vain aiemmin tilaamani",
+      reset: "Näytä kaikki",
+      resultMany: "{n} tuotetta",
+      resultOne: "1 tuote",
+      resultNone: "Ei tuotteita",
+      /* Puhelimella: sulkee paneelin ja vie fokuksen ensimmäiseen tulokseen */
+      showMany: "Näytä {n} tuotetta",
+      showOne: "Näytä 1 tuote",
+      mobileBtn: "Rajaa ({n} valittu)",
+      mobileBtnNone: "Rajaa",
+      fill: "Nykyisessä sivupalkissa ei ole ryhmittelyä tuoteperheisiin; väliotsikot Lihatuotteet / Kokkikartanon valmisruoat ovat lisäys. „Vain aiemmin tilaamani” on Jarkon ja Sarin pääsuodatin: se pudottaa 300 rivin sivun omaan vakiolistaan ilman suosikkitoimintoa."
+    },
+    list: {
+      block: "per kategoria core/heading H2 + genero/product-list. Kategoria ilman saatavilla olevia tuotteita piilotetaan.",
+      groupLabel: "{tuoteperhe} · Toimitus {pvm}",
+      openCat: "Avaa kategoriasivu",
+      countMany: "{n} tuotetta",
+      countOne: "1 tuote"
+    },
+    cartbar: {
+      block: "genero/cart-summary-bar (uusi): sticky palkki alareunassa (mobiili) tai oikeassa alakulmassa (desktop), näkyy kun korissa on rivejä",
+      ariaLabel: "Korin yhteenveto",
+      text: "{n} tuotetta · {summa} €",
+      textOne: "1 tuote · {summa} €",
+      approx: "n. {summa}",
+      approxNote: "Painotuotteita korissa: hinta on arvio",
+      cta: { label: "Siirry koriin", href: "07-ostoskori.html" }
+    },
+    empty: {
+      noMine: { text: "Et ole vielä tilannut mitään. Kun teet ensimmäisen tilauksen, löydät tuotteet täältä nopeasti.", cta: "Näytä kaikki" },
+      filtered: { text: "Ei tuotteita näillä valinnoilla.", cta: "Näytä kaikki" },
+      noDate:  { text: "Valitse toimituspäivä, niin näet tuotteet ja hinnat.", cta: "Valitse päivä" }
+    }
+  },
+
+  /* ═══ H5 tuki (sama kuin 01 B6 / 03 O7) ═══ */
+  support: {
+    block: "core/columns 2 → gds/card × 2, koko kortti linkki",
+    ariaLabel: "Tuki",
+    items: [
+      { title: "Asiakaspalvelu ja usein kysytyt kysymykset", text: "Toimitukset, tuotteet, tunnukset. Vastaukset yleisimpiin kysymyksiin ja yhteystiedot.", href: "04-asiakaspalvelu.html", cta: "Siirry" },
+      { title: "Tilausehdot", text: "Minimitilaus, toimitusalue, tilauksen muuttaminen ja peruminen.", href: "05-tilausehdot.html", cta: "Siirry" }
+    ]
+  }
+};
+</script>
+
+<!-- ══════════ DATA: demokategoriat ja -tuotteet (WooCommerce product_cat + tuotteet) ══════════ -->
+<script>
+/* ══════════ DATA: Snellmanin tuotedata (lib/data/products.js ← b2bshop, 30.9.2026) ══════════
+   Kategoriat, alakategoriat, nimet, tuotenumerot, paino, arviopaino, kuvaus ja kuva ovat oikeita.
+   Datassa ei ole hintoja, saldoja, Boost-eriä eikä omia tilauksia: ne ovat alla DEMO-arvoja,
+   ja hinta lasketaan tuotenumerosta, jotta se pysyy samana joka latauksella.
+   Tuoteperhe (hubin ryhmä) = lastauspaikka kategorian mukaan, sama sääntö kuin 01:ssä. */
+const KERAVA = ["Valmisruoka", "Suurkeittiötuotteet", "Paninit", "Kastikkeet"];
+/* Sisäinen termi, ei asiakkaalle: vastaava asiakasnäkymä on Snellman Outlet (03). */
+const HIDDEN_CATS = ["2-laadun tuotteet"];
+const slugify = (s) => s.toLowerCase().replace(/[åä]/g, "a").replace(/ö/g, "o").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+/* Sivun omat lisätiedot kategorioille (kuvaus on Snellmanin kirjoitettava, ks. fillDesc). */
+const CAT_EXTRA = {
+  "Tuore liha": { desc: "Naudan, porsaan ja broilerin tuoreet lihat ammattikeittiön koossa. Toimitetaan vakuumipakattuna." },
+  "Paninit": { emptyForDay: true, fill: "Lastauspaikka vahvistetaan. Demossa tyhjä valitulle päivälle → ei näy hubissa." },
+  "Suurkeittiötuotteet": { img: false, fill: "Lastauspaikka: voi olla molempia. Sekakategoria ratkaistaan Oskarin kanssa." }
+};
+const CATS = SN.CATEGORIES.filter((c) => !HIDDEN_CATS.includes(c.name)).map((c) => Object.assign({
+  family: KERAVA.includes(c.name) ? "ready" : "meat", name: c.name, slug: slugify(c.name), desc: "",
+  /* Alakategoriasuodatin vain, kun alakategorioita on vähintään kaksi */
+  subs: c.subs.length > 1 ? c.subs.map((x) => ({ v: slugify(x.name), label: x.name })) : null
+}, CAT_EXTRA[c.name] || {}));
+
+/* DEMO: asiakkaan aiemmat tilaukset, Boost-erät ja ei saatavilla valitulle päivälle (tuotenumerot datasta). */
+const DEMO = {
+  mine: ["17516", "15611", "12348", "13211", "22264", "20550", "22238", "12346"],
+  boost: {
+    "15204": { regular: "10,65", bb: "2026-09-27", saldo: 18, orig: 60 },
+    "15611": { regular: "11,90", bb: "2026-09-27", saldo: 14, orig: 40 },
+    "12332": { regular: "2,36",  bb: "2026-10-03", saldo: 24, orig: 40 },
+    "22268": { regular: "2,36",  bb: "2026-09-26", saldo: 34, orig: 80 },
+    "13211": { regular: "3,90",  bb: "2026-09-28", saldo: 6,  orig: 50 }
+  },
+  na: ["17622", "15606"]
+};
+/* Demohinta tuotenumerosta: arviopainoiselle €/kg, muille €/pakk. painon mukaan. Boost-erällä −30 %. */
+const hashOf = (sku) => String(sku).split("").reduce((h, c) => (h * 31 + c.charCodeAt(0)) % 9973, 7);
+const eur = (n) => n.toFixed(2).replace(".", ",");
+function demoPrice(p) {
+  const perKg = 6 + (hashOf(p.sku) % 180) / 10;                  /* 6,00–23,90 €/kg */
+  return p.approx ? perKg : Math.max(1.2, (p.kg || 0.3) * perKg);
+}
+const PRODUCTS = SN.PRODUCTS.filter((p) => p.cat && !HIDDEN_CATS.includes(p.cat)).map((p) => {
+  const b = DEMO.boost[p.sku], base = demoPrice(p);
+  return {
+    cat: slugify(p.cat), sub: p.sub ? slugify(p.sub) : "", name: p.name, nro: p.sku,
+    unit: p.approx ? "kg" : "pakk", kg: p.kg, approx: p.approx,
+    price: eur(b ? parseFloat(b.regular.replace(",", ".")) * 0.7 : base),
+    /* Suosituimmat: demojärjestys tuotenumerosta (myyntidataa ei ole) */
+    rank: hashOf(p.sku + "r"), mine: DEMO.mine.includes(p.sku), boost: b || null, na: DEMO.na.includes(p.sku), desc: p.desc
+  };
+});
+</script>
+
+<body>
+<a href="#main" class="skip" id="skiplink"></a>
+<div class="proto"><div class="container" id="proto"></div></div>
+<div id="shell-header"></div>
+<div id="crumb"></div>
+<main id="main"></main>
+<div id="cartbar"></div>
+<div id="shell-footer"></div>
+
+
+<!-- ══════════ RENDER ══════════ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ─── Tila ────────────────────────────────────────────────────── */
+  const KEY = "snellman-wf-02", CART_KEY = "snellman-wf-02-cart";
+  const URLQ = new URLSearchParams(location.search);
+  const VIEWS = ["hub", "cat", "search", "quick"];
+  /* Suodattimet: kategoriasivu/haku (F) ja pikatilaus (Q). Eivät tallennu.
+     ?suodatin=boost (Kaikki Boost-erät) = Boost-chip päällä. */
+  const F = { sub: "all", boost: URLQ.get("suodatin") === "boost", avail: true, sort: "pop", shown: 0 };
+  const Q = { cat: "all", brand: "all", boost: false, mine: false, q: "", panel: false };
+  const S = Object.assign({}, PROTO.defaults, readState());
+  /* Hakusana tulee URL:sta (?view=search&q=…): headerin haku ja hubin haku lähettävät sen. */
+  let query = (URLQ.get("q") || "").trim();
+  if (CATS.some((c) => c.slug === URLQ.get("kategoria"))) PAGE.cat.slug = URLQ.get("kategoria");
+  if (S.view === "search" && !URLQ.has("q") && !URLQ.has("suodatin")) query = PROTO.searchDemo;
+  /* Kori säilyy näkymien välillä (spec). nro → määrä. */
+  let CART = readCart();
+  let focusId = null, hubQuery = "", calOpen = false;
+
+  /* Näkymä tulee vain URL:sta (oletus hub), jotta headerin Kategoriat-linkki vie aina hubiin.
+     Muut proto-ehdot muistetaan. */
+  function readState() {
+    let out = {};
+    try { out = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { out = {}; }
+    delete out.view;
+    PROTO.controls.forEach((c) => { if (URLQ.has(c.key)) out[c.key] = URLQ.get(c.key); });
+    if (out.view && !VIEWS.includes(out.view)) delete out.view;
+    return out;
+  }
+  function saveState() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* privaatti-ikkuna */ } }
+  /* Osoiterivi seuraa näkymää ja hakusanaa, jotta linkin voi jakaa ja uudelleenlataus säilyttää tilan. */
+  function syncUrl() {
+    const u = new URLSearchParams(location.search);
+    u.set("view", S.view);
+    PROTO.controls.forEach((c) => { if (c.key !== "view" && u.has(c.key)) u.set(c.key, S[c.key]); });
+    if (S.view === "search" && query) u.set("q", query); else u.delete("q");
+    if (S.view !== "search") u.delete("suodatin");
+    if (S.view === "cat") u.set("kategoria", PAGE.cat.slug); else u.delete("kategoria");
+    try { history.replaceState(null, "", "?" + u.toString()); } catch (e) { /* file:// */ }
+  }
+  function setState(k, v) {
+    S[k] = v;
+    if (k === "view") {
+      F.shown = 0; window.scrollTo(0, 0);
+      if (v === "search" && !query) query = PROTO.searchDemo;
+    }
+    saveState(); syncUrl(); render();
+  }
+  function readCart() { try { return JSON.parse(localStorage.getItem(CART_KEY) || "{}") || {}; } catch (e) { return {}; } }
+  function saveCart() { try { localStorage.setItem(CART_KEY, JSON.stringify(CART)); } catch (e) { /* privaatti-ikkuna */ } }
+  const hasDate = () => S.date === "yes";
+  const view = () => S.view;
+
+  /* ─── Apurit ──────────────────────────────────────────────────── */
+  const esc = SN.esc, t = SN.t;
+  /* Sivun omat ikonit samasta Snellmanin FA Pro -kitistä (Light), jonka lib/core.js lataa */
+  const ico = (n) => '<span class="ico" aria-hidden="true"><i class="fa-light fa-' + n + '"></i></span>';
+  const num = (s) => parseFloat(String(s).replace(",", "."));
+  const money = (n) => n.toFixed(2).replace(".", ",");
+  const btn = (a) => SN.render("button", a);
+
+  function vars(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, function (m, key) {
+      const v = src[key];
+      if (v == null) return '<span class="fill">TÄYTTÖ: ' + esc(key) + '</span>';
+      return '<span class="var">' + esc(v) + '</span>';
+    });
+  }
+  function varsPlain(str, extra) {
+    const src = Object.assign({}, PAGE.vars, extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, (m, k) => (src[k] == null ? m : src[k]));
+  }
+  const fill = (text) => text ? '<p class="fill fill--block">TÄYTTÖ: ' + esc(text) + "</p>" : "";
+  const countText = (c, n) => n === 1 ? c.countOne : t(c.countMany, { n });
+
+  function block(inner, o) {
+    o = o || {};
+    const id  = o.id ? ' id="' + esc(o.id) + '"' : "";
+    const lab = o.labelledby ? ' aria-labelledby="' + esc(o.labelledby) + '"' : o.label ? ' aria-label="' + esc(o.label) + '"' : "";
+    const mod = (o.variant || []).map((v) => " block--" + esc(v)).join("");
+    return '<section class="block' + mod + '"' + id + lab + '><div class="container">' + inner + "</div></section>";
+  }
+  function fmtDate(iso) { const d = new Date(iso + "T00:00:00"); return d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear(); }
+
+  /* ─── Toimituspäivä: valittu päivä → päivämuuttujat ───────────────
+     Kokkikartanon valmisruoat (Kerava) = tavoitepäivä, lihatuotteet (Pietarsaari)
+     = seuraava arkipäivä, kun ryhmien päivät eroavat. */
+  const W = PAGE.weekdays;
+  const dayOf = (iso) => new Date(iso + "T00:00:00");
+  /* Viikonpäivät demopäivälistan mukaan (sama kuin 07: ke 24.9.2026), ei todellisen kalenterin */
+  const d0 = PAGE.delivery.days[0], OFF = (W.indexOf(d0.wd) - new Date(d0.iso + "T00:00:00").getDay() + 7) % 7;
+  const wdOf = (d) => (d.getDay() + OFF) % 7;
+  const long = (d) => W[wdOf(d)] + " " + d.getDate() + "." + (d.getMonth() + 1) + "." + d.getFullYear();
+  const nextWeekday = (d) => { const x = new Date(d); do { x.setDate(x.getDate() + 1); } while (wdOf(x) === 0 || wdOf(x) === 6); return x; };
+  function applyDate() {
+    const days = PAGE.delivery.days;
+    const sel = days.find((d) => d.iso === S.iso && !d.disabled) || days.find((d) => d.selected && !d.disabled);
+    days.forEach((d) => { d.selected = d === sel; });
+    S.iso = sel.iso;
+    const tgt = dayOf(sel.iso), meat = S.days === "same" ? tgt : nextWeekday(tgt);
+    const nx = days.find((d) => !d.disabled && d.iso > sel.iso);
+    Object.assign(PAGE.vars, {
+      "pvm": long(tgt), "pvm_kerava": long(tgt), "pvm_pietarsaari": long(meat),
+      "pvm_seuraava": long(nx ? dayOf(nx.iso) : nextWeekday(tgt)),
+      "viikonpäivä": W[wdOf(meat)], "pv.kk.": meat.getDate() + "." + (meat.getMonth() + 1) + "."
+    });
+  }
+  const selectedDay = () => PAGE.delivery.days.find((d) => d.selected);
+
+  /* ─── Data-apurit ─────────────────────────────────────────────── */
+  const famOf = (key) => PAGE.families.find((f) => f.key === key);
+  const catOf = (slug) => CATS.find((c) => c.slug === slug);
+  /* Kategoriasivu: ?view=cat&kategoria=<slug> (oletus PAGE.cat.slug) */
+  const catHref = (slug) => "?view=cat&kategoria=" + encodeURIComponent(slug);
+  const famDate = (key) => PAGE.vars[famOf(key).dateVar];
+  /* Brändi: tuotteen oma kenttä, muuten demo-oletus tuoteperheen mukaan ⚠ */
+  const BRANDS = [ { key: "snellman", name: "Snellman" }, { key: "kokkikartano", name: "Kokkikartano" } ];
+  const brandOf = (p) => p.brand || ((catOf(p.cat) || {}).family === "ready" ? "kokkikartano" : "snellman");
+  /* Haku: nimi TAI tuotenumero, kirjainkoolla ei väliä */
+  const matches = (p, q) => !q || p.name.toLowerCase().includes(q) || p.nro.toLowerCase().includes(q);
+
+  /* Kaikki tuotteet proto-tilassa: Boost pois jos Boost-rivejä ei ole; yli 60 -tila lisää generoituja rivejä. */
+  function allProducts() {
+    return PRODUCTS.map((p) => S.boost === "yes" ? p : Object.assign({}, p, { boost: null }));
+  }
+  const productsIn = (slug) => allProducts().filter((p) => p.cat === slug);
+  const availableIn = (slug) => catOf(slug).emptyForDay ? [] : productsIn(slug).filter((p) => !p.na);
+
+  /* Suosituimmat: omat tilaukset ensin, sitten myydyimmät. */
+  function sortItems(items, mode) {
+    const out = items.slice();
+    if (mode === "name") out.sort((a, b) => a.name.localeCompare(b.name, "fi"));
+    else if (mode === "asc")  out.sort((a, b) => num(a.price) - num(b.price));
+    else if (mode === "desc") out.sort((a, b) => num(b.price) - num(a.price));
+    else out.sort((a, b) => {
+      if (S.orders === "yes" && !!a.mine !== !!b.mine) return a.mine ? -1 : 1;
+      return a.rank - b.rank;
+    });
+    return out;
+  }
+
+  /* ─── Kori ────────────────────────────────────────────────────────
+     Yksi luku kaikkialla: korin rivimäärä. Header ("Kori, N tuotetta") ja
+     pikatilauksen korivalkki lukevat saman cartLines().length-arvon. */
+  const cartLines = () => Object.keys(CART).filter((k) => CART[k] > 0);
+  const cartCount = () => cartLines().length;
+  function cartTotal() {
+    let sum = 0, approx = false;
+    cartLines().forEach((k) => {
+      const p = PRODUCTS.find((x) => x.nro === k) || allProducts().find((x) => x.nro === k);
+      if (!p) return;
+      const kg = p.unit === "kg" ? p.kg : 1;
+      if (p.unit === "kg") approx = true;
+      sum += CART[k] * num(p.price) * kg;
+    });
+    return { sum, approx };
+  }
+
+  /* ─── Proto-palkki ────────────────────────────────────────────── */
+  function renderProto() {
+    const meta = PROTO.meta.map((m) => "<span>" + esc(m) + "</span>").join('<span aria-hidden="true">·</span>');
+    const ctrls = PROTO.controls.filter((c) => !c.only || c.only.includes(view())).map(function (c) {
+      const opts = c.opts.map((o) =>
+        '<button type="button" data-k="' + esc(c.key) + '" data-v="' + esc(o.v) + '" aria-pressed="' + (S[c.key] === o.v) + '">' + esc(o.label) + "</button>").join("");
+      return '<span class="ctrl"><span class="ctrl__label">' + esc(c.label) + '</span><span class="ctrl__opts">' + opts + "</span></span>";
+    }).join("");
+    document.getElementById("proto").innerHTML =
+      '<div class="proto__title">' + PROTO.title + meta + "</div>" +
+      '<div class="proto__ctrls"><span class="ctrl"><span class="ctrl__label">' + esc(PROTO.hint) + "</span></span>" + ctrls + "</div>" +
+      '<div class="proto__legend">' + PROTO.legend.map((l) =>
+        '<span><i class="lg lg--' + esc(l.cls) + '" aria-hidden="true"></i>' + esc(l.label) + "</span>").join("") + "</div>";
+  }
+
+  /* ─── Kehys: kirjaston header, murupolku ja footer, kirjaston linkit ── */
+  const isSearch = () => view() === "search";
+  function pageTitle() {
+    if (view() === "hub") return PAGE.hub.title;
+    if (view() === "cat") return catOf(PAGE.cat.slug).name;
+    if (isSearch()) return query ? t(PAGE.search.title, { haku: query }) : PAGE.search.titleAll;
+    return PAGE.quick.title;
+  }
+  function breadcrumb() {
+    if (view() === "hub") return PAGE.hub.breadcrumb;
+    if (view() === "cat") return PAGE.cat.breadcrumbRoot.concat([{ label: catOf(PAGE.cat.slug).name }]);
+    if (isSearch()) return PAGE.cat.breadcrumbRoot.concat([{ label: PAGE.search.crumb }]);
+    return PAGE.quick.breadcrumb;
+  }
+  SN.SHELL.home = SHELL.home;
+  /* Hubissa on oma iso hakukenttä ehdotuksineen (spec H1) → headerin haku pois, yksi haku sivulla. */
+  const headerHtml = () => SN.render("header", { state: "b", current: view() === "quick" ? "pikatilaus" : "kategoriat",
+    outlet: S.outlet === "yes", search: view() !== "hub", query: isSearch() ? query : "", cartCount: cartCount() });
+  function renderShell() {
+    document.documentElement.lang = SHELL.lang;
+    document.title = pageTitle() + PAGE.meta.titleSuffix;
+    document.getElementById("skiplink").textContent = SHELL.skip;
+    document.getElementById("shell-header").innerHTML = headerHtml();
+    document.getElementById("crumb").innerHTML = '<div class="container crumb">' +
+      SN.render("breadcrumb", { label: SHELL.breadcrumbLabel, items: breadcrumb().map((x) => ({ label: varsPlain(x.label), href: x.href })) }) + "</div>";
+    document.getElementById("shell-footer").innerHTML = SN.render("footer", { loggedIn: true });
+  }
+
+  /* ─── Toimituspäivä: lib delivery (panel) + lib calendar body-paikassa ──
+     Vaihda avaa kalenterin (controls + expanded). Päivän valinta (sn:date) päivittää
+     päivän, sulkee kalenterin, palauttaa fokuksen Vaihda-painikkeeseen ja ilmoittaa. */
+  function renderDelivery(groupLine) {
+    const c = PAGE.delivery, has = hasDate();
+    const days = c.days.map((d) => Object.assign({}, d, { selected: has && !!d.selected }));
+    const cal = SN.render("calendar", { id: "wf-cal", hidden: !calOpen, heading: c.calendarHeading, headingLevel: 2, weekNav: false, days });
+    const sel = selectedDay();
+    return SN.render("delivery", { variant: "panel", date: has ? PAGE.vars.pvm : "", dateHtml: has ? vars("{pvm}") : "", note: "",
+      resultHtml: has ? (groupLine || esc(t(SN.UI.calendar.cutoff, sel))) : "",
+      body: cal, controls: "wf-cal", expanded: calOpen, id: "wf-date" });
+  }
+
+  /* ═══════════ Tuoterivi: lib genero/product-card (B Kortti) ═══════════
+     Sivu kääntää oman tuotedatansa rivin argumenteiksi. Kaikki rivin variantit
+     ja tilat ovat kirjastossa (library/ → Tuoterivi), ei tällä sivulla.
+     Yksiköt kirjaston sanastolla: kpl, pakk (näkyy "pakk."), kg-tuote €/kg + pakk. */
+  function rowArgs(p) {
+    const b = p.boost, kg = p.unit === "kg";
+    return {
+      context: "list", layout: "b", variant: b ? "boost" : "normal",
+      /* Pakkauskokoa ei toisteta: Snellmanin tuotenimessä on jo paino (kuten 01) */
+      name: p.name, sku: p.nro, pack: "", previously: S.orders === "yes" && !!p.mine,
+      price: p.price, priceUnit: kg ? "kg" : p.unit, unit: kg ? "pakk" : p.unit,
+      kgPerUnit: kg ? p.kg : "", variableWeight: kg ? "" : false,
+      regular: b ? b.regular : "", bestBefore: b ? fmtDate(b.bb) : "", stock: b ? b.saldo : "",
+      /* Rivin päivä = tuotteen toimitusryhmän päivä */
+      qty: CART[p.nro] || 0, state: p.na ? "unavailable" : hasDate() ? "ok" : "nodate", date: famDate(catOf(p.cat).family), desc: p.desc
+    };
+  }
+  const rowsList = (items, label) => '<ul class="grid grid--b"' + (label ? ' aria-label="' + esc(label) + '"' : "") + ">" +
+    items.map((p) => '<li class="cell">' + SN.render("productRow", rowArgs(p)) + "</li>").join("") + "</ul>";
+  const emptyBox = (html, action) => '<div class="empty" role="status"><p>' + html + "</p>" + action + "</div>";
+
+  /* ═══════════ HUB: H1–H4 ═══════════ */
+  function suggestions(value) {
+    const s = PAGE.hub.search, q = value.trim().toLowerCase();
+    if (q.length < 2) return { html: "", n: -1 };
+    const hits = PRODUCTS.filter((p) => matches(p, q)).slice(0, 6);
+    const html = '<div class="search__sugg" id="wf-sugg">' + (hits.length
+      ? '<p class="search__sugg-h">' + esc(s.suggHeading) + "</p><ul>" + hits.map((p) =>
+          '<li><a href="' + esc(t(s.resultsHref, { q: encodeURIComponent(p.nro) })) + '">' + esc(p.name) +
+          ' <span class="nro">· ' + esc(t(s.suggRow, { nro: p.nro })) + "</span></a></li>").join("") + "</ul>"
+      : '<p class="search__empty">' + vars(s.suggEmpty, { haku: value.trim() }) + "</p>") + "</div>";
+    return { html, n: hits.length };
+  }
+  function renderHubIntro() {
+    const c = PAGE.hub.intro, s = PAGE.hub.search, sg = suggestions(hubQuery);
+    const search = '<form class="search" role="search" id="wf-search" action="02-kategoriat.html" autocomplete="off">' +
+      '<input type="hidden" name="view" value="search">' +
+      '<label class="vh" for="wf-q">' + esc(s.label) + "</label>" +
+      '<div class="search__row"><input type="search" id="wf-q" name="q" enterkeyhint="search" placeholder="' + esc(s.placeholder) + '" value="' + esc(hubQuery) + '"' +
+        ' aria-controls="wf-sugg-wrap" aria-expanded="' + (sg.n >= 0) + '">' +
+      btn({ type: "submit", iconOnly: true, icon: "search", label: s.button }) + "</div>" +
+      '<div id="wf-sugg-wrap">' + sg.html + "</div></form>";
+    return block('<h1 id="page-title">' + esc(c.h1) + "</h1>" +
+      '<div class="toprow">' + renderDelivery() + search + "</div>" + fill(s.fill), { labelledby: "page-title", variant: ["tight"] });
+  }
+
+  function renderQuickLinks() {
+    const c = PAGE.hub.quick;
+    const items = c.items.filter((i) => !i.requires || S[i.requires] === "yes").map((i) =>
+      ({ key: i.key, tone: i.tone, title: i.title, subHtml: vars(i.sub), href: i.href, cta: i.cta }));
+    return block(SN.render("startLinks", { items }), { label: c.ariaLabel, variant: ["tight"] });
+  }
+
+  function renderGroups() {
+    const c = PAGE.hub.groups, e = PAGE.cat.empty.noDate;
+    if (!hasDate()) return block(emptyBox(esc(e.text), btn({ label: e.cta, data: { opencal: "1" } })), { label: c.ariaLabel });
+    const groups = PAGE.families.map((f) => {
+      const cats = CATS.filter((k) => k.family === f.key && availableIn(k.slug).length > 0);
+      const sub = S.days === "differ" ? '<p class="sub">' + vars(PAGE.familyDate, { pvm: famDate(f.key) }) + "</p>" : "";
+      const cards = cats.map((k) => {
+        const n = availableIn(k.slug).length;
+        const img = k.img === false ? "" : '<div class="ph catcard__img">' + esc(c.imgAlt) + "</div>";
+        return '<a class="catcard' + (k.img === false ? " catcard--noimg" : "") + '" href="' + esc(catHref(k.slug)) + '">' + img +
+          '<span class="catcard__body"><span class="catcard__name">' + esc(k.name) + '</span><span class="catcard__n">' + esc(countText(c, n)) + "</span></span></a>";
+      }).join("");
+      return '<div class="group"><div class="group__head"><h2 id="fam-' + f.key + '">' + esc(f.name) + "</h2>" + sub + "</div>" +
+        '<div class="catgrid">' + cards + "</div></div>";
+    }).join("");
+    const fills = CATS.filter((k) => k.fill).map((k) => fill(k.name + ": " + k.fill)).join("");
+    return block(groups + fill(c.fill) + fill(PAGE.familyFill) + fills, { label: c.ariaLabel, id: "kategoriat" });
+  }
+
+  function renderBoostPick() {
+    const c = PAGE.hub.boost;
+    if (!hasDate()) return "";
+    const items = allProducts().filter((p) => p.boost && !p.na).slice(0, 4);
+    if (!items.length) return "";
+    return block(SN.render("sectionHead", { heading: c.heading, id: "boost-title", link: c.link, tight: true }) +
+      '<p class="sub">' + esc(c.sub) + "</p>" + rowsList(items, c.heading),
+      { labelledby: "boost-title", variant: ["block-bg"] });
+  }
+
+  function renderSupport() {
+    const c = PAGE.support;
+    const cards = c.items.map((i) => SN.render("card", { title: i.title, text: i.text, href: i.href, cta: i.cta })).join("");
+    return block('<div class="cols cols--2">' + cards + "</div>", { label: c.ariaLabel });
+  }
+
+  /* ═══════════ KATEGORIASIVU C2–C6 + HAKUTULOKSET ═══════════ */
+  /* Perusjoukko ennen käyttäjän suodattimia. */
+  function catBase() {
+    if (isSearch()) {
+      if (S.hits === "no") return [];
+      const q = query.toLowerCase();
+      return allProducts().filter((p) => matches(p, q));
+    }
+    if (S.stock === "empty") return [];
+    return productsIn(PAGE.cat.slug);
+  }
+  function catFiltered(base) {
+    return sortItems(base
+      .filter((p) => F.sub === "all" || p.sub === F.sub)
+      .filter((p) => !F.boost || p.boost)
+      .filter((p) => !F.avail || !p.na), F.sort);
+  }
+  /* Saatavuuschipin päivä: kategorian (tai kaikkien osumien) toimitusryhmän päivä */
+  function availLabel(base) {
+    const c = PAGE.cat.controls;
+    const fams = isSearch() ? [...new Set(base.map((p) => catOf(p.cat).family))] : [catOf(PAGE.cat.slug).family];
+    return fams.length === 1 ? varsPlain(c.availToggle, { pvm: famDate(fams[0]) }) : c.availToggleMixed;
+  }
+
+  function renderCatIntro(base) {
+    const c = PAGE.cat.intro, cat = catOf(PAGE.cat.slug);
+    const n = catFiltered(base).length;
+    if (isSearch()) {
+      /* "Hakutulokset: 17516 · 1 tuote" */
+      const count = hasDate() ? '<span class="count-h"> · ' + esc(countText(PAGE.search, n)) + "</span>" : "";
+      const h1 = query ? vars(PAGE.search.h1, { haku: query }) : esc(PAGE.search.h1All);
+      return block('<h1 id="page-title">' + h1 + count + "</h1>" +
+        '<div class="toprow toprow--one">' + renderDelivery() + "</div>" + fill(PAGE.search.fill),
+        { labelledby: "page-title", variant: ["tight"] });
+    }
+    const count = hasDate() && base.length ? '<span class="count-h">' + esc(countText(c, n)) + "</span>" : "";
+    const desc = '<p class="lead" style="margin-top:var(--gap-16)">' + esc(cat.desc) + "</p>" + fill(c.fillDesc);
+    const groupLine = S.days === "differ" ? vars(c.groupDate) : "";
+    return block('<div class="h1row"><h1 id="page-title">' + esc(cat.name) + "</h1>" + count + "</div>" + desc +
+      '<div class="toprow">' + renderDelivery(groupLine) + "</div>",
+      { labelledby: "page-title", variant: ["tight"] });
+  }
+
+  function renderCatControls(base, n) {
+    const c = PAGE.cat.controls, cat = catOf(PAGE.cat.slug);
+    const chip = (id, label, pressed, data) => SN.render("chip", { mode: "toggle", id, label, pressed, data });
+    const subs = !isSearch() && cat.subs ? [{ v: "all", label: c.subAll }].concat(cat.subs) : null;
+    const chipsSub = subs ? '<div class="chips" role="group" aria-label="' + esc(c.subLabel) + '"><span class="chips__label" aria-hidden="true">' + SN.cap(c.subLabel) + "</span>" +
+      subs.map((o) => chip("chip-sub-" + o.v, o.label, F.sub === o.v, { sub: o.v })).join("") + "</div>" : "";
+    const toggles = '<div class="chips">' + chip("chip-boost", c.boostToggle, F.boost, { toggle: "boost" }) + chip("chip-avail", availLabel(base), F.avail, { toggle: "avail" }) + "</div>";
+    const sort = '<div class="sort"><label for="wf-sort">' + SN.cap(c.sortLabel) + '</label><select id="wf-sort">' +
+      c.sorts.map((o) => '<option value="' + esc(o.v) + '"' + (F.sort === o.v ? " selected" : "") + ">" + esc(o.label) + "</option>").join("") + "</select></div>";
+    return '<div class="controls" role="group" aria-label="' + esc(c.ariaLabel) + '">' + chipsSub + toggles + sort +
+      '<span class="count">' + esc(countText(c, n)) + "</span></div>";
+  }
+
+  function renderCatEmpty(kind) {
+    const e = PAGE.cat.empty[kind];
+    let action;
+    if (kind === "emptyDay" || kind === "noDate") action = btn({ label: e.cta, data: { opencal: "1" } });
+    if (kind === "filtered") action = btn({ label: e.cta, variant: "outline", id: "wf-reset", data: { reset: "1" } });
+    if (kind === "noHits")   action = btn({ label: e.cta, href: e.href });
+    return emptyBox(vars(e.text, { haku: query || PROTO.searchDemo }), action);
+  }
+
+  function renderCatList(base) {
+    const c = PAGE.cat.list;
+    if (!hasDate()) return block(renderCatEmpty("noDate"), { label: c.ariaLabel, variant: ["list"] });
+    if (!base.length) return block(renderCatEmpty(isSearch() ? "noHits" : "emptyDay"), { label: c.ariaLabel, variant: ["list"] });
+    const items = catFiltered(base);
+    const controls = renderCatControls(base, items.length);
+    if (!items.length) return block(controls + renderCatEmpty("filtered") + fill(PAGE.cat.controls.fillAvail), { label: c.ariaLabel, variant: ["list"] });
+
+    /* Ei sivutusta; yli 60 → Näytä lisää 40 rivin erissä. */
+    const limit = items.length > c.pageSize ? c.pageSize + F.shown * c.step : items.length;
+    const shown = items.slice(0, limit), left = items.length - shown.length;
+    const tail = left > 0
+      ? '<div class="more-wrap">' + btn({ variant: "outline", id: "wf-more", label: t(c.more, { n: left }) }) + "</div>"
+      : (items.length > c.pageSize ? '<p class="list-end" role="status">' + vars(c.end, { n: String(items.length) }) + "</p>" : "");
+    return block(controls + rowsList(shown, c.ariaLabel) + tail +
+      fill(PAGE.cat.controls.fillPop) + fill(PAGE.cat.controls.fillAvail),
+      { label: c.ariaLabel, variant: ["list"], id: "tuotteet" });
+  }
+
+  function renderOthers() {
+    const c = PAGE.cat.others, cat = catOf(PAGE.cat.slug), fam = famOf(cat.family);
+    const others = CATS.filter((k) => k.family === cat.family && k.slug !== cat.slug);
+    const cards = others.map((k) => '<a href="' + esc(catHref(k.slug)) + '"><span>' + esc(k.name) + '<span class="n">' + esc(countText(PAGE.hub.groups, productsIn(k.slug).length)) + "</span></span>" + ico("chevron-right") + "</a>").join("");
+    return block(SN.render("sectionHead", { headingHtml: vars(c.heading, { tuoteperhe: fam.name }), id: "others-title", link: c.link }) +
+      '<div class="others">' + cards + "</div>", { labelledby: "others-title", variant: ["block-bg"] });
+  }
+
+  /* ═══════════ PIKATILAUS P1–P5 ═══════════ */
+  function quickBase() {
+    const q = Q.q.trim().toLowerCase();
+    return allProducts().filter((p) => !p.na && !catOf(p.cat).emptyForDay).filter((p) => matches(p, q));
+  }
+  function quickFiltered(base) {
+    return base.filter((p) => Q.cat === "all" || p.cat === Q.cat)
+      .filter((p) => Q.brand === "all" || brandOf(p) === Q.brand)
+      .filter((p) => !Q.boost || p.boost)
+      .filter((p) => !Q.mine || (S.orders === "yes" && p.mine));
+  }
+  const quickActive = () => (Q.cat !== "all" ? 1 : 0) + (Q.brand !== "all" ? 1 : 0) + (Q.boost ? 1 : 0) + (Q.mine ? 1 : 0);
+  const quickCount = () => quickFiltered(quickBase()).length;
+  function quickCountText(n) {
+    const c = PAGE.quick.side;
+    return n === 0 ? c.resultNone : n === 1 ? c.resultOne : t(c.resultMany, { n });
+  }
+
+  function renderQuickIntro() {
+    const c = PAGE.quick.intro;
+    const groupLine = S.days === "differ" ? vars(c.resultDiffer) : "";
+    return '<h1 id="page-title">' + esc(c.h1) + '</h1><p class="lead" style="margin-top:var(--gap-16)">' + esc(c.lead) + "</p>" +
+      '<div class="toprow toprow--one">' + renderDelivery(groupLine) + "</div>";
+  }
+
+  function renderSide(base) {
+    const c = PAGE.quick.side;
+    const n = quickActive(), searching = !!Q.q.trim();
+    const facetBtn = (kind, v, label, count, on) => '<li><button type="button" id="q' + kind + "-" + esc(v) + '" data-q' + kind + '="' + esc(v) + '" aria-pressed="' + on + '"><span>' + esc(label) + "</span>" +
+      (count != null ? '<span class="n">(' + count + ")</span>" : "") + "</button></li>";
+    const fams = PAGE.families.map((f) => {
+      const cats = CATS.filter((k) => k.family === f.key && base.some((p) => p.cat === k.slug));
+      return '<li class="facet__fam" aria-hidden="true">' + esc(f.name) + "</li>" + cats.map((k) => facetBtn("cat", k.slug, k.name, base.filter((p) => p.cat === k.slug).length, Q.cat === k.slug)).join("");
+    }).join("");
+    const inCat = base.filter((p) => Q.cat === "all" || p.cat === Q.cat);
+    const brands = BRANDS.filter((b) => inCat.some((p) => brandOf(p) === b.key));
+    const brandHtml = brands.length > 1 || Q.brand !== "all"
+      ? "<h3>" + esc(c.brandsHeading) + '</h3><ul class="facet">' + facetBtn("brand", "all", c.allBrands, inCat.length, Q.brand === "all") +
+        brands.map((b) => facetBtn("brand", b.key, b.name, inCat.filter((p) => brandOf(p) === b.key).length, Q.brand === b.key)).join("") + "</ul>" + fill(c.brandFill)
+      : "";
+    const toggle = (key, label) => '<label class="toggle"><input type="checkbox" id="qt-' + key + '" data-qtoggle="' + key + '"' + (Q[key] ? " checked" : "") + ">" + esc(label) + "</label>";
+    /* Tulosmäärä kentän alla + puhelimella Näytä N tuotetta (sulkee paneelin, fokus ensimmäiseen tulokseen) */
+    const total = quickCount(), showing = searching || n > 0;
+    const panel = '<div class="side__panel' + (Q.panel ? "" : " is-closed") + '" id="wf-side">' +
+      '<div class="side__search"><label class="vh" for="wf-qq">' + esc(c.searchLabel) + '</label>' +
+        '<input type="search" id="wf-qq" enterkeyhint="search" placeholder="' + esc(c.searchPlaceholder) + '" value="' + esc(Q.q) + '" aria-describedby="wf-qq-count">' + ico("magnifying-glass") + "</div>" +
+      '<p class="side__count" id="wf-qq-count">' + (showing ? esc(quickCountText(total)) : "") + "</p>" +
+      (showing && hasDate() && total > 0 ? '<div class="side__show">' + btn({ id: "wf-qshow", block: true, label: total === 1 ? c.showOne : t(c.showMany, { n: total }) }) + "</div>" : "") +
+      '<div class="side__cats"><h3>' + esc(c.catsHeading) + '</h3><ul class="facet">' + facetBtn("cat", "all", c.allCats, base.length, Q.cat === "all") + fams + "</ul></div>" + brandHtml +
+      '<div class="toggles">' + toggle("boost", c.boostToggle) + toggle("mine", c.mineToggle) + "</div>" +
+      (n || searching ? '<div class="side__reset">' + btn({ variant: "text", label: c.reset, data: { qreset: "1" } }) + "</div>" : "") + "</div>";
+    return '<aside class="side" aria-labelledby="side-title"><h2 id="side-title">' + esc(c.heading) + "</h2>" +
+      '<div class="side__toggle">' + btn({ variant: "outline", size: "sm", id: "wf-sidetoggle", label: n ? t(c.mobileBtn, { n }) : c.mobileBtnNone,
+        attrs: { "aria-expanded": String(Q.panel), "aria-controls": "wf-side" } }) + "</div>" + panel + fill(c.fill) + "</aside>";
+  }
+
+  function renderQuickList(base) {
+    const c = PAGE.quick.list, e = PAGE.quick.empty;
+    if (!hasDate()) return emptyBox(esc(e.noDate.text), btn({ label: e.noDate.cta, data: { opencal: "1" } }));
+    if (Q.mine && S.orders !== "yes") return emptyBox(esc(e.noMine.text), btn({ variant: "outline", label: e.noMine.cta, data: { qreset: "1" } }));
+    const items = quickFiltered(base);
+    if (!items.length) return emptyBox(esc(e.filtered.text), btn({ variant: "outline", label: e.filtered.cta, data: { qreset: "1" } }));
+    return PAGE.families.map((f) => {
+      const cats = CATS.filter((k) => k.family === f.key && items.some((p) => p.cat === k.slug));
+      if (!cats.length) return "";
+      const label = S.days === "differ"
+        ? '<p class="grouplabel">' + vars(c.groupLabel, { tuoteperhe: f.name, pvm: famDate(f.key) }) + "</p>"
+        : '<p class="grouplabel">' + esc(f.name) + "</p>";
+      return label + cats.map((k) => {
+        const rows = sortItems(items.filter((p) => p.cat === k.slug), "pop");
+        return '<div class="cath"><h2 id="qc-' + esc(k.slug) + '">' + esc(k.name) + ' <span class="sub">' + esc(countText(c, rows.length)) + "</span></h2>" +
+          btn({ variant: "text", href: "?view=cat", label: c.openCat, icon: "arrow", attrs: { "aria-label": c.openCat + ": " + k.name } }) + "</div>" + rowsList(rows, k.name);
+      }).join("");
+    }).join("");
+  }
+
+  function renderQuick() {
+    const base = quickBase();
+    /* DOM: H1 ensin, sitten sivupalkin H2 ja lista. Leveässä sivupalkki vasemmalla (grid-alueet). */
+    return block('<div class="layout"><div class="quick-head">' + renderQuickIntro() + "</div>" + renderSide(base) +
+      '<div class="quick-main">' + renderQuickList(base) + "</div></div>",
+      { labelledby: "page-title", variant: ["tight"] });
+  }
+
+  /* genero/cart-summary-bar: vain pikatilauksessa, kun korissa on rivejä. Sama luku kuin headerissa. */
+  function renderCartbar() {
+    const c = PAGE.quick.cartbar, el = document.getElementById("cartbar");
+    const n = cartCount();
+    document.body.classList.toggle("has-cartbar", view() === "quick" && n > 0);
+    if (view() !== "quick" || !n) { el.innerHTML = ""; return; }
+    const tt = cartTotal();
+    const sum = tt.approx ? varsPlain(c.approx, { summa: money(tt.sum) }) : money(tt.sum);
+    el.innerHTML = '<div class="cartbar" role="region" aria-label="' + esc(c.ariaLabel) + '"><span class="cartbar__txt">' +
+      vars(n === 1 ? c.textOne : c.text, { n: String(n), summa: sum }) + (tt.approx ? '<span class="sub">' + esc(c.approxNote) + "</span>" : "") + "</span>" +
+      btn({ href: c.cta.href, label: c.cta.label }) + "</div>";
+  }
+
+  /* ─── Kokoaminen ──────────────────────────────────────────────── */
+  function render() {
+    applyDate();
+    renderProto();
+    renderShell();
+    let parts;
+    if (view() === "hub") parts = [renderHubIntro(), renderQuickLinks(), renderGroups(), renderBoostPick(), renderSupport()];
+    else if (view() === "quick") parts = [renderQuick(), renderSupport()];
+    else { const base = catBase(); parts = [renderCatIntro(base), renderCatList(base)].concat(isSearch() ? [] : [renderOthers()]).concat([renderSupport()]); }
+    document.getElementById("main").innerHTML = parts.join("");
+    renderCartbar();
+    wire();
+    if (focusId) { const el = document.getElementById(focusId); if (el) { el.focus(); if (el.tagName === "INPUT" && el.type !== "checkbox" && el.setSelectionRange) el.setSelectionRange(el.value.length, el.value.length); } focusId = null; }
+  }
+
+  /* ─── Vuorovaikutus ───────────────────────────────────────────── */
+  function openCal(open, focusDay) {
+    const cal = document.getElementById("wf-cal"), chg = document.getElementById("wf-date");
+    if (!cal) return;
+    calOpen = open;
+    cal.hidden = !open;
+    if (chg) chg.setAttribute("aria-expanded", String(open));
+    if (open) {
+      cal.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      if (focusDay) { const d = cal.querySelector('.cal__day[tabindex="0"]'); if (d) d.focus({ preventScroll: true }); }
+    }
+  }
+  function on(sel, ev, fn) { document.querySelectorAll(sel).forEach((el) => el.addEventListener(ev, fn.bind(null, el))); }
+  /* Hakukentät: päivitys vasta pienen tauon jälkeen, jotta kirjoitus ei katkea. */
+  let typing = null;
+  function debounced(fn) { return function () { const a = arguments; clearTimeout(typing); typing = setTimeout(() => fn.apply(null, a), 250); }; }
+
+  /* Kategoriasivu/haku: uudelleenpiirto, fokus takaisin ja tulosmäärä ruudunlukijalle */
+  function refilter(focus) {
+    focusId = focus; render();
+    const n = catFiltered(catBase()).length;
+    SN.announce(n ? countText(PAGE.cat.controls, n) : PAGE.cat.empty.filtered.text);
+  }
+  function requick(focus) {
+    focusId = focus; render();
+    SN.announce(quickCountText(quickCount()));
+  }
+
+  /* Rivin määrä tulee kirjastosta sn:qty-tapahtumana: sivu päivittää korinsa,
+     headerin laskurin ja korivalkin samasta luvusta. */
+  document.addEventListener("sn:qty", (e) => {
+    const { sku, qty } = e.detail;
+    if (qty > 0) CART[sku] = qty; else delete CART[sku];
+    saveCart();
+    document.getElementById("shell-header").innerHTML = headerHtml();
+    renderCartbar();
+  });
+  document.addEventListener("sn:rowaction", (e) => {
+    if (e.detail.act !== "changedate") return;
+    openCal(true, true);
+  });
+  /* Kalenteri lähettää sn:date myös nuolinäppäimillä (radioryhmä). Nuolilla valinta vain
+     siirtyy; päivä vaihtuu napsautuksella, Enterillä tai välilyönnillä. */
+  let arrowKey = false;
+  document.addEventListener("keydown", (e) => {
+    arrowKey = !!(e.target.closest && e.target.closest(".cal__day")) && /^(Arrow|Home|End)/.test(e.key);
+  }, true);
+  document.addEventListener("sn:date", (e) => {
+    if (e.detail.calendar !== "wf-cal") return;
+    if (arrowKey) { arrowKey = false; return; }
+    S.iso = e.detail.iso; S.date = "yes";
+    calOpen = false; saveState(); syncUrl(); render();
+    const b = document.getElementById("wf-date"); if (b) b.focus();
+    SN.announce(t(PAGE.delivery.changed, { "päivä": PAGE.vars.pvm }));
+  });
+  SN.mount(document);
+
+  function wire() {
+    on("#proto button[data-k]", "click", (b) => setState(b.dataset.k, b.dataset.v));
+    on("#wf-date", "click", () => openCal(!calOpen));
+    on("[data-opencal]", "click", () => openCal(true, true));
+
+    /* Hub: haku ehdottaa kirjoittaessa (vain ehdotuslista päivittyy), submit vie hakutulossivulle */
+    on("#wf-q", "input", debounced((i) => {
+      hubQuery = i.value;
+      const sg = suggestions(hubQuery), s = PAGE.hub.search;
+      document.getElementById("wf-sugg-wrap").innerHTML = sg.html;
+      i.setAttribute("aria-expanded", String(sg.n >= 0));
+      if (sg.n >= 0) SN.announce(sg.n === 0 ? s.suggCountNone : sg.n === 1 ? s.suggCountOne : t(s.suggCountMany, { n: sg.n }));
+    }));
+    on("#wf-q", "keydown", (i, e) => {
+      if (e.key !== "Escape" || !document.getElementById("wf-sugg")) return;
+      document.getElementById("wf-sugg-wrap").innerHTML = ""; i.setAttribute("aria-expanded", "false");
+    });
+
+    /* Kategoriasivu: chipit, järjestys, Näytä lisää, nollaus */
+    on("[data-sub]", "click", (b) => { F.sub = b.dataset.sub; F.shown = 0; refilter(b.id); });
+    on("#chip-boost", "click", (b) => { F.boost = !F.boost; F.shown = 0; refilter(b.id); });
+    on("#chip-avail", "click", (b) => { F.avail = !F.avail; F.shown = 0; refilter(b.id); });
+    on("#wf-sort", "change", (s) => { F.sort = s.value; refilter("wf-sort"); });
+    on("#wf-more", "click", () => {
+      const from = document.querySelectorAll("#tuotteet .cell").length;
+      F.shown++; render();
+      const cell = document.querySelectorAll("#tuotteet .cell")[from], a = cell && cell.querySelector(".pch__title a");
+      if (a) a.focus();
+    });
+    on("[data-reset]", "click", () => { F.sub = "all"; F.boost = false; F.avail = true; F.shown = 0; refilter("chip-boost"); });
+
+    /* Pikatilaus: sivupalkki */
+    on("#wf-qq", "input", debounced((i) => { Q.q = i.value; requick("wf-qq"); }));
+    on("[data-qcat]", "click", (b) => { Q.cat = b.dataset.qcat; requick(b.id); });
+    on("[data-qtoggle]", "change", (i) => { Q[i.dataset.qtoggle] = i.checked; requick(i.id); });
+    on("[data-qbrand]", "click", (b) => { Q.brand = b.dataset.qbrand; requick(b.id); });
+    on("[data-qreset]", "click", () => { Q.cat = "all"; Q.brand = "all"; Q.boost = false; Q.mine = false; Q.q = ""; requick("wf-qq"); });
+    on("#wf-sidetoggle", "click", () => { Q.panel = !Q.panel; focusId = "wf-sidetoggle"; render(); });
+    on("#wf-qshow", "click", () => {
+      Q.panel = false; render();
+      const a = document.querySelector(".quick-main .pch__title a"); if (a) a.focus();
+    });
+  }
+
+  syncUrl();
+  render();
+})();
+</script>
+</body>
+</html>

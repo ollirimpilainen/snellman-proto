@@ -1,0 +1,110 @@
+/* Snellman Retail – Tilausehdot. Siirretty wireframesta, tokenit: ds/sn/tokens.css, komponentit: ds/sn/components/bundle.css */
+body { margin: 0; background: var(--c-bg); }
+.site-footer { margin-top: 0; }
+
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Tässä vain sivun omat. */
+  :root { --c-text-muted: var(--c-meta); }
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+  /* Header, murupolku, painikkeet, TÄYTTÖ, footer: lib/components.css */
+  /* Kääre ei saa rajata stickyä: header on sticky bodyn, ei #shell-headerin sisällä. */
+  .crumb { padding-top: var(--gap-8); }
+
+  /* ── Lohkot ────────────────────────────────────────────────────── */
+  .block { padding: var(--gap-60) 0; }
+  .block--block-bg { background: var(--c-bg-block); }
+  .block--tight { padding-top: var(--gap-48); padding-bottom: 0; }
+  .block[id] { scroll-margin-top: calc(var(--sticky-offset) + 16px); }
+  .lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; }
+  .cols { display: grid; gap: var(--gap-32); }
+  .cols--2 { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── T1 otsikko ja tiivistelmä ─────────────────────────────────── */
+  .intro { max-width: var(--container-text); }
+  .intro h1 { margin-bottom: var(--gap-24); }
+  .intro__valid { font-size: var(--fs-small); color: var(--c-text-muted); margin-top: var(--gap-16); }
+  .summary { background: var(--c-bg-block); padding: var(--gap-32); margin-top: var(--gap-40); max-width: var(--container-text); }
+  .summary h2 { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-h4); margin-bottom: var(--gap-16); }
+  .summary ul { list-style: none; display: grid; gap: var(--gap-12); }
+  .summary li { display: grid; grid-template-columns: 22px 1fr; gap: var(--gap-12); align-items: start; }
+  .summary li .ico { color: var(--c-primary); margin-top: 6px; }
+
+  /* ── T2 + T3: sisällysluettelo ja ehtokohdat — gds/layout 25/75 ── */
+  .terms { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: var(--gap-60); align-items: start; }
+  .toc { position: sticky; top: calc(var(--sticky-offset) + var(--gap-24)); }
+  .toc__label { font-family: var(--font-sans); font-size: var(--fs-eyebrow); font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-2); margin-bottom: var(--gap-12); }
+  .toc ol { list-style: none; counter-reset: toc; }
+  .toc li { counter-increment: toc; }
+  .toc a { display: grid; grid-template-columns: 28px 1fr; gap: var(--gap-8); align-items: center;
+    min-height: 44px; padding: 8px var(--gap-16) 6px; 
+    text-decoration: none; font-size: var(--fs-small); line-height: 1.4; color: var(--c-text-2); }
+  .toc a::before { content: counter(toc); font-weight: 700; color: var(--c-text-muted); }
+  .toc a:hover { color: var(--c-primary); text-decoration: underline; }
+  /* Nykyinen kohta: lihavointi + väri + taustasävy, ei sivuraitaa (projektin sääntö) */
+  .toc a[aria-current="true"] { color: var(--c-primary); font-weight: 700; background: var(--c-bg-accent); }
+  .toc a[aria-current="true"]::before { color: var(--c-primary); }
+
+  .term { padding: var(--gap-40) 0; border-top: 1px solid var(--c-border); max-width: var(--container-text);
+    scroll-margin-top: calc(var(--sticky-offset) + var(--gap-24)); }
+  .term:first-child { border-top: 0; padding-top: 0; }
+  .term h2 { margin-bottom: var(--gap-24); }
+  .term__short { display: grid; grid-template-columns: 96px 1fr; gap: var(--gap-24); }
+  .term__label { font-family: var(--font-sans); font-size: var(--fs-eyebrow); font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-2); padding-top: 6px; }
+  .term__short p { margin: 0; }
+  .term__links { list-style: none; display: flex; flex-wrap: wrap; gap: var(--gap-8) var(--gap-24); margin-top: var(--gap-8); }
+  /* Haitari "Tarkempi ehto": lib .acc (gds/accordion) */
+  .term .acc { margin-top: var(--gap-24); }
+  .term .acc__panel .fill--block { margin: 0 0 var(--gap-12); }
+
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Responsiivisuus ───────────────────────────────────────────── */
+  @media (max-width: 960px) {
+    /* Spec T2: mobiilissa sisällysluettelo sivun alussa, ei sticky. */
+    .terms { grid-template-columns: 1fr; gap: var(--gap-40); }
+    .toc { position: static; }
+    .toc ol { display: grid; grid-template-columns: 1fr 1fr; gap: 0 var(--gap-24); }
+    .toc a { padding-left: 0; }
+    .term__short { grid-template-columns: 1fr; gap: var(--gap-4); }
+    .term__label { padding-top: 0; }
+  }
+  @media (max-width: 768px) {
+    .block { padding: var(--gap-40) 0; }
+    .block--tight { padding-top: var(--gap-32); padding-bottom: 0; }
+    .cols--2 { grid-template-columns: 1fr; }
+    .summary { padding: var(--gap-24); }
+    .toc ol { grid-template-columns: 1fr; }
+    .term { padding: var(--gap-32) 0; }
+  }
+
+  /* ── Tuloste (T4 kortti 2: PDF generoidaan sivun sisällöstä) ───── */
+  @media print {
+    .skip, .proto, .site-nav, .site-search, .site-utils, .menu-toggle, .crumb, .toc, .site-footer, .support { display: none !important; }
+    .site-header { position: static; }
+    .terms { display: block; }
+    .term, .acc__item { break-inside: avoid; }
+    /* Haitarit auki tulosteessa (T4 kortti 2): lib piilottaa paneelin hidden-attribuutilla. */
+    .acc__panel[hidden] { display: block !important; }
+    .acc__btn .ico { display: none; }
+    a { text-decoration: none; }
+  }
+
+
+/* Ehto aina näkyvissä (ei haitaria): Lyhyesti ja Ehto peräkkäin samassa ruudukossa */
+.term__full { margin-top: var(--gap-16); }
+.term__ph { color: var(--c-text-2); font-style: italic; }

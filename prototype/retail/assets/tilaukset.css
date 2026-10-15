@@ -1,0 +1,87 @@
+/* Snellman Retail – tilaushistoria. Tokenit: ds/sn/tokens.css, komponentit: ds/sn/components/bundle.css */
+body { margin: 0; background: var(--c-bg); }
+.site-footer { margin-top: 0; }
+.page { padding: var(--gap-24) 0 var(--gap-80); }
+.lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; margin: var(--gap-12) 0 0; }
+
+/* Otsikko ja haku */
+.otop { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: var(--gap-24) var(--gap-48); align-items: end; margin: var(--gap-24) 0 var(--gap-32); }
+.otop h1 { margin: 0; }
+.osearch .field__label { display: block; margin-bottom: var(--gap-8); }
+.osearch__row { display: grid; grid-template-columns: minmax(0, 1fr) var(--touch-lg, 48px); }
+.osearch__row input { min-height: 48px; border: 1px solid var(--c-border); border-right: 0; border-radius: 0; padding: 0 var(--gap-16); font: inherit; background: var(--c-surface); color: var(--c-text); min-width: 0; }
+.osearch__row button { min-height: 48px; border: 1px solid var(--c-primary); background: var(--c-primary); color: var(--c-on-dark); border-radius: 0; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+
+/* Lisätty koriin */
+.oadded { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: var(--gap-16); align-items: center; background: var(--c-bg-accent); border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24); margin-bottom: var(--gap-24); }
+.oadded .ico { font-size: 28px; color: var(--c-primary); }
+.oadded p { margin: 0; color: var(--c-text-2); }
+.oadded strong { color: var(--c-text); }
+
+/* Tilauslista: jokainen tilaus kortti, sarakkeet linjassa */
+.orders { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--gap-12); }
+.order { background: var(--c-surface); border-radius: var(--r-card); box-shadow: var(--shadow-card); }
+.order__head { display: grid; grid-template-columns: 110px 120px minmax(0, 1.4fr) 90px 120px 120px 330px; gap: var(--gap-16); align-items: center; padding: var(--gap-16) var(--gap-24); }
+.order__c { display: flex; flex-direction: column; gap: 2px; font-variant-numeric: tabular-nums; min-width: 0; }
+.order .lbl { font-size: var(--fs-eyebrow); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--c-text-2); }
+.order__c--no strong { color: var(--c-primary); }
+.ostatus { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-small); font-weight: 700; }
+.ostatus::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.ostatus--new { color: var(--c-primary); }
+.ostatus--done { color: var(--c-text-2); }
+.order__btns .btn { white-space: nowrap; }
+.order__btns { display: flex; align-items: center; gap: var(--gap-8); justify-self: end; }
+.order__toggle { min-width: 136px; justify-content: flex-end; display: inline-flex; align-items: center; gap: 6px; min-height: var(--touch); padding: 0 var(--gap-8); background: none; border: 0; color: var(--c-primary); font: inherit; font-size: var(--fs-small); font-weight: 700; letter-spacing: var(--ls-button); text-transform: uppercase; cursor: pointer; white-space: nowrap; }
+.order__toggle .ico { font-size: 18px; transition: transform .15s ease-out; }
+.order.is-open .order__toggle .ico { transform: rotate(180deg); }
+
+/* Avattu tilaus */
+.order__detail { border-top: 1px solid var(--c-hairline); padding: var(--gap-24); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--gap-24) var(--gap-40); }
+.oship h3 { font-size: var(--fs-h4); font-weight: 700; color: var(--c-text); margin: 0 0 var(--gap-8); }
+.oship .group__date { font-size: var(--fs-small); font-weight: 700; color: var(--c-primary); margin-left: var(--gap-8); }
+.olines { list-style: none; margin: 0; padding: 0; }
+.olines li { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto 80px; gap: var(--gap-12); align-items: center; padding: var(--gap-8) 0; border-bottom: 1px solid var(--c-hairline); }
+.olines img { width: 48px; height: 48px; object-fit: contain; }
+.olines__nm { display: flex; flex-direction: column; min-width: 0; }
+.olines__t { font-weight: 700; font-size: var(--fs-small); line-height: 1.35; }
+.olines__sku { font-size: var(--fs-xs); color: var(--c-meta); }
+.olines__q { font-size: var(--fs-small); color: var(--c-text-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.olines__s { font-weight: 700; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.order__foot { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) 360px; grid-template-areas: "acts sum" "note sum"; gap: var(--gap-8) var(--gap-40); align-items: start; border-top: 1px solid var(--c-border); padding-top: var(--gap-16); }
+.order__sum { grid-area: sum; list-style: none; margin: 0; padding: 0; font-variant-numeric: tabular-nums; }
+.order__sum li { display: flex; justify-content: space-between; gap: var(--gap-16); padding: 4px 0; color: var(--c-text-2); }
+.order__sum li.is-total { color: var(--c-text); font-weight: 700; font-size: var(--fs-h4); padding-top: var(--gap-8); }
+.order__acts { grid-area: acts; display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-16) var(--gap-24); }
+.order__note { grid-area: note; margin: 0; font-size: var(--fs-small); color: var(--c-text-2); max-width: 60ch; }
+.omore { display: flex; flex-direction: column; align-items: center; gap: var(--gap-12); margin-top: var(--gap-32); color: var(--c-text-2); font-size: var(--fs-small); }
+.omore p { margin: 0; }
+
+@media (max-width: 63.99em) {
+  .otop { grid-template-columns: minmax(0, 1fr); }
+  .order__head { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .order__btns { grid-column: 1 / -1; justify-self: stretch; justify-content: space-between; }
+  .order__head { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .order__detail { grid-template-columns: minmax(0, 1fr); }
+  .order__foot { grid-template-columns: minmax(0, 1fr); grid-template-areas: "sum" "acts" "note"; }
+}
+@media (max-width: 37.49em) {
+  .page { padding-bottom: var(--gap-40); }
+  .lead { font-size: 16px; }
+  .oadded { grid-template-columns: auto minmax(0, 1fr); padding: var(--gap-16); }
+  .oadded .btn { grid-column: 1 / -1; }
+  .order__head { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "no st" "dt sum" "btns btns"; gap: var(--gap-12) var(--gap-16); padding: var(--gap-16); }
+  .order__head > :nth-child(1) { grid-area: no; }
+  .order__head > :nth-child(2) { grid-area: dt; }
+  .order__head > :nth-child(3), .order__head > :nth-child(4) { display: none; }
+  .order__head > :nth-child(5) { grid-area: sum; align-items: flex-end; text-align: right; }
+  .order__head > :nth-child(6) { grid-area: st; align-items: flex-end; }
+  .order__head > :nth-child(6) .lbl { display: none; }
+  .order__btns { grid-area: btns; flex-direction: row-reverse; justify-content: space-between; }
+  .order__toggle { min-width: 0; padding: 0; }
+  .order__detail { padding: var(--gap-16); }
+  .olines li { grid-template-columns: 40px minmax(0, 1fr) auto; row-gap: 2px; }
+  .olines img { grid-row: 1 / span 2; }
+  .olines img { width: 40px; height: 40px; }
+  .olines__q { grid-column: 2; grid-row: 2; }
+  .olines__s { grid-column: 3; grid-row: 1 / span 2; }
+}

@@ -1,0 +1,25 @@
+/* Snellman Retail – Uusi salasana. Siirretty wireframesta, tokenit: ds/sn/tokens.css, komponentit: ds/sn/components/bundle.css */
+body { margin: 0; background: var(--c-bg); }
+.site-footer { margin-top: 0; }
+
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-16); }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left-width: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+
+  .auth--mail .invite-mail { margin-inline: auto; }
+  .auth { padding: var(--gap-60) 0 var(--gap-80); background: var(--c-bg-block); }
+  .auth .login-card { max-width: 480px; width: 100%; margin-inline: auto; }
+  .annot { max-width: 480px; margin: var(--gap-24) auto 0; border: 1px dashed var(--c-ph-border); background: var(--c-ph-bg);
+    padding: var(--gap-12) var(--gap-16); font-size: var(--fs-small); }
+  .annot > summary { cursor: pointer; font-size: var(--fs-micro); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: var(--c-text-2); }
+  .annot ul { margin: var(--gap-8) 0 0; padding-left: 1.1em; display: grid; gap: 4px; }
+  .annot code { font-size: 12px; }
+  @media (max-width: 600px) { .auth { padding: var(--gap-24) 0 var(--gap-60); } }
+

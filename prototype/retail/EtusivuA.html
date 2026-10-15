@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Etusivu, kirjautumaton · Snellman Retail -prototyyppi</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/bundle.css">
+<link rel="stylesheet" href="assets/etusivu.css">
+<link rel="stylesheet" href="assets/proto.css?v=20261014">
+
+<style>
+body{margin:0}
+</style>
+
+</head>
+<body>
+<template id="tpl">
+
+<div style="min-height: 100%; background: var(--c-bg); color: var(--c-text); font-family: var(--font-sans);">
+<header class="site-header site-header--a"><div class="container site-header__inner"><a class="brand" href="#"><img src="assets/img/snellman-logo.svg" alt="Snellman, etusivu"></a><nav class="site-nav" id="nav-a" aria-label="Päävalikko"><ul><li><a href="Asiakaspalvelu.html"><span class="cap">Asiakaspalvelu</span></a></li><li><a href="Tilausehdot.html"><span class="cap">Tilausehdot</span></a></li></ul></nav><div class="site-utils"><a class="btn btn--on-dark btn--sm" href="#kirjaudu"><span class="cap">Kirjaudu</span></a><button type="button" class="menu-toggle" aria-expanded="false" aria-controls="nav-a"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="cap">Valikko</span></button></div></div></header>
+
+<main id="main-a">
+<section class="hero-cover" aria-labelledby="hero-title">
+<div class="container">
+<div class="hero__inner">
+<div class="hero__text hero-panel">
+<p class="eyebrow">Lähikaupoille, kioskeille ja kahviloille</p>
+<h1 id="hero-title">Tilaa Snellmanin tuotteet suoraan verkosta</h1>
+<p class="lead">Valitse toimituspäivä, kokoa tilaus ja lähetä se silloin kun sinulle sopii. Lähellä päiväystä olevat erät saat Boostista ja Outletista edullisemmin.</p>
+</div>
+<div class="hero__aside" id="kirjaudu">
+<form class="login-card" novalidate="novalidate" aria-labelledby="login-h"><h2 id="login-h" class="login-card__h">Kirjaudu sisään</h2><div class="field"><label class="field__label" for="login-user">Sähköpostiosoite</label><input autocapitalize="none" spellcheck="false" id="login-user" name="username" required="required" autocomplete="username" inputmode="email" type="text" value=""></div><div class="field"><label class="field__label" for="login-pass">Salasana</label><div class="field__control"><input id="login-pass" name="password" required="required" autocomplete="current-password" type="password" value=""><button type="button" class="pw-toggle" aria-controls="login-pass" aria-label="Näytä salasana"><span class="cap">Näytä</span></button></div></div><div class="checkfield"><label class="checkfield__label" for="login-remember"><input type="checkbox" id="login-remember" name="rememberme" checked="checked"><span>Pidä minut kirjautuneena</span></label></div><button type="submit" class="btn btn--primary btn--block"><span class="cap">Kirjaudu</span></button><p class="login-card__lost"><a href="#">Unohtuiko salasana?</a></p><div class="login-card__request"><p>Ei vielä tunnuksia?</p><a class="btn btn--outline btn--block" href="Tunnukset.html"><span class="cap">Pyydä tunnukset</span></a></div></form>
+</div>
+</div>
+</div>
+</section>
+
+<section class="block" aria-labelledby="benefits-title">
+<div class="container">
+<div class="block__head"><h2 id="benefits-title">Miksi tilata verkkokaupasta</h2></div>
+<div class="cols cols--3">
+<div class="card"><h3>Tilaa kun sinulle sopii</h3><p>Ei puhelinaikoja eikä sähköpostiketjuja. Tee tilaus vaikka illalla kaupan sulkeuduttua, ja se on perillä heti.</p></div>
+<div class="card"><h3>Boost- ja Outlet-erät edullisemmin</h3><p>Lähellä päiväystä olevat erät myydään alennettuun hintaan. Näet aina, paljonko erää on jäljellä ja mihin asti tuote on käytettävä.</p></div>
+<div class="card"><h3>Kokkikartano ja lihatuotteet samaan tilaukseen</h3><p>Valmisruoat ja lihatuotteet samaan koriin. Näet kummankin toimituspäivän ennen kuin vahvistat.</p></div>
+</div>
+</div>
+</section>
+
+<section class="block block--block-bg" aria-labelledby="how-title">
+<div class="container">
+<div class="block__head"><h2 id="how-title">Näin se toimii</h2></div>
+<div class="cols cols--3">
+<div class="step"><p class="step__n" aria-hidden="true">1</p><h3>Pyydä tunnukset</h3><p>Täytä lyhyt lomake. Saat sähköpostiin linkin, jolla asetat salasanan.</p></div>
+<div class="step"><p class="step__n" aria-hidden="true">2</p><h3>Kirjaudu ja valitse toimituspäivä</h3><p>Näet oman valikoimasi, hintasi ja saatavilla olevat toimituspäivät.</p></div>
+<div class="step"><p class="step__n" aria-hidden="true">3</p><h3>Kokoa tilaus ja lähetä</h3><p>Lisää tuotteet suoraan listasta. Vahvistus tulee sähköpostiin heti.</p></div>
+</div>
+</div>
+</section>
+
+<section class="block block--dark on-dark" id="asiakkaaksi" aria-labelledby="become-title">
+<div class="container">
+<div class="cols cols--6040">
+<div><h2 id="become-title">Etkö ole vielä asiakas?</h2><p class="lead">Tilauskanava on tarkoitettu itsenäisille lähikaupoille, kioskeille ja kahviloille. Kerro yrityksesi tiedot lomakkeella, niin asiakaspalvelu soittaa ja avaa asiakkuuden.</p></div>
+<div><a class="btn btn--on-dark" href="Tunnukset.html"><span class="cap">Pyydä tunnukset</span></a><p class="contact">Tai soita asiakaspalveluun arkisin klo 8–16.</p></div>
+</div>
+</div>
+</section>
+
+<section class="block" aria-label="Tuki">
+<div class="container">
+<div class="cols cols--2"><a class="card card--link" href="#"><h3>Asiakaspalvelu ja usein kysytyt kysymykset</h3><p>Toimitukset, tuotteet, tunnukset. Vastaukset yleisimpiin kysymyksiin ja yhteystiedot.</p><span class="go"><span class="btn-text"><span class="cap">Siirry</span><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span></span></span></a><a class="card card--link" href="#"><h3>Tilausehdot</h3><p>Minimitilaus, toimitusalue, tilauksen muuttaminen ja peruminen.</p><span class="go"><span class="btn-text"><span class="cap">Siirry</span><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h16M14 6l6 6-6 6"/></svg></span></span></span></a></div>
+</div>
+</section>
+</main>
+
+<footer class="site-footer"><div class="container"><span>Snellmanin Lihanjalostus Oy</span><ul><li><a href="#">Tietosuoja</a></li><li><a href="#">Yksityisyys ja evästeet</a></li><li><a href="Tilausehdot.html">Tilausehdot</a></li><li><a href="Asiakaspalvelu.html">Asiakaspalvelu</a></li></ul></div></footer>
+</div>
+</template>
+<div id="app"></div>
+<script src="assets/proto.js?v=20261014f"></script>
+<script>
+class Component extends DCLogic {
+renderVals() {
+return {};
+}
+}
+
+window.Component = Component;</script>
+</body>
+</html>

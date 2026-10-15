@@ -1,0 +1,980 @@
+<!doctype html>
+<html lang="fi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Outlet — Snellman B2B-verkkokauppa (proto v0.1)</title>
+  <meta name="description" content="Snellmanin Outlet — parasta ennen -lähellä olevat erät selvästi edullisempaan hintaan.">
+  <link rel="icon" href="https://snellman.fi/app/uploads/2021/12/cropped-Snellman-logo-01-32x32.png" sizes="32x32">
+  <style>
+/* =================================================================
+ * Snellman B2B — Outlet-näkymä (proto v0.1)
+ * Käyttää samaa token-pohjaa kuin etusivu. Vain Outlet-spesifit lisäykset.
+ * ================================================================= */
+
+@font-face {
+  font-family: "Taberna Serif";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TabernaSerif-Regular.307208f4.otf") format("opentype");
+}
+@font-face {
+  font-family: "TheSansB";
+  font-style: normal; font-weight: 400; font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W5Plain.9a8ed524.otf") format("opentype");
+}
+@font-face {
+  font-family: "TheSansB";
+  font-style: normal; font-weight: 700; font-display: swap;
+  src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W7Bold.f9113732.otf") format("opentype");
+}
+
+:root {
+  --c-white: #ffffff;
+  --c-black: #333031;
+  --c-green-dark: #00522c;
+  --c-green-darkest: #00422c;
+  --c-green-bright: #005a30;
+  --c-green-hover: #1e5f41;
+  --c-green-soft: #7d968a;
+  --c-cream: #f3f2eb;
+  --c-off-white: #faf9f5;
+  --c-yellow: #f2cd5b;
+  --c-red: #cc3721;
+  --c-red-soft: #ffdcdd;
+  --c-border: #dddddd;
+  --c-muted: #6b6b6b;
+  --c-muted-light: #a9a9a9;
+
+  --font-display: "Taberna Serif", "Cormorant Garamond", Georgia, "Times New Roman", serif;
+  --font-sans: "TheSansB", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+
+  --container-max: 1280px;
+  --container-pad: 24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--c-green-darkest);
+  background: var(--c-cream);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+img, svg { display: block; max-width: 100%; height: auto; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: 0; background: none; padding: 0; color: inherit; }
+ul { list-style: none; padding: 0; margin: 0; }
+h1, h2, h3, h4, h5, h6, p { margin: 0; }
+
+h1 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(36px, 5vw, 64px);
+  line-height: 1.05;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+}
+.eyebrow {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--c-green-dark);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 24px;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  border-radius: 0;
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--c-green-dark); color: var(--c-white); }
+.btn-primary:hover { background: var(--c-green-hover); }
+.btn-on-dark { background: var(--c-white); color: var(--c-green-darkest); }
+.btn-on-dark:hover { background: var(--c-cream); }
+.btn-sm { padding: 10px 16px; font-size: 12px; }
+.btn-block { width: 100%; justify-content: center; }
+.btn .arrow { transition: transform 0.15s ease-out; }
+.btn:hover .arrow { transform: translateX(4px); }
+
+.container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--container-pad);
+}
+
+/* ─── Proto-banner ────────────────────────────────────────────── */
+.proto-banner {
+  background: var(--c-yellow);
+  color: var(--c-green-darkest);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: center;
+  padding: 10px 16px;
+  letter-spacing: 0.02em;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 10px;
+}
+.proto-banner strong { font-weight: 700; }
+.proto-banner .sep { opacity: 0.5; }
+.proto-banner a { text-decoration: underline; font-weight: 700; }
+
+/* ─── A0 · Header (kirjautunut-tila) ──────────────────────────── */
+.site-header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--c-white);
+  border-bottom: 1px solid var(--c-border);
+}
+.site-header__inner {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 70px; gap: 24px;
+}
+.site-header__logo img { height: 38px; width: auto; }
+.site-nav { display: none; gap: 28px; }
+.site-nav a {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--c-green-darkest);
+  padding: 8px 0;
+  border-bottom: 2px solid transparent;
+  transition: border-color 0.15s;
+}
+.site-nav a:hover, .site-nav a.is-active { border-bottom-color: var(--c-green-dark); }
+.site-utils { display: flex; align-items: center; gap: 16px; }
+.icon-btn {
+  width: 36px; height: 36px;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--c-green-darkest);
+  position: relative;
+}
+.icon-btn__count {
+  position: absolute;
+  top: 0; right: 0;
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  background: var(--c-green-dark);
+  color: var(--c-white);
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+.user-badge {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px 8px 8px;
+  background: var(--c-off-white);
+  font-size: 13px;
+}
+.user-badge__avatar {
+  width: 28px; height: 28px;
+  background: var(--c-green-dark);
+  color: var(--c-white);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+.user-badge__name { font-weight: 700; }
+.user-badge__meta { font-size: 11px; color: var(--c-muted); letter-spacing: 0.05em; text-transform: uppercase; }
+@media (min-width: 900px) {
+  .site-nav, .user-badge { display: flex; }
+}
+
+/* ─── Sub-header: konteksti + access-status ──────────────────── */
+.context-bar {
+  background: var(--c-green-darkest);
+  color: var(--c-white);
+}
+.context-bar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+.breadcrumbs { display: flex; gap: 8px; align-items: center; opacity: 0.85; }
+.breadcrumbs a:hover { text-decoration: underline; }
+.breadcrumbs .sep { opacity: 0.5; }
+.access-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 8px;
+  background: rgba(108, 221, 102, 0.15);
+  color: #6cdd66;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
+}
+.access-tag::before {
+  content: "";
+  width: 8px; height: 8px;
+  background: #6cdd66;
+  border-radius: 50%;
+}
+
+/* ─── Hero / page intro ──────────────────────────────────────── */
+.page-hero {
+  background: var(--c-cream);
+  padding: 56px 0 32px;
+  border-bottom: 1px solid var(--c-border);
+}
+.page-hero__inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 32px;
+  align-items: end;
+}
+.page-hero__title { margin-top: 12px; }
+.page-hero__sub { color: var(--c-muted); margin-top: 16px; max-width: 540px; }
+.page-hero__meta {
+  display: flex; flex-direction: column; gap: 8px;
+  font-size: 13px;
+  text-align: left;
+}
+.meta-row {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--font-sans);
+}
+.meta-row__label {
+  font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  font-size: 11px;
+  color: var(--c-muted);
+}
+.meta-row__value { color: var(--c-green-darkest); }
+.live-dot {
+  width: 8px; height: 8px;
+  background: #cc3721;
+  border-radius: 50%;
+  display: inline-block;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+}
+@media (min-width: 900px) {
+  .page-hero__inner { grid-template-columns: 1.4fr 1fr; }
+  .page-hero__meta { text-align: right; align-items: flex-end; }
+}
+
+/* ─── Filter bar (snellman.fi-tyyliset dropdownit) ────────────── */
+.filterbar {
+  position: sticky; top: 70px; z-index: 50;
+  background: var(--c-cream);
+  border-top: 1px solid var(--c-border);
+  border-bottom: 1px solid var(--c-border);
+}
+.filterbar__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+}
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 28px;
+  align-items: center;
+}
+.filter-dropdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.01em;
+  color: var(--c-green-darkest);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  transition: opacity 0.15s;
+}
+.filter-dropdown:hover { opacity: 0.65; }
+.filter-dropdown svg {
+  display: inline-block;
+  width: 12px;
+  height: 8px;
+  transition: transform 0.2s ease-out;
+}
+.filter-dropdown:hover svg { transform: translateY(2px); }
+.filter-dropdown__count {
+  font-weight: 400;
+  color: var(--c-muted);
+  font-size: 13px;
+  margin-left: -4px;
+}
+
+/* ─── Tuotegrid ───────────────────────────────────────────────── */
+.products-section {
+  padding: 40px 0 96px;
+}
+.products-section__head {
+  display: flex; align-items: baseline; justify-content: space-between;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.products-section__count {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+}
+.products-section__count strong { color: var(--c-green-darkest); font-weight: 700; }
+
+.products {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+}
+@media (min-width: 600px) { .products { grid-template-columns: repeat(2, 1fr); } }
+@media (min-width: 900px) { .products { grid-template-columns: repeat(3, 1fr); } }
+
+.product {
+  background: var(--c-white);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  transition: transform 0.15s ease-out, box-shadow 0.15s ease-out;
+  border: 1px solid transparent;
+}
+.product:hover { transform: translateY(-3px); border-color: var(--c-green-dark); }
+.product__media {
+  aspect-ratio: 4 / 3;
+  background: linear-gradient(140deg, var(--c-green-bright), var(--c-green-darkest));
+  position: relative;
+  overflow: hidden;
+}
+.product__media-label {
+  position: absolute;
+  bottom: 12px; left: 12px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.55);
+}
+.product__discount {
+  position: absolute;
+  top: 12px; right: 12px;
+  background: var(--c-yellow);
+  color: var(--c-green-darkest);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+  padding: 8px 12px;
+}
+.product__expiry {
+  position: absolute;
+  top: 12px; left: 12px;
+  background: rgba(255,255,255,0.95);
+  color: var(--c-green-darkest);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 6px 10px;
+}
+.product__expiry--urgent {
+  background: var(--c-red);
+  color: var(--c-white);
+}
+.product__body {
+  padding: 20px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.product__brand {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--c-muted);
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+.product__name {
+  font-family: var(--font-display);
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: 0.03em;
+  text-transform: lowercase;
+  color: var(--c-green-darkest);
+}
+.product__pack {
+  font-size: 13px;
+  color: var(--c-muted);
+  line-height: 1.4;
+}
+.product__price {
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.product__price-old {
+  font-size: 13px;
+  color: var(--c-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--c-muted-light);
+  margin-bottom: 4px;
+}
+.product__price-new {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 0.95;
+  color: var(--c-green-dark);
+  letter-spacing: 0.02em;
+}
+.product__stock {
+  margin-top: 12px;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: var(--c-muted);
+}
+.product__stock--low {
+  color: var(--c-red);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 11px;
+}
+.product__cta {
+  margin-top: 16px;
+}
+
+/* ─── Info-osio Outletista ───────────────────────────────────── */
+.outlet-info {
+  background: var(--c-green-dark);
+  color: var(--c-white);
+  padding: 80px 0;
+}
+.outlet-info__inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+}
+.outlet-info h2 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: clamp(28px, 3vw, 42px);
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  color: var(--c-white);
+}
+.outlet-info__rules { display: grid; gap: 24px; }
+.rule {
+  display: flex; gap: 16px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.rule:last-child { border-bottom: 0; padding-bottom: 0; }
+.rule__num {
+  font-family: var(--font-display);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--c-yellow);
+  flex: 0 0 auto;
+  width: 56px;
+}
+.rule__body strong {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 4px;
+  letter-spacing: 0.02em;
+}
+.rule__body p { font-size: 14px; color: rgba(255,255,255,0.8); line-height: 22px; }
+@media (min-width: 900px) {
+  .outlet-info__inner { grid-template-columns: 0.9fr 1.1fr; }
+}
+
+/* ─── Footer (kevennetty) ─────────────────────────────────────── */
+.site-footer {
+  background: var(--c-green-darkest);
+  color: rgba(255,255,255,0.65);
+  padding: 32px 0;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+}
+.site-footer__inner {
+  display: flex; flex-wrap: wrap; gap: 16px;
+  align-items: center; justify-content: space-between;
+}
+.site-footer a { transition: color 0.15s; }
+.site-footer a:hover { color: var(--c-white); }
+.site-footer__links a { margin-right: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- Proto-banner -->
+  <div class="proto-banner" role="note">
+    <span><strong>Proto v0.1</strong></span>
+    <span class="sep">·</span>
+    <span>Outlet-näkymä (kirjautuneen asiakkaan tila — proto-mielessä avattu)</span>
+    <span class="sep">·</span>
+    <a href="index.html">← Takaisin etusivulle</a>
+  </div>
+
+  <!-- ═════ Header ═════════════════════════════════════════════════ -->
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a href="index.html" class="site-header__logo" aria-label="Snellman etusivulle">
+        <img src="https://snellman.fi/app/themes/snellmanrecipes/build/images/snellman-logo.svg" alt="Snellman">
+      </a>
+
+      <nav class="site-nav" aria-label="Päänavigaatio">
+        <a href="#">Valikoima</a>
+        <a href="#">Boost</a>
+        <a href="#" class="is-active">Outlet</a>
+        <a href="#">Tilaukset</a>
+        <a href="#">Tuki</a>
+      </nav>
+
+      <div class="site-utils">
+        <div class="user-badge" aria-label="Kirjautunut asiakas">
+          <span class="user-badge__avatar">RT</span>
+          <div>
+            <div class="user-badge__name">Ravintola Toivola</div>
+            <div class="user-badge__meta">Asiakas #4821</div>
+          </div>
+        </div>
+
+        <button class="icon-btn" aria-label="Haku">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+        </button>
+
+        <button class="icon-btn" aria-label="Ostoskori, 3 tuotetta">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h2l2 12h11l2-9H6"/><circle cx="9" cy="20" r="1.5" fill="currentColor"/><circle cx="17" cy="20" r="1.5" fill="currentColor"/></svg>
+          <span class="icon-btn__count">3</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Kontekstipalkki -->
+  <div class="context-bar">
+    <div class="container context-bar__inner">
+      <nav class="breadcrumbs" aria-label="Navigaatiopolku">
+        <a href="index.html">Etusivu</a>
+        <span class="sep">/</span>
+        <a href="#">Valikoima</a>
+        <span class="sep">/</span>
+        <span>Outlet</span>
+      </nav>
+      <span class="access-tag">Outlet-pääsy aktiivinen</span>
+    </div>
+  </div>
+
+  <!-- ═════ Sivun otsikko ═════════════════════════════════════════ -->
+  <section class="page-hero">
+    <div class="container page-hero__inner">
+      <div>
+        <span class="eyebrow">Snellman Outlet</span>
+        <h1 class="page-hero__title">Tämän päivän erät.</h1>
+        <p class="page-hero__sub">
+          Parasta ennen -lähellä olevat erät selvästi edullisempaan hintaan — sama Snellmanin laatu, vain päiväys lähestyy. Erät vaihtuvat päivittäin, eikä niitä voi varata.
+        </p>
+      </div>
+      <div class="page-hero__meta">
+        <div class="meta-row">
+          <span class="live-dot" aria-hidden="true"></span>
+          <span class="meta-row__value">Päivitetty juuri nyt — ma 11.5. klo 08:42</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-row__label">Saatavilla</span>
+          <span class="meta-row__value"><strong>47 erää</strong> · 9 tuoteryhmästä</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-row__label">Toimitus</span>
+          <span class="meta-row__value">Aikaisintaan ti 12.5.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ Filtterit + lajittelu (dropdown-tyyli) ═══════════════ -->
+  <div class="filterbar">
+    <div class="container filterbar__inner">
+      <div class="filter-group" role="group" aria-label="Suodattimet">
+        <button class="filter-dropdown">
+          <span>Kategoria</span>
+          <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+        <button class="filter-dropdown">
+          <span>Päiväys</span>
+          <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+        <button class="filter-dropdown">
+          <span>Alennus</span>
+          <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+        <button class="filter-dropdown">
+          <span>Pakkaustyyppi</span>
+          <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+      </div>
+      <div class="filter-group">
+        <button class="filter-dropdown">
+          <span>Järjestys</span>
+          <svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M1 1.5l5 5 5-5"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═════ Tuotegrid ═════════════════════════════════════════════ -->
+  <section class="products-section">
+    <div class="container">
+      <div class="products-section__head">
+        <p class="products-section__count">Näkyvissä <strong>12</strong> / 47 erää</p>
+        <p class="products-section__count">Hinnat alv 0 %</p>
+      </div>
+
+      <div class="products">
+
+        <!-- Tuote 1 — kiireellinen, paistivalmis -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry product__expiry--urgent">Parasta ennen 12.5.</span>
+            <span class="product__discount">−55 %</span>
+            <span class="product__media-label">[ tuotekuva: naudan jauheliha ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Naudan jauheliha 17 %</h3>
+            <span class="product__pack">5 kg pakkaus · pakaste</span>
+            <div class="product__price">
+              <span class="product__price-old">52,90 €</span>
+              <span class="product__price-new">23,80 €</span>
+            </div>
+            <span class="product__stock product__stock--low">Vain 3 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 2 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry product__expiry--urgent">Parasta ennen 12.5.</span>
+            <span class="product__discount">−50 %</span>
+            <span class="product__media-label">[ tuotekuva: lihapullat ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Lihapullat, klassiset</h3>
+            <span class="product__pack">2 kg · esikypsennetty</span>
+            <div class="product__price">
+              <span class="product__price-old">28,40 €</span>
+              <span class="product__price-new">14,20 €</span>
+            </div>
+            <span class="product__stock">8 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 3 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 13.5.</span>
+            <span class="product__discount">−45 %</span>
+            <span class="product__media-label">[ tuotekuva: pekoni ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Savustettu pekoni, viipale</h3>
+            <span class="product__pack">1 kg · vakuumipakkaus</span>
+            <div class="product__price">
+              <span class="product__price-old">18,50 €</span>
+              <span class="product__price-new">10,20 €</span>
+            </div>
+            <span class="product__stock">12 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 4 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 13.5.</span>
+            <span class="product__discount">−50 %</span>
+            <span class="product__media-label">[ tuotekuva: saunapalvikinkku ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Saunapalvikinkku, viipaloitu</h3>
+            <span class="product__pack">800 g · valmiina tarjoiluun</span>
+            <div class="product__price">
+              <span class="product__price-old">21,90 €</span>
+              <span class="product__price-new">10,95 €</span>
+            </div>
+            <span class="product__stock">6 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 5 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 14.5.</span>
+            <span class="product__discount">−40 %</span>
+            <span class="product__media-label">[ tuotekuva: bratwurst ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Bratwurst, grillimakkara</h3>
+            <span class="product__pack">1,2 kg · 10 kpl</span>
+            <div class="product__price">
+              <span class="product__price-old">14,80 €</span>
+              <span class="product__price-new">8,90 €</span>
+            </div>
+            <span class="product__stock">15 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 6 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 14.5.</span>
+            <span class="product__discount">−50 %</span>
+            <span class="product__media-label">[ tuotekuva: paneroitu pihvi ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Paneroitu broileripihvi</h3>
+            <span class="product__pack">2 kg · pakaste · esikypsennetty</span>
+            <div class="product__price">
+              <span class="product__price-old">34,20 €</span>
+              <span class="product__price-new">17,10 €</span>
+            </div>
+            <span class="product__stock">4 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 7 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 14.5.</span>
+            <span class="product__discount">−35 %</span>
+            <span class="product__media-label">[ tuotekuva: nakit ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Suomi-nakki, klassinen</h3>
+            <span class="product__pack">3 kg · kuluttajapakkaukset 6×500g</span>
+            <div class="product__price">
+              <span class="product__price-old">22,40 €</span>
+              <span class="product__price-new">14,55 €</span>
+            </div>
+            <span class="product__stock">9 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 8 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 15.5.</span>
+            <span class="product__discount">−45 %</span>
+            <span class="product__media-label">[ tuotekuva: salami ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Italian salami, viipaloitu</h3>
+            <span class="product__pack">500 g · suojakaasupakkaus</span>
+            <div class="product__price">
+              <span class="product__price-old">12,90 €</span>
+              <span class="product__price-new">7,10 €</span>
+            </div>
+            <span class="product__stock">18 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 9 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 15.5.</span>
+            <span class="product__discount">−50 %</span>
+            <span class="product__media-label">[ tuotekuva: jauheliha sika-nauta ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Jauheliha sika–nauta 50/50</h3>
+            <span class="product__pack">5 kg · pakaste</span>
+            <div class="product__price">
+              <span class="product__price-old">42,50 €</span>
+              <span class="product__price-new">21,25 €</span>
+            </div>
+            <span class="product__stock">7 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 10 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 15.5.</span>
+            <span class="product__discount">−40 %</span>
+            <span class="product__media-label">[ tuotekuva: kebab ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Kebab-suikale, marinoitu</h3>
+            <span class="product__pack">2 kg · pakaste</span>
+            <div class="product__price">
+              <span class="product__price-old">28,90 €</span>
+              <span class="product__price-new">17,35 €</span>
+            </div>
+            <span class="product__stock">11 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 11 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 16.5.</span>
+            <span class="product__discount">−30 %</span>
+            <span class="product__media-label">[ tuotekuva: porsaan fileepala ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Porsaan ulkofile, kokonainen</h3>
+            <span class="product__pack">~2,5 kg · vakuumi · tuore</span>
+            <div class="product__price">
+              <span class="product__price-old">38,20 €</span>
+              <span class="product__price-new">26,75 €</span>
+            </div>
+            <span class="product__stock product__stock--low">Vain 2 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+        <!-- Tuote 12 -->
+        <article class="product">
+          <div class="product__media">
+            <span class="product__expiry">Parasta ennen 16.5.</span>
+            <span class="product__discount">−45 %</span>
+            <span class="product__media-label">[ tuotekuva: maksamakkara ]</span>
+          </div>
+          <div class="product__body">
+            <span class="product__brand">Snellman</span>
+            <h3 class="product__name">Maksamakkara, paloiteltu</h3>
+            <span class="product__pack">1 kg · pakaste</span>
+            <div class="product__price">
+              <span class="product__price-old">9,90 €</span>
+              <span class="product__price-new">5,45 €</span>
+            </div>
+            <span class="product__stock">14 erää jäljellä</span>
+            <a href="#" class="btn btn-primary btn-sm btn-block product__cta">Lisää koriin <span class="arrow">→</span></a>
+          </div>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ Outletin pelisäännöt ══════════════════════════════════ -->
+  <section class="outlet-info">
+    <div class="container outlet-info__inner">
+      <div>
+        <span class="eyebrow" style="color: var(--c-yellow);">Miten outlet toimii</span>
+        <h2 style="margin-top: 12px;">Parasta ennen — hyvää sen jälkeenkin.</h2>
+        <p style="margin-top: 20px; color: rgba(255,255,255,0.85); max-width: 480px;">
+          Outletissa myydään aina samoja Snellmanin tuotteita kuin vakiovalikoimassa. Erot ovat vain päiväyksessä ja erien koossa. Erät ovat aitona rajallisia eikä niitä voi varata — kun yksi loppuu, se loppuu.
+        </p>
+      </div>
+
+      <div class="outlet-info__rules">
+        <div class="rule">
+          <span class="rule__num">1</span>
+          <div class="rule__body">
+            <strong>Erät vaihtuvat päivittäin</strong>
+            <p>Lista päivittyy joka aamu klo 08. Jos näet erän nyt, se on ostettavissa vain kunnes joku muu ehtii ensin.</p>
+          </div>
+        </div>
+        <div class="rule">
+          <span class="rule__num">2</span>
+          <div class="rule__body">
+            <strong>Ei varauksia, ei pidätyksiä</strong>
+            <p>Tilaus on sitova vasta kun erä on korissa ja maksu vahvistettu. Reaaliaikainen varasto — eräkoko voi muuttua tilauksen aikana.</p>
+          </div>
+        </div>
+        <div class="rule">
+          <span class="rule__num">3</span>
+          <div class="rule__body">
+            <strong>Toimitus aikaisintaan seuraavana arkipäivänä</strong>
+            <p>Outlet-erät kulkevat samalla autolla kuin vakiotilauksesi — yhdistä siis Outlet-ostokset normaaliin tilaukseen kun mahdollista.</p>
+          </div>
+        </div>
+        <div class="rule">
+          <span class="rule__num">4</span>
+          <div class="rule__body">
+            <strong>Sama laatu, sama vastuu</strong>
+            <p>Tuote on Snellmanin tuotantolaadun mukainen. Jos erässä on vikaa, reklamoit kuten normaalistikin — hyvitykset 5 arkipäivässä.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════ Footer ════════════════════════════════════════════════ -->
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <div class="site-footer__links">
+        <a href="index.html">← Etusivulle</a>
+        <a href="#">Toimitusehdot</a>
+        <a href="#">Reklamaatiot</a>
+        <a href="#">Tuki</a>
+      </div>
+      <span>© 2026 Snellman · Outlet-näkymä</span>
+    </div>
+  </footer>
+
+</body>
+</html>

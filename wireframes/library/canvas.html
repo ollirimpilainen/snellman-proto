@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Canvas — Snellman-komponentit</title>
+<script>
+  /* Välimuistin ohitus: python http.server ei lähetä cache-otsakkeita,
+     joten muokattu lib-tiedosto näkyisi vasta kovalla uudelleenlatauksella. */
+  window.SNL_V = Date.now();
+  ["../lib/tokens.css", "../lib/components.css"].forEach((h) =>
+    document.write('<link rel="stylesheet" href="' + h + '?v=' + SNL_V + '">'));
+</script>
+<style>
+  /* Canvas-kehys: vain esikatselun asettelu, ei komponenttien tyylejä */
+  html, body { min-height: 100%; }
+  body.sn-bg-page   { background: var(--c-bg); }
+  body.sn-bg-block  { background: var(--c-bg-block); }
+  body.sn-bg-white  { background: #fff; }
+  body.sn-bg-green  { background: var(--c-primary); }
+  body.sn-bg-accent { background: var(--c-bg-accent); }
+  #sn-root { box-sizing: border-box; }
+  .sn-layout-padded     { padding: 32px 24px; }
+  .sn-layout-centered   { padding: 32px 24px; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+  .sn-layout-fullscreen { padding: 0; }
+  body.sn-embed .sn-layout-centered { min-height: 0; padding: 40px 24px; }
+  .sn-frame { margin: 0 auto; }
+  .sn-outline * { outline: 1px solid rgba(233, 30, 99, .45) !important; outline-offset: -1px; }
+  .sn-error { font: 14px/1.5 ui-monospace, Menlo, monospace; color: #bd0a0a; background: #fdeceb; padding: 16px; white-space: pre-wrap; }
+</style>
+</head>
+<body class="sn-bg-page">
+<div id="sn-root"></div>
+<script>document.write('<script src="manifest.js?v=' + SNL_V + '"><\/script>');</script>
+<script>
+(function () {
+  "use strict";
+  const params = new URLSearchParams(location.search);
+  const embed = params.get("embed") === "1";
+  if (embed) document.body.classList.add("sn-embed");
+  const root = document.getElementById("sn-root");
+  let current = { id: params.get("story"), args: {}, bg: params.get("bg") || "", outline: params.get("outline") === "1" };
+  try { current.args = JSON.parse(params.get("args") || "{}"); } catch (e) { current.args = {}; }
+
+  const DECORATORS = {
+    cell: (html) => '<ul class="grid"><li class="cell">' + html + '</li></ul>',
+    none: (html) => html
+  };
+  const post = (msg) => { try { parent.postMessage(Object.assign({ source: "sn-canvas", story: current.id, embedKey: params.get("key") }, msg), "*"); } catch (e) {} };
+
+  function render() {
+    const found = SNL.story(current.id);
+    if (!found) { root.innerHTML = '<div class="sn-error">Tarinaa ei löydy: ' + SN.esc(current.id) + '</div>'; return; }
+    const { comp, story } = found;
+    const args = Object.assign({}, comp.args, story.args || {}, current.args || {});
+    const layout = comp.layout || (comp.kind === "page" ? "padded" : "padded");
+    const bg = current.bg || story.bg || comp.bg || "page";
+    document.body.className = "sn-bg-" + bg + (embed ? " sn-embed" : "");
+    root.className = "sn-layout-" + layout + (current.outline ? " sn-outline" : "");
+    let html;
+    try {
+      html = SN.render(comp.component, args);
+    } catch (e) {
+      root.innerHTML = '<div class="sn-error">' + SN.esc(e.stack || e.message) + '</div>';
+      post({ type: "rendered", html: "", error: String(e.message) });
+      return;
+    }
+    const dec = DECORATORS[comp.decorator || "none"] || DECORATORS.none;
+    const wrapped = dec(html);
+    root.innerHTML = comp.width && layout !== "fullscreen"
+      ? '<div class="sn-frame" style="max-width:' + comp.width + 'px">' + wrapped + '</div>' : wrapped;
+    document.title = comp.title + " · " + story.name;
+    post({ type: "rendered", html, args });
+    sendHeight();
+  }
+
+  function sendHeight() {
+    const h = Math.ceil(root.getBoundingClientRect().height);
+    if (h === sendHeight.last) return;
+    sendHeight.last = h;
+    post({ type: "height", height: h });
+  }
+
+  window.addEventListener("message", (e) => {
+    const m = e.data; if (!m || m.source !== "sn-manager") return;
+    if (m.type === "update") {
+      if (m.id !== undefined) current.id = m.id;
+      if (m.args !== undefined) current.args = m.args;
+      if (m.bg !== undefined) current.bg = m.bg;
+      if (m.outline !== undefined) current.outline = m.outline;
+      render();
+    }
+  });
+
+  SNL_load(SNL_MANIFEST.lib.concat(SNL_MANIFEST.stories)).then(() => {
+    SN.base = "../";
+    SN.onEmit = (type, detail) => post({ type: "event", event: type, detail });
+    SN.mount(document);
+    render();
+    new ResizeObserver(sendHeight).observe(root);
+    document.fonts && document.fonts.ready.then(sendHeight);
+    window.addEventListener("load", sendHeight);
+    setTimeout(sendHeight, 400);
+    post({ type: "ready" });
+  }).catch((e) => { root.innerHTML = '<div class="sn-error">' + SN_escape(e.message) + '</div>'; });
+  function SN_escape(s) { return String(s).replace(/</g, "&lt;"); }
+})();
+</script>
+</body>
+</html>

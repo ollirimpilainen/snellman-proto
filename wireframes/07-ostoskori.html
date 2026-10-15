@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title></title>
+<!-- Kirjasto välimuistin ohi: lib/load.js (tokens, components, core, basics, product, shell, forms) -->
+<script src="lib/load.js" data-with="forms"></script>
+<!--
+  SNELLMAN RETAIL — OSTOSKORI JA YHTEENVETO (wireframe)
+  ==================================================================
+  Spec:   07-ostoskori.md v1.0, 15.9.2026
+  Pohja:  lib/ (komponenttikirjasto): tokenit, header, footer, murupolku, painikkeet,
+          ilmoitus, toimituspäivä (panel + sivun päivävalinta body-paikassa),
+          tuoterivi (B Kortti, korikonteksti), lomakekentät (field, readonlyValue).
+          Rivin tilat ja ilmoitukset: library/ → Tuoterivi → Kori · …
+
+  Tuotannossa nämä ovat kolme URL:ia (/cart/, /checkout/,
+  /checkout/order-received/{id}/). Wireframessä ne ovat yksi tiedosto,
+  koska ne jakavat saman korin, saman sanaston ja saman kehyksen:
+  ?step=cart | checkout | confirm | email. Korin muutokset kulkevat
+  vaiheesta toiseen sessionStoragessa, jotta polku tuntuu yhtenäiseltä.
+
+  Proto-palkista voi kokeilla specin "Ehdollinen näkyvyys" -taulukon
+  ja "Avoimet oletukset" -taulukon sivutason ehdot.
+
+  Kaikki näkyvä teksti on PROTO/SHELL/PAGE-objekteissa ja SN.UI:ssa.
+  Markkupissa ei ole sanoja — ruotsin lisääminen olisi sisältötyötä.
+  ==================================================================
+-->
+<style>
+  /* Tokenit, fontit ja perustyylit: lib/tokens.css. Header, murupolku, painikkeet,
+     merkinnät, ilmoitus, toimituspäivä ja tuoterivi: lib/components.css. Tässä vain sivun omat. */
+
+  /* ── Proto-palkki (ei osa designia) ────────────────────────────── */
+  .proto { background: #2b2b28; color: #e9e8e1; font-size: var(--fs-xs); line-height: 1.5; }
+  .proto .container { padding-top: var(--gap-12); padding-bottom: var(--gap-12); }
+  .proto__title { display: flex; flex-wrap: wrap; gap: var(--gap-8); align-items: baseline; margin-bottom: var(--gap-8); }
+  .proto__title b { color: #fff; }
+  .proto__title span { color: #a9a79d; }
+  .proto__ctrls { display: flex; flex-wrap: wrap; gap: var(--gap-12) var(--gap-16); }
+  .ctrl { display: flex; align-items: center; gap: var(--gap-8); flex-wrap: wrap; }
+  .ctrl__label { color: #a9a79d; }
+  .ctrl__opts { display: flex; flex-wrap: wrap; }
+  .ctrl__opts button { font: inherit; font-family: var(--font-sans); cursor: pointer;
+    background: transparent; color: #e9e8e1; border: 1px solid #55534b; padding: 3px 10px; }
+  .ctrl__opts button + button { border-left: 0; }
+  .ctrl__opts button[aria-pressed="true"] { background: #e9e8e1; color: #2b2b28; border-color: #e9e8e1; font-weight: 700; }
+  .proto__legend { display: flex; flex-wrap: wrap; gap: var(--gap-16); margin-top: var(--gap-8); color: #a9a79d; }
+  .proto__legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .proto__legend a { color: #e9e8e1; }
+  .lg { width: 18px; height: 10px; display: inline-block; }
+  .lg--var { border-bottom: 1px dotted #e9e8e1; }
+  .lg--fill { background: var(--c-fill-bg); border: 1px solid var(--c-fill-border); }
+
+  .crumb { padding-top: var(--gap-8); }
+  .site-footer { margin-top: var(--gap-80); }
+
+  /* ── Sektiot ───────────────────────────────────────────────────── */
+  .block { padding: var(--gap-40) 0; }
+  .block--tight { padding-top: var(--gap-24); }
+  .block--last { padding-bottom: var(--gap-60); }
+  .block > .container > h2 { margin-bottom: var(--gap-24); }
+  .sums { max-width: 480px; }
+
+  /* ── K1 vaiheilmaisin ──────────────────────────────────────────── */
+  .steps { display: flex; gap: var(--gap-32); flex-wrap: wrap; font-weight: 700; text-transform: uppercase;
+    letter-spacing: var(--ls-button); font-size: var(--fs-small); color: var(--c-meta); margin-top: var(--gap-16); }
+  .steps li { display: inline-flex; align-items: center; gap: var(--gap-8); padding-bottom: 6px; border-bottom: 3px solid transparent; }
+  .steps li[aria-current="step"] { color: var(--c-primary); border-bottom-color: var(--c-primary); }
+  .steps li.is-done { color: var(--c-primary); }
+  .steps .n { display: inline-flex; width: 26px; height: 26px; border-radius: 50%; border: 2px solid currentColor;
+    align-items: center; justify-content: center; font-size: var(--fs-xs); }
+  .steps li[aria-current="step"] .n { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+  .steps li.is-done .n .ico { font-size: 12px; }
+
+  /* ── K2 otsikko + tavoitepäivä (lib delivery panel + sivun kalenteri) ── */
+  .title-row { display: flex; align-items: baseline; gap: var(--gap-16); flex-wrap: wrap; margin-top: var(--gap-24); }
+  .title-row .count { color: var(--c-meta); font-size: var(--fs-body); }
+  .lead { color: var(--c-text-2); max-width: var(--container-text); margin-top: var(--gap-8); }
+  .cart-delivery { margin-top: var(--gap-24); }
+  /* Päivävalinta: lib calendar */
+
+  /* ── Sivun runko: rivit vasemmalla, yhteenveto oikealla ─────────── */
+  .cart-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: var(--gap-40); align-items: start; margin-top: var(--gap-32); }
+  .cart-main { min-width: 0; }
+  .cart-main > .notice { margin-bottom: var(--gap-24); }
+  .cart-aside { position: sticky; top: calc(var(--nav-h) + 16px); }
+
+  /* ── K3 toimitusryhmä — uusi genero/cart-groups ─────────────────── */
+  .group + .group { margin-top: var(--gap-48); }
+  .group__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-8) var(--gap-16); margin-bottom: var(--gap-16); }
+  .group__head h2 { font-family: var(--font-sans); font-weight: 700; font-size: 28px; line-height: 1.3; color: var(--c-text); letter-spacing: 0; }
+  .group__date { font-weight: 700; color: var(--c-primary); }
+  .group__date--late { color: var(--c-warn-text); }
+  .group__count { color: var(--c-meta); font-size: var(--fs-small); }
+  .group__foot { display: flex; justify-content: flex-end; margin-top: var(--gap-16); padding-top: var(--gap-12); border-top: 1px solid var(--c-border); font-weight: 700; }
+  .group__min { color: var(--c-error); font-weight: 400; font-size: var(--fs-small); line-height: 1.5; margin-top: var(--gap-8); text-align: right; max-width: 420px; margin-left: auto; }
+  .group__min:empty { display: none; }
+
+  /* ── K5 yhteenveto ─────────────────────────────────────────────── */
+  .summary { background: var(--c-bg-block); border-radius: var(--r-card); padding: var(--gap-24); }
+  .summary h2 { font-size: var(--fs-h4); font-family: var(--font-sans); font-weight: 700; color: var(--c-text); letter-spacing: 0; margin-bottom: var(--gap-16); }
+  .summary__rows li { display: flex; justify-content: space-between; gap: var(--gap-16); padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,.08); }
+  .summary__rows li.is-sub { font-size: var(--fs-small); color: var(--c-text-2); padding-left: var(--gap-16); border-bottom: 0; padding-top: 0; }
+  .summary__rows li.is-sub + li:not(.is-sub) { border-top: 1px solid rgba(0,0,0,.08); }
+  .summary__rows li.is-total { font-weight: 700; font-size: var(--fs-h4); border-bottom: 0; padding-top: var(--gap-12); }
+  .summary__rows li.is-note { display: block; font-size: var(--fs-xs); color: var(--c-text-2); line-height: 1.5; border-bottom: 0; }
+  .summary__rows .amt { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .summary__min { color: var(--c-error); font-size: var(--fs-small); line-height: 1.5; margin: var(--gap-12) 0 0; }
+  .summary__cta { margin-top: var(--gap-16); }
+  .summary__blocked { font-size: var(--fs-small); color: var(--c-error); margin-top: var(--gap-8); line-height: 1.5; }
+  .summary__more { margin-top: var(--gap-8); display: flex; justify-content: center; }
+
+  /* ── K6 tyhjä kori ─────────────────────────────────────────────── */
+  .empty { background: var(--c-bg-block); border-radius: var(--r-card); padding: var(--gap-40); text-align: center; margin-top: var(--gap-32); }
+  .empty h2 { margin-bottom: var(--gap-8); }
+  .empty p { color: var(--c-text-2); max-width: 520px; margin: 0 auto var(--gap-24); }
+  .empty .btns { justify-content: center; }
+  .popular { margin-top: var(--gap-48); }
+
+  /* ── Y2 toimitus, tiivistetty ryhmänäkymä ──────────────────────── */
+  .ship + .ship { margin-top: var(--gap-32); }
+  .ship__head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--gap-8) var(--gap-16); margin-bottom: var(--gap-12); }
+  .ship__head h3 { font-size: var(--fs-h4); font-weight: 700; color: var(--c-text); }
+  .ship__grid { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: var(--gap-24); }
+  .addr { background: var(--c-bg-accent); border-radius: var(--r-card); padding: var(--gap-16) var(--gap-24); font-size: var(--fs-small); line-height: 1.6; }
+  .addr .lbl { font-size: var(--fs-eyebrow); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--c-text-2); margin-bottom: var(--gap-4); }
+  .addr .edit { margin-top: var(--gap-8); color: var(--c-text-2); }
+  .lines { background: var(--c-surface); box-shadow: var(--shadow-card); border-radius: var(--r-card); padding: var(--gap-8) var(--gap-24); }
+  .lines li { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--gap-16); padding: 8px 0; border-bottom: 1px solid var(--c-hairline); align-items: baseline; }
+  .lines li:last-child { border-bottom: 0; }
+  .lines .nm { min-width: 0; }
+  .lines .nm .badge { margin-right: 6px; vertical-align: 1px; }
+  .lines .nm small { display: block; font-size: var(--fs-xs); color: var(--c-meta); }
+  .lines .q { color: var(--c-meta); font-size: var(--fs-small); white-space: nowrap; }
+  .lines .s { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ship__edit { margin-top: var(--gap-4); }
+
+  /* ── Y3 lomake: kentät lib/components/forms.js, laskuri sivun ────── */
+  .form { max-width: 640px; }
+  .form .field:has(+ .counter) { margin-bottom: 0; }
+  .counter { font-size: var(--fs-xs); color: var(--c-meta); text-align: right; margin: var(--gap-4) 0 var(--gap-24); }
+
+  /* ── Y5 ehdot ──────────────────────────────────────────────────── */
+  .terms { max-width: 640px; }
+  .terms > .notice { margin-bottom: var(--gap-24); }
+  .terms p { color: var(--c-text-2); }
+  .check { display: flex; gap: var(--gap-12); align-items: flex-start; cursor: pointer; }
+  .check input { width: 20px; height: 20px; margin: 4px 0 0; accent-color: var(--c-primary); flex: 0 0 auto; }
+  .check.is-error { color: var(--c-error); }
+  .field-error { color: var(--c-error); font-size: var(--fs-small); margin-top: var(--gap-4); }
+  .terms .btns { margin-top: var(--gap-24); }
+
+  /* ── V vahvistus ───────────────────────────────────────────────── */
+  .confirm-hero { background: var(--c-bg-accent); border-radius: var(--r-card); padding: var(--gap-40); margin-top: var(--gap-24); }
+  .confirm-hero > .ico { font-size: 40px; color: var(--c-primary); margin-bottom: var(--gap-12); }
+  .confirm-hero p { color: var(--c-text-2); max-width: var(--container-text); }
+  .confirm-hero p strong { color: var(--c-text); }
+
+  /* ── Sähköposti ────────────────────────────────────────────────── */
+  .email { max-width: 600px; margin: var(--gap-32) auto 0; background: #fff; box-shadow: var(--shadow-card); font-size: var(--fs-small); }
+  .email__meta { background: var(--c-bg-block); padding: var(--gap-12) var(--gap-24); color: var(--c-text-2); font-size: var(--fs-xs); line-height: 1.6; overflow-wrap: anywhere; }
+  .email__meta b { color: var(--c-text); }
+  .email__head { background: var(--c-primary); color: #fff; padding: var(--gap-24); }
+  .email__head img { height: 48px; }
+  .email__body { padding: var(--gap-24); }
+  .email__body h2 { color: var(--c-primary); font-size: var(--fs-h3); margin-bottom: var(--gap-12); }
+  .email__body h3 { font-size: var(--fs-body); font-weight: 700; color: var(--c-text); margin: var(--gap-24) 0 var(--gap-8); }
+  .email__body .lines { box-shadow: none; padding: 0; border-radius: 0; }
+  .email__body .summary { background: none; padding: 0; margin-top: var(--gap-24); }
+  .email__foot { padding: var(--gap-16) var(--gap-24) var(--gap-24); border-top: 1px solid var(--c-border); color: var(--c-text-2); line-height: 1.6; }
+
+  /* ── Responsiivisuus — kaupan breakpointit 64em / 37.5em ───────── */
+  @media (max-width: 63.99em) {
+    .cart-layout { grid-template-columns: 1fr; gap: var(--gap-32); }
+    .cart-aside { position: static; }
+    .ship__grid { grid-template-columns: 1fr; }
+    .group__head h2 { font-size: 24px; }
+  }
+  @media (max-width: 37.49em) {
+    .block { padding: var(--gap-32) 0; }
+    .steps { gap: var(--gap-16); }
+    .group__min { text-align: left; margin-left: 0; }
+    .summary { padding: var(--gap-16); }
+    .empty { padding: var(--gap-24) var(--gap-16); }
+    .confirm-hero { padding: var(--gap-24) var(--gap-16); }
+    .email__meta, .email__head, .email__body { padding-left: var(--gap-16); padding-right: var(--gap-16); }
+    .lines { padding: var(--gap-8) var(--gap-16); }
+    .lines li { grid-template-columns: minmax(0,1fr) auto; }
+    .lines .q { grid-column: 1; }
+    .lines .s { grid-column: 2; grid-row: 1 / span 2; align-self: center; }
+  }
+</style>
+</head>
+
+<!-- ══════════ PROTO: kokeiltavat ehdot (ei osa designia) ══════════ -->
+<script>
+const PROTO = {
+  title: "<b>Wireframe</b>",
+  meta: ["Snellman Retail", "07 Ostoskori ja yhteenveto", "spec v1.0 / 15.9.2026"],
+  hint: "Kokeile specin ehdollista näkyvyyttä:",
+  legend: [
+    { cls: "var",  label: "pisteviiva = dynaaminen arvo" },
+    { cls: "fill", label: "keltainen = avoin kysymys Snellmanille" }
+  ],
+  /* Rivin tilat ja rivi-ilmoitukset (loppu, ei saatavilla, saldo pienempi, hinta muuttui,
+     käyttöpäivä ennen toimitusta, poistettu) ovat kirjastossa, eivät tällä sivulla. */
+  library: { text: "Rivi-ilmoitukset ja rivin tilat:", label: "kirjasto → Tuoterivi → Kori", href: "library/#docs=tuoterivi" },
+  controls: [
+    { key: "step",     label: "Vaihe",            opts: [ { v: "cart", label: "1 Ostoskori" }, { v: "checkout", label: "2 Yhteenveto" }, { v: "confirm", label: "Vahvistus" }, { v: "email", label: "Sähköposti" } ] },
+    { key: "empty",    label: "Kori",             opts: [ { v: "no", label: "Rivejä" }, { v: "yes", label: "Tyhjä" } ], only: "cart" },
+    { key: "groups",   label: "Toimitusryhmiä",   opts: [ { v: "two", label: "Kaksi" }, { v: "one", label: "Yksi" } ] },
+    { key: "dates",    label: "Toimituspäivät",   opts: [ { v: "differ", label: "Eroavat" }, { v: "same", label: "Sama" } ] },
+    { key: "minimum",  label: "Minimitilaus (k5)", opts: [ { v: "group", label: "Per toimitus" }, { v: "order", label: "Per tilaus" }, { v: "none", label: "Ei minimiä" } ] },
+    { key: "vat",      label: "Hinnat (k8)",      opts: [ { v: "excl", label: "Ilman alv" }, { v: "incl", label: "Sis. alv" } ] },
+    { key: "shipping", label: "Toimitus (k9)",    opts: [ { v: "included", label: "Sisältyy" }, { v: "fee", label: "Maksu" } ] },
+    { key: "reorder",  label: "Tilaa uudelleen -tuonti", opts: [ { v: "no", label: "Ei" }, { v: "all", label: "Kaikki" }, { v: "partial", label: "Osa puuttuu" }, { v: "batches", label: "Eriä mukana" } ], only: "cart" },
+    { key: "terms",    label: "Ehdot",            opts: [ { v: "text", label: "Lause" }, { v: "checkbox", label: "Ruutu" } ], only: "checkout" },
+    { key: "error",    label: "Virhetila",        opts: [ { v: "none", label: "Ei" }, { v: "availability", label: "Saatavuus" }, { v: "technical", label: "M3" }, { v: "session", label: "Istunto" } ], only: "checkout" }
+  ],
+  defaults: { step: "cart", empty: "no", groups: "two", dates: "differ", minimum: "group", vat: "excl", shipping: "included",
+              reorder: "no", terms: "text", error: "none" }
+};
+
+/* ══════════ SHELL: sivun linkit kehykseen (lib SN.SHELL, 01-etusivu.md B0) ══════════ */
+const SHELL = {
+  lang: "fi",
+  skip: "Siirry sisältöön",
+  breadcrumbLabel: "Murupolku",
+  home: "01-etusivu.html?view=b",
+  nav: [
+    { key: "kategoriat", label: "Kategoriat",      href: "/kategoriat/" },
+    { key: "pikatilaus", label: "Pikatilaus",      href: "/pikatilaus/" },
+    { key: "outlet",     label: "Snellman Outlet", href: "03-snellman-outlet.html", requires: "outlet" },
+    { key: "tilaukset",  label: "Tilaukset",       href: "/my-account/orders/" },
+    { key: "tili",       label: "Tili",            href: "/my-account/" }
+  ],
+  cart: { href: "?step=cart" },
+  footer: {
+    links: [
+      { label: "Tietosuoja",               href: "/tietosuoja/" },
+      { label: "Yksityisyys ja evästeet",  href: "/yksityisyys-ja-evasteet/" },
+      { label: "Tilausehdot",              href: "/tilausehdot/" },
+      { label: "Asiakaspalvelu",           href: "/asiakaspalvelu/" }
+    ]
+  }
+};
+
+/* ══════════ UI: tuoterivin sanasto on kirjastossa (SN.UI, lib/core.js) ══════════ */
+
+/* ══════════ PAGE: sivun koko sisältö ══════════ */
+const PAGE = {
+  meta: { title: "Ostoskori" },
+
+  /* Muuttujien demoarvot. Sivulla ne näkyvät pisteviivalla alleviivattuina. */
+  vars: {
+    "asiakas": "Ravintola Toivola",
+    "katuosoite": "Toivolankatu 12",
+    "postinumero": "04200",
+    "kaupunki": "Kerava",
+    "sähköposti": "tilaukset@toivola.fi",
+    "tilausnumero": "100482",
+    "tilauspvm": "15.9.2026",
+    "aika": "14.32",
+    "aikaraja": "toimitusta edeltävänä arkipäivänä klo 12",
+    "minimi": "150",
+    "alv": "13,5",
+    "toimitusmaksu": "12,00",
+    "asiakaspalvelun_sähköposti": "asiakaspalvelu@snellman.fi",
+    "puhelin": "020 XXX XXXX",
+    "lähettäjä": "Snellman tilauskanava"
+  },
+
+  /* Tavoitepäivä ja toteutuvat päivät per lastauspaikka. */
+  dates: {
+    target:     { wd: "ke", date: "24.9.2026", short: "24.9." },
+    kerava:     { wd: "ke", date: "24.9.2026", short: "24.9." },
+    pietarsaari:{ differ: { wd: "to", date: "25.9.2026", short: "25.9." }, same: { wd: "ke", date: "24.9.2026", short: "24.9." } },
+    outlet:     { differ: { wd: "pe", date: "26.9.2026", short: "26.9." }, same: { wd: "ke", date: "24.9.2026", short: "24.9." } },
+    /* lib calendar -päivät */
+    calendar: [
+      { iso: "2026-09-23", wd: "ti", n: "23.9.", cutoff: "ma 22.9. klo 12" }, { iso: "2026-09-24", wd: "ke", n: "24.9.", selected: true, cutoff: "ti 23.9. klo 12" },
+      { iso: "2026-09-25", wd: "to", n: "25.9.", cutoff: "ke 24.9. klo 12" }, { iso: "2026-09-26", wd: "pe", n: "26.9.", cutoff: "to 25.9. klo 12" },
+      { iso: "2026-09-29", wd: "ma", n: "29.9.", cutoff: "pe 26.9. klo 12" }, { iso: "2026-09-30", wd: "ti", n: "30.9.", disabled: true, reason: "ei toimitusta" }
+    ]
+  },
+
+  /* Ryhmät = lastauspaikat asiakkaan kielellä (07-ostoskori.md "Ryhmittelyn periaate").
+     Avain ja `internal` ovat vain dataa (M3-lastauspaikka), asiakkaalle näkyy `name`. */
+  places: {
+    kerava:      { name: "Kokkikartanon valmisruoat", internal: "Kerava" },
+    pietarsaari: { name: "Lihatuotteet", internal: "Pietarsaari" },
+    outlet:      { name: "Outlet-erät", internal: "Outlet-varasto (erävarasto)" }
+  },
+
+  /* Korin rivit: realistinen oletuskori ilman ongelmarivejä. Rivin tilat ja
+     ilmoitukset näkyvät kirjastossa (Tuoterivi → Kori · …).
+     €/kg-rivi on arvio ("n. … €"), paitsi variableWeight: false (kiinteäpainoinen,
+     esim. Meetvursti 1 kg). Tuotesivun osoite: href (puuttuu → "#"). */
+  rows: [
+    { place: "kerava", name: "Broileririsotto ja papuja 360g", sku: "20550", unit: "kpl", price: "3,54", priceUnit: "kpl", kgPerUnit: 0.36, qty: 24 },
+    { place: "kerava", name: "Tomaatti-vuohenjuustopasta 300g", sku: "22332", unit: "kpl", price: "2,65", priceUnit: "kpl", kgPerUnit: 0.3, qty: 12 },
+    { place: "kerava", name: "Possu-pekonikast. muusilla 300g", sku: "22262", unit: "kpl", price: "2,28", priceUnit: "kpl", regular: "2,68", campaign: true, kgPerUnit: 0.3, qty: 12 },
+    { place: "kerava", name: "Mango-chilibroileri riisiä 300g", sku: "22268", unit: "kpl", price: "1,65", priceUnit: "kpl", regular: "2,36", variant: "boost",
+      bestBefore: "22.9.2026", stock: 34, kgPerUnit: 0.3, qty: 10 },
+    { place: "pietarsaari", name: "Grillimakkara, vaihteleva paino", sku: "106330", unit: "pakk", price: "5,98", priceUnit: "kg", kgPerUnit: 1.05, qty: 6 },
+    { place: "pietarsaari", name: "Porsaan ulkofilee, n. 2,2 kg", sku: "102255", unit: "kpl", price: "11,90", priceUnit: "kg", kgPerUnit: 2.2, qty: 4 },
+    { place: "pietarsaari", name: "Meetvursti 1 kg", sku: "105710", unit: "kpl", price: "12,40", priceUnit: "kg", kgPerUnit: 1, variableWeight: false, qty: 3 },
+    { place: "outlet", name: "Naudan paahtopaisti 1,2 kg", sku: "108110", unit: "kpl", price: "7,45", priceUnit: "kg", regular: "14,90", variant: "outlet",
+      bestBefore: "27.9.2026", stock: 5, kgPerUnit: 1.2, variableWeight: false, qty: 2 }
+  ],
+
+  /* ─────────────── Vaihe 1: Ostoskori ─────────────── */
+  cart: {
+    breadcrumb: [ { label: "Etusivu", href: "01-etusivu.html?view=b" }, { label: "Ostoskori", href: "?step=cart" } ],
+    steps: { block: "nykyinen kaksivaiheinen ilmaisin", label: "Tilauksen vaiheet", items: [ { n: "1", label: "Ostoskori" }, { n: "2", label: "Yhteenveto" } ] },
+    title: {
+      block: "core/heading H1 + toimituspäivävalitsin (korivariantti)",
+      heading: "Ostoskori",
+      count: "{n} tuotetta", countOne: "1 tuote"
+    },
+    delivery: {
+      block: "gds/warehouse, variant panel (lib delivery) + sivun päivävalinta",
+      resultDiffer: "Tilaus toimitetaan {osat} osassa: {toimitukset}.",
+      resultSame: "Kaikki tuotteet toimitetaan {pvm}.",
+      warn: "Kun vaihdat päivää, hinnat ja saatavuus tarkistetaan uudelleen. Rivit, joita ei ole saatavilla uudelle päivälle, merkitään korissa.",
+      calendarHeading: "Valitse toimituspäivä"
+    },
+    reorder: {
+      block: "core/paragraph korin yläosassa (01-etusivu.md B2 → kori)",
+      all:     "Edellisen tilauksen {n} tuotetta lisätty koriin. Tarkista määrät ja toimituspäivä.",
+      partial: "Edellisen tilauksen {n} tuotetta lisätty koriin. {m} tuotetta ei ole saatavilla {pvm} ja jätettiin pois: {tuotenimet}.",
+      batches: "Boost- ja Outlet-erät ovat kertaluonteisia, eikä niitä lisätty koriin. Katso tämän hetken erät Outletista.",
+      batchesLink: { label: "Snellman Outlet", href: "03-snellman-outlet.html" },
+      partialVars: { n: "14", m: "2", tuotenimet: "Kanapasta pestolla 300g, Jauhelihakastike 2,5 kg" },
+      allVars: { n: "14" }
+    },
+    groups: {
+      block: "uusi genero/cart-groups: per lastauspaikka core/group → otsikko, toimituspäivä, rivit, välisumma",
+      date: "Toimitus {viikonpäivä} {pv.kk.}",
+      dateLate: "Toimitus {viikonpäivä} {pv.kk.}, aikaisin mahdollinen valitsemallesi päivälle",
+      count: "{n} tuotetta", countOne: "1 tuote",
+      total: "Yhteensä {summa} €",
+      outletNote: "", /* Ratkaistu 30.9.2026 (Oskar Q18): Outlet-erä on oma toimituksensa, koska se lähtee erävarastosta omana päivänään. */
+      familyNote: "⚠ Tuoteperhejako vahvistetaan Snellmanilta: paninit ja välitystuotteet voivat lähteä Keravalta. Ryhmän nimi tulee lastauspaikan attribuutista, ei kategoriasta."
+    },
+    minimum: {
+      block: "core/group → core/paragraph, #bd0a0a-teksti",
+      group: "Tämän toimituksen minimitilaus on {minimi} €. Lisää vielä {puuttuva} €, tai poista ryhmän tuotteet.",
+      order: "Minimitilaus on {minimi} €. Lisää vielä {puuttuva} €.",
+      note: "⚠ Avoin: minimi per toimitus (ryhmä) vai per tilaus? Oletus per toimitusryhmä, koska kuljetuskustannus syntyy per lähtö. Kokeile poistaa rivi Kokkikartanon ryhmästä, niin ilmoitus tulee näkyviin."
+    },
+    summary: {
+      block: "core/group (tausta #f3f2eb, sticky desktopilla) → summat + core/buttons",
+      heading: "Yhteenveto",
+      products: "Tuotteet ({n})",
+      shippingIncluded: "Toimitus sisältyy",
+      shipping: "Toimitus",
+      vat: "Alv {alv} %",
+      vatIncluded: "Hinnat sisältävät alv {alv} %",
+      weightNote: "Sisältää arvion painotuotteiden hinnasta. Lopullinen summa laskun mukaan.",
+      total: "Yhteensä",
+      cta: { label: "Jatka yhteenvetoon", href: "?step=checkout" },
+      blocked: "Korjaa merkityt rivit ennen jatkamista.",
+      more: { label: "Jatka ostoksia", href: "/kategoriat/" },
+      shippingNote: "⚠ Avoin: toimitusmaksu. Sitä ei ole vielä sovittu. Oletus: toimitus sisältyy hintaan."
+    },
+    empty: {
+      block: "nykyinen tyhjätila, copy korvattu",
+      heading: "Kori on tyhjä",
+      text: "Aloita edellisestä tilauksesta tai selaa kategorioita.",
+      buttons: [
+        { label: "Tilaa uudelleen", href: "01-etusivu.html?view=b", primary: true },
+        { label: "Selaa kategorioita", href: "/kategoriat/" },
+        { label: "Katso Outlet", href: "03-snellman-outlet.html" }
+      ],
+      popularHeading: "Suosittuja tuotteita",
+      popular: [
+        { name: "Broileririsotto ja papuja 360g", sku: "20550", unit: "kpl", price: "3,54", priceUnit: "kpl", kgPerUnit: 0.36 },
+        { name: "Lihamakaronilaatikko 4 × 2 kg", sku: "208902", unit: "kpl", price: "2,20", priceUnit: "kpl", kgPerUnit: 8 },
+        { name: "Grillimakkara, vaihteleva paino", sku: "106330", unit: "pakk", price: "5,98", priceUnit: "kg", kgPerUnit: 1.05 },
+        { name: "Meetvursti 1 kg", sku: "105710", unit: "kpl", price: "12,40", priceUnit: "kg", kgPerUnit: 1, variableWeight: false }
+      ]
+    }
+  },
+
+  /* ─────────────── Vaihe 2: Yhteenveto ─────────────── */
+  checkout: {
+    breadcrumb: [ { label: "Etusivu", href: "01-etusivu.html?view=b" }, { label: "Ostoskori", href: "?step=cart" }, { label: "Yhteenveto", href: "?step=checkout" } ],
+    title: { heading: "Yhteenveto", lead: "Tarkista tilaus ja vahvista. Saat vahvistuksen sähköpostiin heti." },
+    shipping: {
+      block: "core/group → per ryhmä: nimi, toimituspäivä, osoite, rivit tiivistettynä",
+      heading: "Toimitus",
+      groupTitle: "{ryhmän_nimi} · Toimitus {viikonpäivä} {pv.kk.vvvv}",
+      singleTitle: "Toimitus {viikonpäivä} {pv.kk.vvvv}",
+      addressLabel: "Toimitusosoite",
+      addressEdit: "Osoitteet päivitetään asiakaspalvelun kautta.",
+      addressLink: { label: "Asiakaspalvelu", href: "/asiakaspalvelu/#osoite" },
+      addressNote: "⚠ Jos M3 on osoitteen master, kaupassa ei muokata. Jos muokataan, Y2 saa osoitelomakkeen.",
+      editCart: { label: "Muokkaa koria", href: "?step=cart" },
+      qty: "{määrä} {yksikkö}"
+    },
+    fields: {
+      block: "WooCommerce checkout fields, karsittu (lib field + readonlyValue; \"(valinnainen)\" SN.UI.form)",
+      heading: "Tilauksen tiedot",
+      reference: { label: "Oma viite laskulle", hint: "Esimerkiksi kustannuspaikka tai tilaajan nimi. Näkyy laskulla." },
+      message:   { label: "Viesti toimitukseen", hint: "Esimerkiksi ovikoodi, toimitusaika tai vastaanottajan puhelinnumero. Enintään 200 merkkiä.", max: 200, counter: "{n}/{max}" },
+      email:     { label: "Vahvistus lähetetään osoitteeseen", value: "{sähköposti}", link: { label: "Vaihda tilin tiedoissa", href: "/my-account/" } }
+    },
+    terms: {
+      block: "core/group → (checkbox) + core/buttons",
+      text: "Vahvistamalla hyväksyt tilausehdot. Tilaus laskutetaan asiakkuutesi maksuehdoilla.",
+      link: { label: "Tilausehdot", href: "/tilausehdot/" },
+      checkbox: "Olen lukenut ja hyväksyn tilausehdot",
+      checkboxError: "Hyväksy tilausehdot jatkaaksesi.",
+      cta: "Vahvista tilaus",
+      ctaBusy: "Vahvistetaan…",
+      back: { label: "Takaisin koriin", href: "?step=cart" },
+      note: "⚠ B2B-asiakkuus on jo ehtojen piirissä, joten oletus on lause ilman ruutua. Jos Snellman haluaa erillisen hyväksyntäruudun, se on proto-palkin Ehdot = Ruutu."
+    },
+    errors: {
+      availability: { text: "Yhden tai useamman tuotteen saatavuus muuttui. Palaa koriin tarkistamaan merkityt rivit.", link: { label: "Takaisin koriin", href: "?step=cart" } },
+      technical:    { text: "Tilausta ei voitu vahvistaa. Koriasi ei ole menetetty. Yritä hetken kuluttua uudelleen tai ota yhteyttä asiakaspalveluun.", link: { label: "Asiakaspalvelu", href: "/asiakaspalvelu/" } },
+      session:      { text: "Kirjautumisesi on vanhentunut. Kirjaudu uudelleen, kori on tallessa.", link: { label: "Kirjaudu", href: "01-etusivu.html?view=a" } }
+    }
+  },
+
+  /* ─────────────── Tilausvahvistus ─────────────── */
+  confirm: {
+    breadcrumb: [ { label: "Etusivu", href: "01-etusivu.html?view=b" }, { label: "Tilausvahvistus", href: "?step=confirm" } ],
+    hero: {
+      block: "core/group → core/heading H1, core/paragraph",
+      heading: "Kiitos, tilaus on vastaanotettu",
+      text: "Tilausnumero {tilausnumero}. Vahvistus on lähetetty osoitteeseen {sähköposti}.",
+      two: "Tilaus toimitetaan {osat} osassa: {toimitukset}.",
+      one: "Toimitus {pvm}.",
+      changes: "Muutokset ja peruutukset viimeistään {aikaraja} asiakaspalvelun kautta.",
+      changesNote: "⚠ Avoin: muutosaikaraja. Jos aikarajaa ei ole, lause poistetaan tästä ja sähköpostista."
+    },
+    contents: { heading: "Tilauksen sisältö" },
+    next: {
+      block: "core/buttons + linkit",
+      cta: { label: "Takaisin etusivulle", href: "01-etusivu.html?view=b" },
+      links: [ { label: "Katso tilaukset", href: "/my-account/orders/" }, { label: "Tee uusi tilaus", href: "/kategoriat/" } ]
+    }
+  },
+
+  /* ─────────────── Sähköposti: tilausvahvistus ─────────────── */
+  email: {
+    block: "WooCommerce customer_processing_order, copy korvattu",
+    fromLabel: "Lähettäjä", toLabel: "Vastaanottaja", subjectLabel: "Aihe",
+    from: "{lähettäjä}",
+    subjectOne: "Tilausvahvistus {tilausnumero}, toimitus {pvm}",
+    subjectTwo: "Tilausvahvistus {tilausnumero}, toimitukset {toimituspaivat}",
+    heading: "Kiitos tilauksestasi",
+    intro: "Tilaus {tilausnumero} on vastaanotettu {tilauspvm} klo {aika}.",
+    group: "{ryhmän_nimi} · Toimitus {pvm} · {n} tuotetta",
+    groupSingle: "Toimitus {pvm} · {n} tuotetta",
+    line: "{määrä} {yksikkö}",
+    batchBoost: "Boost-erä, käytä viimeistään {pvm}",
+    batchOutlet: "Outlet-erä, käytä viimeistään {pvm}",
+    referenceLabel: "Oma viite", messageLabel: "Viesti toimitukseen",
+    referenceDemo: "Kustannuspaikka 210 / keittiö", messageDemo: "Ovikoodi 4471, toimitus takaovelle klo 7–9.",
+    footer: "Muutokset viimeistään {aikaraja}: asiakaspalvelu {asiakaspalvelun_sähköposti}, {puhelin}.",
+    senderNote: "⚠ Lähettäjäosoite Snellmanilta."
+  }
+};
+</script>
+
+<body>
+<a href="#main" class="skip" id="skiplink"></a>
+<div class="proto"><div class="container" id="proto"></div></div>
+<div id="shell-header"></div>
+<div id="crumb"></div>
+<main id="main"></main>
+<div id="shell-footer"></div>
+
+
+<!-- ══════════ RENDER ══════════ -->
+<script>
+(function () {
+  "use strict";
+
+  /* ─── Proto-tila ──────────────────────────────────────────────── */
+  const KEY = "snellman-wf-07";
+  const S = Object.assign({}, PROTO.defaults, readState());
+  function readState() {
+    let out = {};
+    try { out = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch (e) { out = {}; }
+    const q = new URLSearchParams(location.search);
+    PROTO.controls.forEach((c) => { if (q.has(c.key)) out[c.key] = q.get(c.key); });
+    /* Vain tunnetut avaimet ja arvot (vanha tallennus voi sisältää poistetun "issues"-ehdon). */
+    const clean = {};
+    PROTO.controls.forEach((c) => { if (c.opts.some((o) => o.v === out[c.key])) clean[c.key] = out[c.key]; });
+    return clean;
+  }
+  function setState(k, v) {
+    S[k] = v;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* privaatti-ikkuna */ }
+    if (k === "step") { CART.forEach((s) => { s.pending = false; }); calOpen = false; }   /* Kumoa kuuluu vain samaan näkymään */
+    if (k === "groups") CART = buildCart();
+    render();
+  }
+
+  /* ─── Apurit ──────────────────────────────────────────────────── */
+  const { esc, num, t } = SN;
+  const fmt = (n) => n.toFixed(2).replace(".", ",").replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  /* Korvaa {muuttujat}: PAGE.vars + lisäarvot. Pisteviiva = dynaaminen arvo. */
+  function vars(str, extra) {
+    const src = Object.assign({}, PAGE.vars, dateVars(), extra || {});
+    return String(str == null ? "" : str).replace(/\{([^{}]+)\}/g, function (m, key) {
+      const v = src[key];
+      return v == null ? SN.render("fill", { text: key }) : '<span class="var">' + esc(v) + '</span>';
+    });
+  }
+  const fill = (txt) => txt ? SN.render("fill", { text: txt, block: true, prefix: "" }) : "";
+  const btn = (a) => SN.render("button", a);
+  const textLink = (l, icon) => btn({ variant: "text", label: l.label, href: l.href, icon: icon === false ? "" : "arrow" });
+  const unitLabel = (u) => SN.UI.units[u] || u;
+
+  /* ─── Päivämäärät proto-tilan mukaan ──────────────────────────── */
+  function placeDate(place) {
+    const d = PAGE.dates;
+    if (place === "pietarsaari" || place === "outlet") return S.dates === "differ" && S.groups === "two" ? d[place].differ : d[place].same;
+    return d.kerava;
+  }
+  function dateVars() {
+    const tgt = PAGE.dates.target, k = placeDate("kerava"), p = placeDate("pietarsaari");
+    return {
+      "viikonpäivä": tgt.wd, "pv.kk.vvvv": tgt.date, "pv.kk.": tgt.short,
+      "pvm": tgt.wd + " " + tgt.date,
+      "pvm_kerava": k.wd + " " + k.date,
+      "pvm_pietarsaari": p.wd + " " + p.date,
+      ...deliveryVars()
+    };
+  }
+  const PLACES = ["kerava", "pietarsaari", "outlet"];
+  /* Toimitukset tekstinä: 2 tai 3 osaa sen mukaan, mitä korissa on.
+     Outlet-erä on oma toimituksensa, koska se lähtee erävarastosta omana päivänään (Oskar Q18). */
+  function deliveryVars() {
+    const ps = (typeof activePlaces === "function" ? activePlaces() : PLACES);
+    const join = (xs) => xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " ja " + xs[xs.length - 1];
+    const dateOf = (pl) => { const d = placeDate(pl); return d.wd + " " + d.date; };
+    return {
+      "osat": ["", "yhdessä", "kahdessa", "kolmessa"][ps.length] || String(ps.length),
+      "toimitukset": join(ps.map((pl) => PAGE.places[pl].name + " " + dateOf(pl))),
+      "toimituspaivat": join(ps.map(dateOf))
+    };
+  }
+
+  /* ─── Korin malli ─────────────────────────────────────────────────
+     Sivu omistaa korin (määrät, poistot, ryhmät, minimit, summat). Rivin
+     oma summa, määrän rajat ja Kumoa-laatikko ovat kirjaston rivissä. */
+  const CKEY = "snellman-wf-07-cart2";
+  let CART = buildCart();
+  function buildCart() {
+    let saved = {};
+    try { saved = JSON.parse(sessionStorage.getItem(CKEY) || "{}") || {}; } catch (e) { saved = {}; }
+    return PAGE.rows.map((r) => {
+      const s = Object.assign({}, r);
+      s.variant = r.variant || (r.campaign ? "campaign" : "normal");
+      s.removed = false; s.pending = false;
+      if (S.groups === "one") s.place = "kerava";
+      const sv = saved[s.sku];
+      if (sv) { if (typeof sv.qty === "number" && sv.qty > 0) s.qty = sv.qty; if (sv.removed) s.removed = true; }
+      if (s.stock != null) s.qty = Math.min(s.qty, s.stock);
+      return s;
+    });
+  }
+  function saveCart() {
+    const o = {};
+    CART.forEach((s) => { o[s.sku] = { qty: s.qty, removed: s.removed }; });
+    try { sessionStorage.setItem(CKEY, JSON.stringify(o)); } catch (e) { /* privaatti-ikkuna */ }
+  }
+  const findRow = (sku) => CART.find((s) => s.sku === sku);
+  const active = () => S.empty === "yes" ? [] : CART.filter((s) => !s.removed);
+  /* Näkyvät rivit: aktiiviset + tässä näkymässä poistetut (Kumoa-laatikko). */
+  const shown = () => S.empty === "yes" ? [] : CART.filter((s) => !s.removed || s.pending);
+  const rowSum = (s) => SN.c.productRow.sum(s, s.qty);          /* sama laskenta kuin rivin oma summa */
+  const byPlace = (place) => active().filter((s) => s.place === place);
+  const shownByPlace = (place) => shown().filter((s) => s.place === place);
+  const groupSum = (place) => byPlace(place).reduce((a, s) => a + rowSum(s), 0);
+  const activePlaces = () => PLACES.filter((p) => byPlace(p).length);
+  const shownPlaces = () => PLACES.filter((p) => shownByPlace(p).length);
+  /* Korissa ryhmäotsikot pysyvät, kun ryhmän viimeinen rivi odottaa Kumoa-päätöstä. */
+  const multiCart = () => shownPlaces().length > 1;
+  const multiOrder = () => activePlaces().length > 1;
+  const datesDiffer = () => S.groups === "two" && S.dates === "differ" && multiOrder();
+  const subtotal = () => active().reduce((a, s) => a + rowSum(s), 0);
+  /* Arvio vain vaihtelevapainoiselle €/kg-riville (sama sääntö kuin lib-rivin "n. … €") */
+  const isApprox = (s) => s.priceUnit === "kg" && s.variableWeight !== false;
+  const hasWeighted = () => active().some(isApprox);
+  const minimum = () => num(PAGE.vars.minimi);
+  const discountOf = (s) => (s.regular && s.price) ? Math.round((1 - num(s.price) / num(s.regular)) * 100) : null;
+  function groupBelowMin(place) { return S.minimum === "group" && byPlace(place).length > 0 && groupSum(place) < minimum(); }
+  function orderBelowMin() { return S.minimum === "order" && active().length > 0 && subtotal() < minimum(); }
+  const isBlocked = () => activePlaces().some(groupBelowMin) || orderBelowMin();
+  function totals() {
+    const sub = subtotal();
+    const ship = S.shipping === "fee" && active().length ? num(PAGE.vars.toimitusmaksu) : 0;
+    const vatRate = num(PAGE.vars.alv) / 100;
+    const vat = S.vat === "excl" ? (sub + ship) * vatRate : 0;
+    return { sub, ship, vat, total: sub + ship + vat };
+  }
+
+  /* ─── Proto-palkki ────────────────────────────────────────────── */
+  function renderProto() {
+    const meta = PROTO.meta.map((m) => "<span>" + esc(m) + "</span>").join('<span aria-hidden="true">·</span>');
+    const ctrls = PROTO.controls.filter((c) => !c.only || c.only === S.step).map(function (c) {
+      const opts = c.opts.map((o) =>
+        '<button type="button" data-k="' + esc(c.key) + '" data-v="' + esc(o.v) + '" aria-pressed="' + (S[c.key] === o.v) + '">' + esc(o.label) + "</button>").join("");
+      return '<span class="ctrl"><span class="ctrl__label">' + esc(c.label) + '</span><span class="ctrl__opts">' + opts + "</span></span>";
+    }).join("");
+    const L = PROTO.library;
+    document.getElementById("proto").innerHTML =
+      '<div class="proto__title">' + PROTO.title + meta + "</div>" +
+      '<div class="proto__ctrls"><span class="ctrl"><span class="ctrl__label">' + esc(PROTO.hint) + "</span></span>" + ctrls + "</div>" +
+      '<div class="proto__legend">' + PROTO.legend.map((l) =>
+        '<span><i class="lg lg--' + esc(l.cls) + '" aria-hidden="true"></i>' + esc(l.label) + "</span>").join("") +
+        '<span>' + esc(L.text) + ' <a href="' + esc(L.href) + '">' + esc(L.label) + "</a></span></div>";
+  }
+
+  /* ─── Kehys kirjastosta. Sivu antaa vain omat linkkinsä SN.SHELLiin. ── */
+  SN.SHELL.home = SHELL.home;
+  SN.SHELL.b.nav = SHELL.nav;
+  SN.SHELL.b.cart.href = SHELL.cart.href;
+  SN.SHELL.footer.links = SHELL.footer.links;
+  const headerHtml = () => SN.render("header", { state: "b", current: S.step === "cart" ? "cart" : "", outlet: true, search: true, cartCount: active().length });
+  function renderShell() {
+    document.documentElement.lang = SHELL.lang;
+    const view = PAGE[S.step === "email" ? "confirm" : S.step];
+    const title = S.step === "email" ? PAGE.email.heading : (view.title ? view.title.heading : view.hero.heading);
+    document.title = title + " — Snellman Retail (wireframe)";
+    document.getElementById("skiplink").textContent = SHELL.skip;
+    document.getElementById("shell-header").innerHTML = headerHtml();
+    const b = view.breadcrumb;
+    document.getElementById("crumb").innerHTML = '<div class="container crumb">' +
+      SN.render("breadcrumb", { label: SHELL.breadcrumbLabel, items: b }) + "</div>";
+    document.getElementById("shell-footer").innerHTML = SN.render("footer", { loggedIn: true });
+  }
+
+  /* ═══════════ K1 vaiheilmaisin ═══════════ */
+  function renderSteps(current) {
+    const c = PAGE.cart.steps;
+    return '<ol class="steps" aria-label="' + esc(c.label) + '">' + c.items.map((s, i) => {
+      const idx = i + 1, done = idx < current;
+      return '<li' + (idx === current ? ' aria-current="step"' : "") + (done ? ' class="is-done"' : "") + '>' +
+        '<span class="n">' + (done ? SN.ico("check") : esc(s.n)) + '</span>' + esc(s.label) + '</li>';
+    }).join("") + "</ol>";
+  }
+
+  /* ═══════════ K2 otsikko ja tavoitepäivä ═══════════ */
+  function countText(n) { const c = PAGE.cart.title; return n === 1 ? esc(c.countOne) : vars(c.count, { n }); }
+  function renderCartTitle() {
+    const n = active().length;
+    return '<div class="title-row"><h1>' + esc(PAGE.cart.title.heading) + '</h1>' +
+      '<span class="count">' + (n ? countText(n) : "") + '</span></div>';
+  }
+  /* Tavoitepäivä = lib delivery (variant panel). Vaihda avaa sivun oman päivävalinnan
+     (disclosure) paneelin body-paikkaan: controls + expanded + id. */
+  let calOpen = false;
+  function renderDelivery() {
+    const d = PAGE.cart.delivery, tgt = PAGE.dates.target;
+    /* lib calendar paneelin body-paikkaan; sivun oma huomautus korvaa oletuksen */
+    const pick = SN.render("calendar", { id: "wf-cal", hidden: !calOpen, heading: d.calendarHeading, weekNav: false,
+      labels: { note: d.warn }, days: PAGE.dates.calendar });
+    return '<div class="cart-delivery">' + SN.render("delivery", { variant: "panel", date: tgt.wd + " " + tgt.date,
+      resultHtml: vars(datesDiffer() ? d.resultDiffer : d.resultSame), body: pick, controls: "wf-cal", expanded: calOpen, id: "wf-date" }) + "</div>";
+  }
+
+  /* ═══════════ Tilaa uudelleen -tuonti (lib notice) ═══════════ */
+  function renderReorder() {
+    const r = PAGE.cart.reorder; if (S.reorder === "no") return "";
+    if (S.reorder === "all") return SN.render("notice", { tone: "info", html: vars(r.all, r.allVars) });
+    if (S.reorder === "partial") return SN.render("notice", { tone: "info", html: vars(r.partial, r.partialVars) });
+    return SN.render("notice", { tone: "info", text: r.batches, actions: [ { label: r.batchesLink.label, href: r.batchesLink.href } ] });
+  }
+
+  /* ═══════════ K3 rivi: lib genero/product-card, korikonteksti ═══════════ */
+  function rowArgs(s) {
+    const d = placeDate(s.place);
+    return {
+      context: "cart", variant: s.variant, issue: s.removed ? "removed" : "none",
+      name: s.name, sku: s.sku, href: s.href || "", pack: s.pack || "", price: s.price, priceUnit: s.priceUnit, regular: s.regular || "",
+      unit: s.unit, kgPerUnit: s.kgPerUnit, variableWeight: s.variableWeight === false ? false : "",
+      bestBefore: s.bestBefore || "", stock: s.stock == null ? "" : s.stock, qty: s.qty, date: d.wd + " " + d.date
+    };
+  }
+  const listArgs = (p) => ({ context: "list", layout: "b", variant: "normal", name: p.name, sku: p.sku, href: p.href || "", price: p.price,
+    priceUnit: p.priceUnit, unit: p.unit, kgPerUnit: p.kgPerUnit, variableWeight: p.variableWeight === false ? false : "", qty: 0, desc: "" });
+
+  /* ═══════════ K3 toimitusryhmät + K4 minimi ═══════════ */
+  function groupDateHtml(place) {
+    const g = PAGE.cart.groups, d = placeDate(place), tgt = PAGE.dates.target;
+    const late = d.date !== tgt.date;
+    return '<span class="group__date' + (late ? " group__date--late" : "") + '">' +
+      vars(late ? g.dateLate : g.date, { "viikonpäivä": d.wd, "pv.kk.": d.short }) + "</span>";
+  }
+  function groupCountHtml(place) { const g = PAGE.cart.groups, n = byPlace(place).length; return n === 1 ? esc(g.countOne) : vars(g.count, { n }); }
+  function renderGroup(place) {
+    const g = PAGE.cart.groups, rows = shownByPlace(place);
+    if (!rows.length) return "";
+    const hid = "group-" + place, multi = multiCart();
+    const head = multi
+      ? '<div class="group__head"><h2 id="' + hid + '">' + esc(PAGE.places[place].name) + "</h2>" + groupDateHtml(place) +
+        '<span class="group__count" data-gcount="' + place + '">' + groupCountHtml(place) + "</span></div>"
+      : "";
+    const foot = multi ? '<div class="group__foot"><span data-gtotal="' + place + '">' + vars(g.total, { summa: fmt(groupSum(place)) }) + "</span></div>" : "";
+    return '<section class="group"' + (multi ? ' aria-labelledby="' + hid + '"' : "") + ">" + head +
+      '<ul class="grid grid--b">' + rows.map((s) => '<li class="cell">' + SN.render("productRow", rowArgs(s)) + "</li>").join("") + "</ul>" + foot +
+      '<p class="group__min" data-gmin="' + place + '" role="status">' + minGroupHtml(place) + "</p>" +
+    "</section>";
+  }
+  function minGroupHtml(place) {
+    if (!groupBelowMin(place)) return "";
+    return vars(PAGE.cart.minimum.group, { puuttuva: fmt(minimum() - groupSum(place)) });
+  }
+
+  /* ═══════════ K5 yhteenveto ═══════════ */
+  function renderSummary(withCta) {
+    const c = PAGE.cart.summary, tt = totals(), n = active().length;
+    const multi = withCta ? multiCart() : multiOrder();
+    let rows = '<li><span>' + vars(c.products, { n }) + '</span><span class="amt">' + fmt(tt.sub) + " €</span></li>";
+    if (multi) rows += (withCta ? shownPlaces() : activePlaces()).map((p) =>
+      '<li class="is-sub"><span>' + esc(PAGE.places[p].name) + '</span><span class="amt">' + fmt(groupSum(p)) + " €</span></li>").join("");
+    rows += S.shipping === "fee"
+      ? '<li><span>' + esc(c.shipping) + '</span><span class="amt">' + fmt(tt.ship) + " €</span></li>"
+      : '<li><span>' + esc(c.shippingIncluded) + "</span><span></span></li>";
+    if (S.vat === "excl") rows += '<li><span>' + vars(c.vat) + '</span><span class="amt">' + fmt(tt.vat) + " €</span></li>";
+    if (hasWeighted()) rows += '<li class="is-note">' + esc(c.weightNote) + "</li>";
+    rows += '<li class="is-total"><span>' + esc(c.total) + '</span><span class="amt">' + fmt(tt.total) + " €</span></li>";
+    if (S.vat === "incl") rows += '<li class="is-note">' + vars(c.vatIncluded) + "</li>";
+
+    const blocked = isBlocked();
+    const cta = withCta
+      ? (orderBelowMin() ? '<p class="summary__min" role="status">' + vars(PAGE.cart.minimum.order, { puuttuva: fmt(minimum() - tt.sub) }) + "</p>" : "") +
+        '<div class="summary__cta">' + btn({ label: c.cta.label, href: c.cta.href, variant: "primary", block: true, disabled: blocked || !n }) +
+          (blocked ? '<p class="summary__blocked" role="status">' + esc(c.blocked) + "</p>" : "") + "</div>" +
+        '<p class="summary__more">' + textLink(c.more) + "</p>"
+      : "";
+    return '<aside class="summary" aria-labelledby="summary-h"><h2 id="summary-h">' + esc(c.heading) + '</h2>' +
+      '<ul class="summary__rows">' + rows + "</ul>" + cta + "</aside>" +
+      (withCta ? fill(c.shippingNote) : "");
+  }
+
+  /* ═══════════ K6 tyhjä kori ═══════════ */
+  function renderEmpty() {
+    const e = PAGE.cart.empty;
+    const btns = e.buttons.map((b) => btn({ label: b.label, href: b.href, variant: b.primary ? "primary" : "outline" })).join("");
+    return '<div class="empty"><h2>' + esc(e.heading) + "</h2><p>" + esc(e.text) + '</p><div class="btns">' + btns + "</div></div>" +
+      '<div class="popular">' + SN.render("productList", { heading: e.popularHeading, context: "list", layout: "b",
+        vatNote: S.vat === "excl", rows: e.popular.map(listArgs) }) + "</div>";
+  }
+
+  /* ═══════════ Vaihe 1 kokonaisuus ═══════════ */
+  function renderCartStep() {
+    const g = PAGE.cart.groups;
+    if (!shown().length) return '<div class="container">' + renderSteps(1) + renderCartTitle() + renderEmpty() + "</div>";
+    return '<div class="container">' + renderSteps(1) + renderCartTitle() + renderDelivery() +
+      '<div class="cart-layout"><div class="cart-main">' + renderReorder() + PLACES.map(renderGroup).join("") +
+        (multiCart() ? fill(g.outletNote) + fill(g.familyNote) : "") + (S.minimum !== "none" ? fill(PAGE.cart.minimum.note) : "") +
+      '</div><div class="cart-aside">' + renderSummary(true) + "</div></div></div>";
+  }
+
+  /* ═══════════ Vaihe 2: Yhteenveto ═══════════ */
+  function renderLines(rows, opts) {
+    opts = opts || {};
+    return '<ul class="lines">' + rows.map((s) => {
+      const batch = s.variant === "boost" || s.variant === "outlet";
+      const note = opts.email && batch
+        ? "<small>" + vars(s.variant === "boost" ? PAGE.email.batchBoost : PAGE.email.batchOutlet, { pvm: s.bestBefore }) + "</small>" : "";
+      const sum = fmt(rowSum(s));
+      return '<li><span class="nm">' + (batch ? SN.render("badge", { type: s.variant, discount: discountOf(s) }) : "") + esc(s.name) + note + '</span>' +
+        '<span class="q">' + esc(t(PAGE.checkout.shipping.qty, { "määrä": s.qty, "yksikkö": unitLabel(s.unit) })) + "</span>" +
+        '<span class="s">' + esc(t(isApprox(s) ? SN.UI.sumApprox : SN.UI.sum, { sum })) + "</span></li>";
+    }).join("") + "</ul>";
+  }
+  function renderShipGroup(place, editable) {
+    const c = PAGE.checkout.shipping, d = placeDate(place), rows = byPlace(place);
+    if (!rows.length) return "";
+    const dv = { "viikonpäivä": d.wd, "pv.kk.vvvv": d.date };
+    const title = multiOrder() ? vars(c.groupTitle, Object.assign({ "ryhmän_nimi": PAGE.places[place].name }, dv)) : vars(c.singleTitle, dv);
+    return '<div class="ship"><div class="ship__head"><h3>' + title + "</h3></div>" +
+      '<div class="ship__grid"><div class="addr"><div class="lbl">' + esc(c.addressLabel) + "</div>" +
+        vars("{asiakas}") + "<br>" + vars("{katuosoite}") + "<br>" + vars("{postinumero} {kaupunki}") +
+        (editable ? '<p class="edit">' + esc(c.addressEdit) + ' <a class="link" href="' + esc(c.addressLink.href) + '">' + esc(c.addressLink.label) + "</a></p>" : "") +
+      "</div>" + renderLines(rows) + "</div>" +
+      (editable ? '<p class="ship__edit">' + textLink(c.editCart) + "</p>" : "") +
+    "</div>";
+  }
+  function renderCheckoutStep() {
+    const c = PAGE.checkout, f = c.fields, tm = c.terms;
+    const err = S.error !== "none" ? c.errors[S.error] : null;
+    const errHtml = err ? SN.render("notice", { tone: "error", text: err.text, actions: [ { label: err.link.label, href: err.link.href } ] }) : "";
+    const ship = '<section class="block block--tight" aria-labelledby="ship-h"><div class="container"><h2 id="ship-h">' + esc(c.shipping.heading) + "</h2>" +
+      PLACES.map((p) => renderShipGroup(p, true)).join("") + fill(c.shipping.addressNote) + "</div></section>";
+    const fields = '<section class="block" aria-labelledby="fields-h"><div class="container"><h2 id="fields-h">' + esc(f.heading) + '</h2>' +
+      '<div class="form">' +
+        SN.render("field", { id: "wf-ref", name: "reference", label: f.reference.label, help: f.reference.hint, required: false, autocomplete: "off" }) +
+        SN.render("field", { id: "wf-msg", name: "message", type: "textarea", label: f.message.label, help: f.message.hint, required: false }) +
+        '<p class="counter" id="wf-msg-count">' + esc(t(f.message.counter, { n: 0, max: f.message.max })) + "</p>" +
+        SN.render("readonlyValue", { label: f.email.label, valueHtml: vars(f.email.value) +
+          ' · <a class="link" href="' + esc(f.email.link.href) + '">' + esc(f.email.link.label) + "</a>" }) +
+      "</div></div></section>";
+    const sums = '<section class="block" aria-labelledby="sums-h"><div class="container"><h2 id="sums-h">' + esc(PAGE.cart.summary.heading) + "</h2>" +
+      '<div class="sums">' + renderSummary(false) + "</div></div></section>";
+    const terms = '<section class="block block--last" aria-label="' + esc(tm.cta) + '"><div class="container"><div class="terms">' + errHtml +
+      (S.terms === "checkbox"
+        ? '<label class="check" id="wf-terms-l"><input type="checkbox" id="wf-terms" aria-describedby="wf-terms-err"><span>' + esc(tm.checkbox) + ' (<a class="link" href="' + esc(tm.link.href) + '" target="_blank" rel="noopener">' + esc(tm.link.label) + "</a>)</span></label>" +
+          '<p class="field-error" id="wf-terms-err" hidden>' + esc(tm.checkboxError) + "</p>"
+        : "<p>" + esc(tm.text) + ' <a class="link" href="' + esc(tm.link.href) + '" target="_blank" rel="noopener">' + esc(tm.link.label) + "</a></p>") +
+      '<div class="btns">' + confirmBtn(false) +
+        textLink(tm.back, false) + "</div>" + fill(tm.note) +
+    "</div></div></section>";
+    return '<div class="container">' + renderSteps(2) + '<div class="title-row"><h1>' + esc(c.title.heading) + '</h1></div><p class="lead">' + esc(c.title.lead) + "</p></div>" +
+      ship + fields + sums + terms;
+  }
+
+  /* Vahvista tilaus: lib button, busy = odottaa vastausta (aria-busy, ei disabled → fokus säilyy) */
+  const confirmBtn = (busy) => btn({ label: PAGE.checkout.terms.cta, id: "wf-confirm", busy,
+    labelHtml: busy ? esc(PAGE.checkout.terms.ctaBusy) : "" });
+
+  /* ═══════════ Tilausvahvistus ═══════════ */
+  function renderConfirmStep() {
+    const c = PAGE.confirm;
+    const hero = '<div class="confirm-hero">' + '<span class="ico" aria-hidden="true"><i class="fa-light fa-circle-check"></i></span>' + "<h1>" + esc(c.hero.heading) + "</h1>" +
+      "<p><strong>" + vars(c.hero.text) + "</strong></p><p>" + vars(datesDiffer() ? c.hero.two : c.hero.one) + "</p><p>" + vars(c.hero.changes) + "</p>" + fill(c.hero.changesNote) + "</div>";
+    const contents = '<section class="block" aria-labelledby="contents-h"><div class="container"><h2 id="contents-h">' + esc(c.contents.heading) + "</h2>" +
+      PLACES.map((p) => renderShipGroup(p, false)).join("") +
+      '<div class="sums" style="margin-top:32px">' + renderSummary(false) + "</div></div></section>";
+    const next = '<section class="block block--last" aria-label="' + esc(c.next.cta.label) + '"><div class="container"><div class="btns">' +
+      btn({ label: c.next.cta.label, href: c.next.cta.href, variant: "primary" }) + c.next.links.map((l) => textLink(l)).join("") + "</div></div></section>";
+    return '<div class="container">' + hero + "</div>" + contents + next;
+  }
+
+  /* ═══════════ Sähköposti ═══════════ */
+  function renderEmailStep() {
+    const e = PAGE.email;
+    const groups = PLACES.map((p) => {
+      const rows = byPlace(p); if (!rows.length) return "";
+      const d = placeDate(p), gv = { "ryhmän_nimi": PAGE.places[p].name, pvm: d.wd + " " + d.date, n: rows.length };
+      return "<h3>" + vars(multiOrder() ? e.group : e.groupSingle, gv) + "</h3>" + renderLines(rows, { email: true });
+    }).join("");
+    return '<div class="container"><div class="email">' +
+      '<div class="email__meta"><b>' + esc(e.fromLabel) + ":</b> " + vars(e.from) + " " + SN.render("fill", { text: e.senderNote, prefix: "" }) + "<br>" +
+        "<b>" + esc(e.toLabel) + ":</b> " + vars("{sähköposti}") + "<br>" +
+        "<b>" + esc(e.subjectLabel) + ":</b> " + vars(datesDiffer() ? e.subjectTwo : e.subjectOne) + "</div>" +
+      '<div class="email__head"><img src="' + esc(SN.SHELL.logo.src) + '" alt="' + esc(SN.SHELL.logo.alt) + '"></div>' +
+      '<div class="email__body"><h2>' + esc(e.heading) + "</h2><p>" + vars(e.intro) + "</p>" + groups + renderSummary(false) +
+        "<h3>" + esc(e.referenceLabel) + "</h3><p>" + vars("{viite}", { viite: e.referenceDemo }) + "</p>" +
+        "<h3>" + esc(e.messageLabel) + "</h3><p>" + vars("{viesti}", { viesti: e.messageDemo }) + "</p></div>" +
+      '<div class="email__foot">' + vars(e.footer) + "</div>" +
+    "</div></div>";
+  }
+
+  /* ─── Kokoaminen ──────────────────────────────────────────────── */
+  function render() {
+    renderProto();
+    renderShell();
+    document.getElementById("main").innerHTML = S.step === "checkout" ? renderCheckoutStep()
+      : S.step === "confirm" ? renderConfirmStep()
+      : S.step === "email" ? renderEmailStep()
+      : renderCartStep();
+    wire();
+  }
+
+  /* ─── Korin summat rivin muutoksen jälkeen ────────────────────────
+     Rivisumman ja rivin tilan päivittää kirjasto; sivu päivittää ryhmän
+     rivimäärän, välisumman, minimin, yhteenvedon, otsikon ja headerin. */
+  function repaint() {
+    const g = PAGE.cart.groups;
+    PLACES.forEach((p) => {
+      const c = document.querySelector('[data-gcount="' + p + '"]'); if (c) c.innerHTML = groupCountHtml(p);
+      const tt = document.querySelector('[data-gtotal="' + p + '"]'); if (tt) tt.innerHTML = vars(g.total, { summa: fmt(groupSum(p)) });
+      const m = document.querySelector('[data-gmin="' + p + '"]'); if (m) m.innerHTML = minGroupHtml(p);
+    });
+    const aside = document.querySelector(".cart-aside"); if (aside) aside.innerHTML = renderSummary(true);
+    const cnt = document.querySelector(".title-row .count"), n = active().length;
+    if (cnt) cnt.innerHTML = n ? countText(n) : "";
+    document.getElementById("shell-header").innerHTML = headerHtml();
+  }
+  const inCart = (e) => e.target.closest && e.target.closest(".pch--cart");
+  document.addEventListener("sn:qty", (e) => {
+    if (!inCart(e)) return;                       /* tyhjän korin nosto: listarivi, ei korin rivi */
+    const s = findRow(e.detail.sku); if (!s) return;
+    s.qty = e.detail.qty; saveCart(); repaint();
+  });
+  document.addEventListener("sn:remove", (e) => {
+    const s = findRow(e.detail.sku); if (!s) return;
+    s.removed = true; s.pending = true;
+    if (e.detail.qty > 0) s.qty = e.detail.qty;
+    saveCart(); repaint();
+  });
+  document.addEventListener("sn:undo", (e) => {
+    const s = findRow(e.detail.sku); if (!s) return;
+    s.removed = false; s.pending = false;
+    s.qty = e.detail.qty > 0 ? e.detail.qty : Math.max(1, s.qty);
+    saveCart(); repaint();
+  });
+  document.addEventListener("sn:rowaction", (e) => {
+    if (e.detail.act !== "changedate") return;
+    toggleCal(true);
+    const b = document.getElementById("wf-date"); if (b) b.focus();
+  });
+  /* lib calendar: valinta säilyy uudelleenpiirrossa */
+  document.addEventListener("sn:date", (e) => {
+    if (e.detail.calendar !== "wf-cal") return;
+    PAGE.dates.calendar.forEach((d) => { d.selected = d.iso === e.detail.iso; });
+  });
+  SN.mount(document);
+
+  function toggleCal(open) {
+    const b = document.getElementById("wf-date"), cal = document.getElementById("wf-cal"); if (!b || !cal) return;
+    const o = calOpen = open == null ? cal.hidden : open;
+    cal.hidden = !o; b.setAttribute("aria-expanded", String(o));
+    if (o) cal.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  function wire() {
+    document.querySelectorAll("#proto button[data-k]").forEach((b) => b.addEventListener("click", () => setState(b.dataset.k, b.dataset.v)));
+    const chg = document.getElementById("wf-date");
+    if (chg) chg.addEventListener("click", () => toggleCal());
+    const msg = document.getElementById("wf-msg");
+    /* lib field: ei maxlength- eikä lisäkuvaus-argumenttia (laskuri), ks. kirjaston aukot */
+    if (msg) { msg.maxLength = PAGE.checkout.fields.message.max; msg.setAttribute("aria-describedby", "wf-msg-help wf-msg-count"); }
+    if (msg) msg.addEventListener("input", () => {
+      document.getElementById("wf-msg-count").textContent = t(PAGE.checkout.fields.message.counter, { n: msg.value.length, max: PAGE.checkout.fields.message.max });
+    });
+    const confirm = document.getElementById("wf-confirm");
+    const cb = document.getElementById("wf-terms");
+    if (confirm) confirm.addEventListener("click", () => {
+      if (cb && !cb.checked) {
+        document.getElementById("wf-terms-err").hidden = false; document.getElementById("wf-terms-l").classList.add("is-error"); cb.focus(); return;
+      }
+      if (S.error !== "none") return;
+      confirm.outerHTML = confirmBtn(true);
+      document.getElementById("wf-confirm").focus();
+      setTimeout(() => { location.search = "?step=confirm"; }, 900);
+    });
+    if (cb) cb.addEventListener("change", () => { if (cb.checked) { document.getElementById("wf-terms-err").hidden = true; document.getElementById("wf-terms-l").classList.remove("is-error"); } });
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>

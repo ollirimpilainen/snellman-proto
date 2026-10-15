@@ -1,0 +1,86 @@
+/* Snellman Retail — generated from tokens.json */
+@font-face { font-family: tabernaserif; font-style: normal; font-weight: 400; font-display: swap; src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TabernaSerif-Regular.307208f4.otf") format("opentype"); }
+@font-face { font-family: thesansb; font-style: normal; font-weight: 400; font-display: swap; src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W5Plain.9a8ed524.otf") format("opentype"); }
+@font-face { font-family: thesansb; font-style: normal; font-weight: 700; font-display: swap; src: url("https://snellman.fi/app/themes/snellmanrecipes/build/fonts/TheSansB-W7Bold.f9113732.otf") format("opentype"); }
+:root, [data-theme="light"] {
+  --c-primary: #00522c;
+  --c-bg: #fcfcfc;
+  --c-bg-block: #f3f2eb;
+  --c-bg-accent: #e2f1ec;
+  --c-surface: #ffffff;
+  --c-dark: #333031;
+  --c-text: #333031;
+  --c-text-2: #57534f;
+  --c-meta: #595959;
+  --c-on-dark: #ffffff;
+  --c-border: #dcdcd6;
+  --c-border-strong: #8f8f86;
+  --c-hairline: rgba(0,0,0,.098);
+  --c-disabled: #b9b9b1;
+  --c-ph-bg: #ecebe4;
+  --c-ph-border: #c9c8bf;
+  --c-error: #bd0a0a;
+  --c-error-bg: #fdeceb;
+  --c-warn-text: #9b4a08;
+  --c-warn-bg: #fff5ed;
+  --c-bg-incart: #f1f8f4;
+  --c-boost-bg: #ffdc4a;
+  --c-boost-text: #7a5800;
+  --c-outlet-bg: #fe9f4d;
+  --c-outlet-text: #542700;
+  --c-on-dark-2: #e8e7e1;
+  --c-on-dark-link: #cdccc4;
+  --c-focus: #00522c;
+  --c-focus-on-dark: #ffffff;
+  --c-fill-bg: #fff6d6;
+  --c-fill-border: #e0c86a;
+  --c-fill-text: #5c4a00;
+  --shadow-card: 2px 3px 8px #0000001f;
+  --shadow-card-hover: 4px 5px 12px #00000029;
+}
+:root {
+  --gap-4: 4px;
+  --gap-8: 8px;
+  --gap-12: 12px;
+  --gap-16: 16px;
+  --gap-24: 24px;
+  --gap-32: 32px;
+  --gap-40: 40px;
+  --gap-48: 48px;
+  --gap-60: 60px;
+  --gap-80: 80px;
+  --r-none: 0;
+  --r-card: 8px;
+  --r-tag: 10px;
+  --fs-h1: clamp(32px, 5.33vw, 48px);
+  --fs-h2: clamp(28px, 4.67vw, 34px);
+  --fs-h3: 24px;
+  --fs-h4: 20px;
+  --fs-body: 16px;
+  --fs-small: 14px;
+  --fs-xs: 13px;
+  --fs-eyebrow: 12px;
+  --fs-micro: 11px;
+  --lh-body: 1.75;
+  --ls-heading: 0.02em;
+  --ls-button: 1.28px;
+  --container: 1200px;
+  --container-text: 792px;
+  --pad: 24px;
+  --nav-h: 100px;
+  --touch: 44px;
+  --font-display: tabernaserif, Georgia, "Times New Roman", serif;
+  --font-sans: thesansb, arial, helvetica, sans-serif;
+}
+.type-h1 { font-family: var(--font-display); font-size: 48px; line-height: 1.08; font-weight: 400; letter-spacing: 0.02em; }
+.type-h2 { font-family: var(--font-display); font-size: 34px; line-height: 1.16; font-weight: 400; letter-spacing: 0.02em; }
+.type-h3 { font-family: var(--font-sans); font-size: 24px; line-height: 1.2; font-weight: 500; letter-spacing: 0.02em; }
+.type-h4 { font-family: var(--font-sans); font-size: 20px; line-height: 1.2; font-weight: 500; letter-spacing: 0.02em; }
+.type-price { font-family: var(--font-sans); font-size: 20px; line-height: 1.2; font-weight: 700; }
+.type-product { font-family: var(--font-sans); font-size: 18px; line-height: 1.3; font-weight: 700; }
+.type-body { font-family: var(--font-sans); font-size: 16px; line-height: 1.75; font-weight: 400; }
+.type-button { font-family: var(--font-sans); font-size: 16px; line-height: 1.2; font-weight: 700; letter-spacing: 1.28px; }
+.type-small { font-family: var(--font-sans); font-size: 14px; line-height: 1.5; font-weight: 400; }
+.type-xs { font-family: var(--font-sans); font-size: 13px; line-height: 1.5; font-weight: 400; }
+.type-eyebrow { font-family: var(--font-sans); font-size: 12px; line-height: 1.4; font-weight: 600; letter-spacing: 1px; }
+.type-micro { font-family: var(--font-sans); font-size: 11px; line-height: 1.3; font-weight: 700; }

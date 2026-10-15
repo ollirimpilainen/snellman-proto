@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Pyydä tunnukset · Snellman Retail -prototyyppi</title>
+<link rel="stylesheet" href="assets/tokens.css">
+<link rel="stylesheet" href="assets/bundle.css">
+<link rel="stylesheet" href="assets/tunnukset.css">
+<link rel="stylesheet" href="assets/proto.css?v=20261014">
+
+<style>
+body{margin:0}
+</style>
+
+</head>
+<body>
+<template id="tpl">
+
+<div style="min-height: 100%; background: var(--c-bg); color: var(--c-text); font-family: var(--font-sans);">
+<header class="site-header site-header--a"><div class="container site-header__inner"><a class="brand" href="EtusivuA.html"><img src="assets/img/snellman-logo.svg" alt="Snellman, etusivu"></a><nav class="site-nav" id="nav-t" aria-label="Päävalikko"><ul><li><a href="Asiakaspalvelu.html"><span class="cap">Asiakaspalvelu</span></a></li><li><a href="Tilausehdot.html"><span class="cap">Tilausehdot</span></a></li></ul></nav><div class="site-utils"><a class="btn btn--on-dark btn--sm" href="EtusivuA.html"><span class="cap">Kirjaudu</span></a><button type="button" class="menu-toggle" aria-expanded="false" aria-controls="nav-t"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></span><span class="cap">Valikko</span></button></div></div></header>
+
+<main class="page" id="main-t">
+<div class="container">
+<nav class="breadcrumb" aria-label="Murupolku"><ol><li><a href="EtusivuA.html">Etusivu</a></li><li aria-current="page">Pyydä tunnukset</li></ol></nav>
+
+<sc-if value="{{notSent}}" hint-placeholder-val="{{true}}">
+<div class="req">
+<div class="req__intro">
+<h1 id="page-title">Pyydä tunnukset</h1>
+<p class="lead">Tunnuksilla tilaat Snellmanin lihatuotteet ja Kokkikartanon valmisruoat suoraan verkosta. Jätä yhteystietosi, niin asiakaspalvelu hoitaa loput.</p>
+<p class="have"><span>Onko sinulla jo tunnukset? <a href="EtusivuA.html">Kirjaudu</a></span><a href="#">Unohtuiko salasana?</a></p>
+</div>
+
+<div class="req__form">
+<div class="form">
+<h2>Yhteystietosi</h2>
+<div class="field"><label class="field__label" for="u-company">Yritys</label><span class="field__help" id="u-company-help">Kaupan tai kahvilan nimi.</span><input id="u-company" name="company" autocomplete="organization" aria-describedby="u-company-help" type="text" value=""></div>
+<div class="field"><label class="field__label" for="u-name">Nimesi</label><input id="u-name" name="name" autocomplete="name" type="text" value=""></div>
+<div class="field"><label class="field__label" for="u-email">Sähköposti</label><span class="field__help" id="u-email-help">Tunnukset lähetetään tähän osoitteeseen.</span><input id="u-email" name="email" autocomplete="email" aria-describedby="u-email-help" type="email" value=""></div>
+<div class="field"><label class="field__label" for="u-phone">Puhelin</label><span class="field__help" id="u-phone-help">Asiakaspalvelu soittaa, jos tarvitsee lisätietoja.</span><input id="u-phone" name="phone" autocomplete="tel" aria-describedby="u-phone-help" type="tel" value=""></div>
+<p class="privacy">Käytämme tietoja vain tunnusten avaamiseen. Lue <a href="#">tietosuojaseloste</a>.</p>
+<button type="button" class="btn btn--primary" onClick="{{send}}"><span class="cap">Lähetä pyyntö</span></button>
+</div>
+</div>
+
+<aside class="req__aside" aria-labelledby="steps-title">
+<div class="step-list"><h2 class="step-list__h" id="steps-title">Näin se etenee</h2><ol><li><span>Lähetä pyyntö. Saat kuittauksen sähköpostiin heti.</span></li><li><span>Asiakaspalvelu hoitaa loput 1–2 arkipäivän kuluessa ja soittaa, jos tarvitsee lisätietoja.</span></li><li><span>Saat sähköpostiin linkin, jolla asetat salasanan ja pääset tilaamaan.</span></li></ol></div>
+</aside>
+</div>
+</sc-if>
+
+<sc-if value="{{sent}}" hint-placeholder-val="{{false}}">
+<div class="sent" role="status" style="margin-top: var(--gap-24);">
+<span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9.25"/><path d="M8 12.5l3 3 5-6"/></svg></span>
+<div>
+<h2>Kiitos, pyyntö on lähetetty</h2>
+<p><strong>Lähetimme kuittauksen sähköpostiisi.</strong></p>
+<p>{{sentText}}</p>
+<p>Etkö saanut kuittausta? Tarkista roskaposti tai soita asiakaspalveluun.</p>
+<div class="btns"><a class="btn btn--outline" href="EtusivuA.html"><span class="cap">Takaisin etusivulle</span></a></div>
+</div>
+</div>
+</sc-if>
+</div>
+</main>
+
+<footer class="site-footer"><div class="container"><span>Snellmanin Lihanjalostus Oy</span><ul><li><a href="#">Tietosuoja</a></li><li><a href="#">Yksityisyys ja evästeet</a></li><li><a href="Tilausehdot.html">Tilausehdot</a></li><li><a href="Asiakaspalvelu.html">Asiakaspalvelu</a></li></ul></div></footer>
+</div>
+</template>
+<div id="app"></div>
+<script src="assets/proto.js?v=20261014f"></script>
+<script>
+class Component extends DCLogic {
+renderVals() {
+var sent = !!(this.state && this.state.sent);
+var self = this;
+return {
+  sent: sent,
+  notSent: !sent,
+  sentText: "Asiakaspalvelu avaa tunnukset 1–2 arkipäivän kuluessa ja soittaa, jos tarvitsee lisätietoja. Saat sen jälkeen sähköpostiin linkin salasanan asettamiseen.",
+  send: function () { self.setState({ sent: true }); }
+};
+}
+}
+
+window.Component = Component;</script>
+</body>
+</html>

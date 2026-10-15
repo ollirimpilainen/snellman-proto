@@ -1,0 +1,88 @@
+/* Snellman Retail – etusivun omat lohkot. Tokenit: ds/sn/tokens.css, komponentit: ds/sn/components/bundle.css */
+body { margin: 0; background: var(--c-bg); }
+.on-dark h1, .on-dark h2, .on-dark h3, .on-dark h4 { color: var(--c-on-dark); }
+.site-footer { margin-top: 0; }
+
+/* Lohkot */
+.block { padding: var(--gap-60) 0; }
+.block--block-bg { background: var(--c-bg-block); }
+.block--dark { background: var(--c-primary); color: var(--c-on-dark); }
+.block--tight { padding: var(--gap-24) 0; }
+.block__head { display: flex; justify-content: space-between; align-items: baseline; gap: var(--gap-24); flex-wrap: wrap; margin-bottom: var(--gap-32); }
+.eyebrow { font-family: var(--font-sans); font-size: var(--fs-eyebrow); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: var(--c-text-2); margin: 0 0 var(--gap-12); }
+.lead { font-size: 18px; color: var(--c-text-2); max-width: 60ch; margin: var(--gap-12) 0 0; }
+.on-dark .lead { color: var(--c-on-dark); }
+
+/* Ruudukot */
+.cols { display: grid; gap: var(--gap-32); }
+.cols--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.cols--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cols--6040 { grid-template-columns: 60fr 40fr; align-items: start; }
+.card h3, .card h4 { margin-bottom: var(--gap-8); }
+.card p { color: var(--c-text-2); }
+.card--link { display: block; text-decoration: none; }
+.card--link .go { display: block; margin-top: var(--gap-8); }
+
+/* B1: tervehdys ja toimituspäivä rinnakkain leveässä */
+.hello { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--gap-48); align-items: center; }
+.hello h1 { margin: 0; }
+.hello .delivery { margin: 0; }
+.delivery__result strong { font-weight: 700; }
+
+/* B3 Nyt tarjolla */
+.rowfilter { display: flex; gap: var(--gap-8); margin-bottom: var(--gap-16); flex-wrap: wrap; }
+
+/* B5 Tiedoksi: ohut reuna, ei omaa pintaa */
+.notice-row { display: flex; flex-wrap: wrap; gap: var(--gap-8) var(--gap-16); align-items: center; font-size: var(--fs-small); color: var(--c-text-2);
+  border-top: 1px solid var(--c-border); border-bottom: 1px solid var(--c-border); padding: var(--gap-16) 0; }
+.notice-row .sep { color: var(--c-meta); }
+
+/* A1 hero */
+.hero__inner { display: grid; grid-template-columns: 60fr 40fr; gap: var(--gap-48); align-items: start; }
+.hero__text h1 { margin-bottom: var(--gap-24); }
+/* A1 cover: brändikuva (Henkilöstökaupan cover-lohko) täyttää ensimmäisen näkymän.
+   Teksti on yhtenäisellä primary-pinnalla, jotta kontrasti ei riipu kuvasta (9,36:1). */
+.hero-cover { background: var(--c-primary) url("img/snellman-tuotteet.jpg") center / cover no-repeat; min-height: 800px;
+  display: flex; align-items: center; padding: var(--gap-60) 0; box-sizing: border-box; }
+.hero-cover > .container { width: 100%; }
+.hero-cover .hero__inner { align-items: center; }
+.hero-panel { background: var(--c-primary); color: var(--c-on-dark); border-radius: var(--r-card); padding: var(--gap-40); max-width: 600px; }
+.hero-panel h1 { color: var(--c-on-dark); }
+.hero-panel .eyebrow { color: var(--c-on-dark-2); }
+.hero-panel .lead { color: var(--c-on-dark); }
+.step__n { font-family: var(--font-display); font-size: 56px; line-height: 1; color: var(--c-primary); margin: 0 0 var(--gap-12); }
+.step h3 { margin-bottom: var(--gap-8); }
+.step p { color: var(--c-text-2); }
+.step .step__n { color: var(--c-primary); }
+.contact { margin: var(--gap-16) 0 0; font-size: var(--fs-small); color: var(--c-on-dark); }
+
+@media (max-width: 1023px) {
+  .hello { grid-template-columns: minmax(0, 1fr); gap: var(--gap-24); }
+}
+@media (max-width: 960px) {
+  .cols--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero__inner, .cols--6040 { grid-template-columns: minmax(0, 1fr); gap: var(--gap-32); }
+  .hero__text { order: 2; }
+  .hero__aside { order: 1; }
+  .hero-cover { min-height: 0; padding: 200px 0 var(--gap-32); background-position: 40% 0; background-size: auto 520px; }
+  .hero-panel { max-width: none; padding: var(--gap-24); }
+}
+@media (max-width: 768px) {
+  .block { padding: var(--gap-32) 0; }
+  .block--first { padding-top: var(--gap-24); }
+  .cols--3, .cols--2 { grid-template-columns: minmax(0, 1fr); }
+  .step__n { font-size: 44px; }
+  .lead { font-size: 16px; }
+  .notice-row { flex-direction: column; align-items: flex-start; }
+  .notice-row .sep { display: none; }
+}
+
+/* Toimituspäivän valinta: ensimmäinen askel, ei esivalintaa */
+.date-opts { list-style: none; margin: var(--gap-12) 0 0; padding: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: var(--gap-8); }
+.date-opt { width: 100%; min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: var(--gap-8) var(--gap-4);
+  background: var(--c-surface); border: 1px solid var(--c-border); border-radius: 0; font: inherit; color: var(--c-text); cursor: pointer; }
+.date-opt:hover { border-color: var(--c-primary); }
+.date-opt:focus-visible { outline: 2px solid var(--c-primary); outline-offset: 2px; }
+.date-opt__d { font-size: var(--fs-xs); font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--c-text-2); }
+.date-opt__n { font-weight: 700; color: var(--c-primary); font-variant-numeric: tabular-nums; }
+.delivery--pick .delivery__result { margin-top: var(--gap-12); }

@@ -1,0 +1,270 @@
+/* =================================================================
+ * Snellman Henkilöstökauppa — design-tokenit
+ * Lähde: https://shop.snellman.fi  (luettu selaimesta 15.9.2026)
+ * Alusta: generoi/snellmanecom · wp-gds-theme · multisite blog #6
+ * Pohja:  genero-design-system v4.0.0-beta.15 + sivustokohtainen override
+ *
+ * TÄRKEÄ LUKUOHJE — sivustolla on KAKSI päällekkäistä tokenikerrosta:
+ *
+ *   1. theme.json-presetit (--wp--preset--color--*)
+ *      = mitä lohkot oikeasti käyttävät ja mitä editori tarjoaa.
+ *        TÄMÄ ON SE MITÄ SIVU PIIRTÄÄ. Suunnittele näillä.
+ *
+ *   2. GDS-komponenttitokenit (--gds-*)
+ *      = design-systeemin oletukset. Suuri osa jää käyttämättä, koska
+ *        sivut on rakennettu WP-lohkoista jotka lukevat preset-paletin.
+ *        Käytä näitä komponenttitason yksityiskohtiin (padding, varjo,
+ *        text-transform, transitio) — ei väreihin.
+ *
+ * Todennettu renderöity lopputulos 15.9.2026 (computed styles):
+ *   header-tausta  #00522c   (EI --gds-color-ui-02 #004e31)
+ *   CTA-painike    #00522c · valkoinen · uppercase · TheSansB 700
+ *                  · border-radius 0 · letter-spacing normal
+ *                  · padding 7.6px 12px 10px
+ *   navigaatio     TheSansB 700 · uppercase · letter-spacing normal
+ *   H1 (hero)      tabernaserif 400 · 48px · ls 0.96px (0.02em) · ei transformia
+ *   body-tausta    #fcfcfc
+ *   Gilroy         EI ladattu eikä käytössä — ei yhtään elementtiä
+ * ================================================================= */
+
+/* ─── KERROS 1 — TOTEUTUNEET VÄRIT (theme.json presetit) ────────────
+ * Näillä sivusto oikeasti piirretään. Nämä ovat myös ne värit jotka
+ * sisällöntuottaja näkee Gutenbergin väripaletissa.
+ */
+:root {
+  --wp--preset--color--primary:                #00522c;  /* header, painikkeet */
+  --wp--preset--color--secondary:              #00522c;
+  --wp--preset--color--alternative:            #00522c;
+  --wp--preset--color--background:             #f3f2eb;  /* pellava — lohkojen tausta */
+  --wp--preset--color--alternative-background: #f3f2eb;
+  --wp--preset--color--foreground:             #333031;  /* lämmin antrasiitti */
+  --wp--preset--color--white:                  #ffffff;
+  --wp--preset--color--black:                  #000000;
+
+  /* Sivun oma pohja (body) on vaaleampi kuin preset-background */
+  --page-background:                           #fcfcfc;
+  /* Vaalea mintunvihreä: sivupalkit ja korostuspinnat (gds-color-ui-04) */
+  --accent-surface:                            #e2f1ec;
+
+  /* Fonttiperheet — theme.json */
+  --wp--preset--font-family--tabernaserif: tabernaserif, serif;
+  --wp--preset--font-family--thesansb:     thesansb, arial, helvetica, sans-serif;
+  --wp--preset--font-family--thesansbold:  thesansbold, sans-serif;
+  --wp--preset--font-family--open-sans:    'Open Sans', sans-serif;
+  /* futura-pt on ladattu mutta kuuluu MUSH-sivustoille, ei Snellmanille */
+
+  /* Fonttikoot — theme.json */
+  --wp--preset--font-size--small:   13px;
+  --wp--preset--font-size--normal:  16px;
+  --wp--preset--font-size--medium:  20px;
+  --wp--preset--font-size--large:   36px;
+  --wp--preset--font-size--x-large: 42px;
+  --wp--preset--font-size--huge:    42px;
+}
+
+/* ─── KERROS 2 — GDS-KOMPONENTTITOKENIT ────────────────────────────
+ * Design-systeemin oletukset. Värit tässä lohkossa EIVÄT vastaa sitä
+ * mitä sivu piirtää (ks. lukuohje yllä) — käytä mittoja ja käyttäytymistä.
+ */
+:root {
+  /* ─── VÄRIT ────────────────────────────────────────────────── */
+  --gds-color-ui-01:            #009d58;   /* kirkas vihreä — ikonien hover, hint-border */
+  --gds-color-ui-02:            #004e31;   /* GDS-oletus — EI käytössä; renderöity primary on #00522c */
+  --gds-color-ui-03:            #028656;   /* keskivihreä — alternative */
+  --gds-color-ui-04:            #e2f1ec;   /* vaalea mintunvihreä — sivupalkit, focus-outline */
+  --gds-color-ui-05:            #f1615e;   /* koralli — huomio */
+  --gds-color-ui-06:            #ffdcdd;   /* vaalea koralli */
+  --gds-color-ui-07:            #9185db;   /* violetti */
+  --gds-color-ui-background-01: #fcfcfc;   /* body-tausta (tämä toteutuu) */
+  --gds-color-ui-background-02: #e2f1ec;   /* korostuspinta — toteutuu sivupalkeissa */
+  --gds-color-black:            #000;
+  --gds-color-white:            #fff;
+  --gds-color-gray:             #00000019;
+  --gds-color-success:          #089528;
+  --gds-color-error:            #f54d4d;
+  --gds-color-notice:           #fff501;
+
+  /* ─── TYPOGRAFIA — perheet ─────────────────────────────────── */
+  /* Ladatut @font-face: thesansb 400/700, tabernaserif 400, thesansbold, Open Sans 400/700 */
+  --gds-body-font-family:       thesansb, arial, helvetica, sans-serif;
+  --gds-heading-font-family:    tabernaserif, serif;
+  --gds-label-font-family:      Gilroy, Arial, Helvetica, sans-serif;   /* ⚠ Gilroyta ei ladata EIKÄ käytetä — labelit ovat TheSansB */
+  --gds-menu-item-font-family:  Gilroy, Arial, Helvetica, sans-serif;   /* ⚠ ei käytössä — navi on core/navigation, TheSansB 700 uppercase */
+
+  /* ─── TYPOGRAFIA — body & kappale ──────────────────────────── */
+  --gds-body-font-size:         16px;
+  --gds-body-line-height:       1.75;
+  --gds-body-text-color:        #000;
+  --gds-body-background-color:  #fcfcfc;
+
+  --gds-paragraph-l-font-size:  16px;   --gds-paragraph-l-line-height: 1.75;
+  --gds-paragraph-m-font-size:  15px;   --gds-paragraph-m-line-height: 1.6;
+  --gds-paragraph-s-font-size:  14px;   --gds-paragraph-s-line-height: 1.28;
+  --gds-paragraph-xs-font-size: 10px;   --gds-paragraph-xs-line-height: 1.4;
+  --gds-paragraph-gutter:       32px;
+
+  /* ─── TYPOGRAFIA — otsikot ─────────────────────────────────────
+   * Kaksi perhettä: L/XL/2XL = Taberna Serif, M/S/XS/2XS = TheSansB 500.
+   * Letter-spacing on 0.02em koko skaalassa (EI 0.05em kuten snellman.fi).
+   * Otsikot eivät ole lowercase — vain 2XL on uppercase.
+   * Otsikkoväri --gds-heading-color on #00522c eli ei täsmää ui-02:n kanssa. ⚠
+   */
+  --gds-heading-color:            #00522c;   /* = renderöity primary, ei ristiriitaa */
+  --gds-heading-letter-spacing:   0.02em;
+  --gds-heading-line-height:      1;
+  --gds-heading-text-transform:   none;
+
+  --gds-heading-2xl-font-family:  tabernaserif, serif;
+  --gds-heading-2xl-font-size:    62px;
+  --gds-heading-2xl-font-weight:  800;
+  --gds-heading-2xl-line-height:  67px;
+  --gds-heading-2xl-letter-spacing: 0px;
+  --gds-heading-2xl-text-transform: uppercase;
+
+  --gds-heading-xl-font-family:   tabernaserif, serif;
+  --gds-heading-xl-font-size:     clamp(32px, calc(32 / 600 * 100vw), 48px);
+  --gds-heading-xl-font-weight:   400;
+  --gds-heading-xl-line-height:   1.08;
+  --gds-heading-xl-letter-spacing: 0.02em;
+  --gds-heading-xl-text-transform: none;
+
+  --gds-heading-l-font-family:    tabernaserif, serif;
+  --gds-heading-l-font-size:      clamp(28px, calc(28 / 600 * 100vw), 34px);
+  --gds-heading-l-font-weight:    400;
+  --gds-heading-l-line-height:    1.16;
+  --gds-heading-l-letter-spacing: 0.02em;
+
+  --gds-heading-m-font-family:    thesansb, arial, helvetica, sans-serif;
+  --gds-heading-m-font-size:      clamp(24px, calc(24 / 600 * 100vw), 28px);
+  --gds-heading-m-font-weight:    500;
+  --gds-heading-m-line-height:    1.16;
+  --gds-heading-m-letter-spacing: 0.02em;
+
+  --gds-heading-s-font-family:    thesansb, arial, helvetica, sans-serif;
+  --gds-heading-s-font-size:      20px;
+  --gds-heading-s-font-weight:    500;
+  --gds-heading-s-line-height:    1.2;
+
+  --gds-heading-xs-font-size:     16px;  --gds-heading-xs-font-weight:  500;  --gds-heading-xs-line-height: 1.25;
+  --gds-heading-2xs-font-size:    14px;  --gds-heading-2xs-font-weight: 500;  --gds-heading-2xs-line-height: 1.25;
+
+  /* ─── TYPOGRAFIA — labelit (uppercase, väljä spacing) ──────── */
+  --gds-label-text-transform:  uppercase;
+  --gds-label-s-font-size:  10px;  --gds-label-s-font-weight:  600;  --gds-label-s-letter-spacing:  0.5px;   --gds-label-s-line-height:  14px;
+  --gds-label-m-font-size:  12px;  --gds-label-m-font-weight:  500;  --gds-label-m-letter-spacing:  1px;     --gds-label-m-line-height:  16px;
+  --gds-label-l-font-size:  16px;  --gds-label-l-font-weight:  400;  --gds-label-l-letter-spacing:  1.28px;  --gds-label-l-line-height:  19px;
+  --gds-label-xl-font-size: 16px;  --gds-label-xl-font-weight: 600;  --gds-label-xl-letter-spacing: 1.28px;  --gds-label-xl-line-height: 19px;
+
+  /* ─── PAINIKE ──────────────────────────────────────────────── */
+  --gds-button-background-color:       #00522c;
+  --gds-button-background-color-hover: #00522c;          /* hover tehdään gradientilla, ei värillä */
+  --gds-button-background-image-hover: linear-gradient(90deg, hsla(0,0%,100%,.2), hsla(0,0%,100%,.2));
+  --gds-button-color:            #fff;
+  --gds-button-font-family:      thesansb, arial, helvetica, sans-serif;
+  --gds-button-font-weight:      700;
+  --gds-button-text-transform:   uppercase;
+  --gds-button-border:           none;
+  --gds-button-border-radius:    0;
+  --gds-button-box-shadow:       none;
+  --gds-button-transition:       background-color 0.1s ease-out;
+  --gds-button-icon-gutter:      16px;
+  --gds-button-l-font-size: 16px;  --gds-button-l-padding: calc(10px - 0.15em) 12px 10px 12px;
+  --gds-button-m-font-size: 16px;  --gds-button-m-padding: calc(10px - 0.15em) 12px 10px 12px;
+  --gds-button-s-font-size: 14px;  --gds-button-s-padding: calc(5px - 0.15em) 8px 5px 8px;
+
+  /* ─── TEKSTIPAINIKE (nuoli liukuu hoverilla) ───────────────── */
+  --gds-text-button-font-family:        thesansb, arial, helvetica, sans-serif;
+  --gds-text-button-font-weight:        600;
+  --gds-text-button-text-transform:     uppercase;
+  --gds-text-button-icon-gutter:        16px;
+  --gds-text-button-icon-hover-offset:  8px;
+  --gds-text-button-icon-transition:    transform 0.1s ease-out;
+  --gds-text-button-l-padding: 18px 0 14px 0;
+  --gds-text-button-s-padding: 12px 0 8px 0;
+
+  /* ─── KORTTI (huom: varjo ON, toisin kuin snellman.fi:ssä) ─── */
+  --gds-card-background-color: #fff;
+  --gds-card-border:           none;
+  --gds-card-border-radius:    0;   /* ⚠ GDS-oletus; frame 5 havaitsi kirjautuneella 8px — varmistettava */
+  --gds-card-box-shadow:       2px 3px 8px #0000001f;
+  --gds-card-padding:          16px 24px;
+  --gds-card-text-align:       left;
+
+  /* ─── MEDIA CARD ───────────────────────────────────────────── */
+  --gds-media-card-media-height:     calc(371 / 486 * 100%);   /* ~3:4 kuvasuhde */
+  --gds-media-card-content-padding:  24px 24px 32px 24px;
+  --gds-media-card-object-fit:       cover;
+  --gds-media-card-overlay-color:    #fff;
+  --gds-media-card-overlay-opacity:  0.75;
+  --gds-media-card-paragraph-gutter: 8px;
+
+  /* ─── AKKORDIONI ───────────────────────────────────────────── */
+  --gds-accordion-background:        #fff;
+  --gds-accordion-border-radius:     8px;
+  --gds-accordion-box-shadow:        0 0 8px #0000001f;
+  --gds-accordion-padding:           16px;
+  --gds-accordion-header-padding:    16px;
+  --gds-accordion-expanded-header-background: #fcfcfc;
+
+  /* ─── LOMAKE ───────────────────────────────────────────────── */
+  --gds-input-background:        #fcfcfc;
+  --gds-input-border:            1px solid #fcfcfc;
+  --gds-input-border-focus:      1px solid #4573ae;
+  --gds-input-border-radius:     none;
+  --gds-input-min-height:        36px;
+  --gds-input-padding:           12px 16px calc(12px - 0.15em) 16px;
+  --gds-input-placeholder-color: #a9a9a9;
+  --gds-input-wrapper-label-color: #004e31;
+
+  /* ─── NAVIGAATIO & VALIKKO ─────────────────────────────────── */
+  --gds-navigation-background:      #fff;
+  --gds-navigation-color:           #000;
+  --gds-navigation-desktop-height:  100px;
+  --gds-navigation-mobile-height:   70px;
+  --gds-menu-item-text-transform:   uppercase;
+  --gds-menu-item-font-size:        16px;
+  --gds-menu-item-letter-spacing:   1.28px;
+  --gds-menu-item-line-height:      19px;
+  --gds-menu-item-padding-horizontal: 16px 16px calc(16px - 0.15em) 16px;
+  --gds-menu-item-padding-vertical:   16px 24px calc(16px - 0.15em) 24px;
+  --gds-menu-item-underline-offset-active: 8px;
+
+  /* ─── TAGI ─────────────────────────────────────────────────── */
+  --gds-tag-background-color: #000;
+  --gds-tag-color:            #fff;
+  --gds-tag-border-radius:    10px;
+  --gds-tag-padding:          6px 12px;
+  --gds-tag-group-gutter-x:   16px;
+  --gds-tag-group-gutter-y:   12px;
+
+  /* ─── HINT / TOOLTIP ───────────────────────────────────────── */
+  --gds-hint-background:    #fff;
+  --gds-hint-border:        1px solid #009d58;
+  --gds-hint-border-radius: 4px 4px 4px 0;
+
+  /* ─── FOKUS (globaali) ─────────────────────────────────────── */
+  --gds-global-outline-focus: auto #e2f1ec;
+
+  /* ─── VÄLISTYS ─────────────────────────────────────────────── */
+  --gds-spacing-3xs: 4px;   --gds-spacing-2xs: 8px;   --gds-spacing-xs: 12px;
+  --gds-spacing-s:   16px;  --gds-spacing-m:   24px;  --gds-spacing-l:  32px;
+  --gds-spacing-xl:  40px;  --gds-spacing-2xl: 48px;  --gds-spacing-3xl: 80px;
+
+  /* ─── GRID & LEVEYDET ──────────────────────────────────────── */
+  --grid-columns:       12;
+  --grid-column:        78px;
+  --grid-gutter:        24px;
+  --viewport-gutter:    15px;
+  --content-width:      calc(78px * 8 + 24px * (8 - 1));    /*  792px */
+  --alignwide-width:    calc(78px * 12 + 24px * (12 - 1));  /* 1200px */
+  --alignfull-width:    1600px;
+  --block-gutter-s:     24px;
+  --block-gutter:       40px;
+  --block-gutter-l:     60px;
+  --footer-gutter:      185px;
+
+  /* WordPress-lohkojen vastineet (theme.json) */
+  --wp--style--global--content-size: 792px;
+  --wp--style--global--wide-size:    1200px;
+  --wp--style--block-gap:            60px;
+}
